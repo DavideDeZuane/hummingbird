@@ -8,7 +8,6 @@
 #include <netdb.h>
 
 
-
 int responder_ini(ike_responder *responder, peer_options* opts){
     int af, port = 0;
     af = validate_address(opts->address);

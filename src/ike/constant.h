@@ -1,6 +1,7 @@
 #ifndef IKE_ALIASES_H
 #define IKE_ALIASES_H
 
+#define MID_NULL 0x00000000
 #define SPI_NULL 0x0000000000000000 //valore speciale del campo che indica che l'initiator non conosce l'SPI del responder
 #define SPI_LENGTH 64
 

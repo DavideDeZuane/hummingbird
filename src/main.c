@@ -11,8 +11,22 @@
 #include <openssl/err.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+// questo andrà nella parte crypto
+#include <sys/random.h>
 
+
+//questa define consente di fare l'overload di un metodo in c, queste sono da utilizzare per implementare il metodo di setup 
+#define foo(X) _Generic((X), int: foo_int, char*: foo_char)(X)
+
+void foo_int(int a){
+    printf("%d\n", a);
+}
+ 
+void foo_char(char* d){
+    printf("Print di un char\n");
+}
 
 uint64_t generate_spi() {
     uint8_t buffer[8];
@@ -30,7 +44,42 @@ void print_hex(const unsigned char *data, size_t len) {
 }
 
 
-int main(){
+int main(int argc, char* argv[]){
+    
+    //spostare questa parte del codice nella parte di utility (oppure trovare un altro nome )
+    int opts;
+    struct option long_opts[] = {
+        {"version", no_argument, 0, 'v'},
+        {"config", no_argument, 0, 'c'},
+        {"help", no_argument, 0, 'h'},
+        {0, 0, 0, 0} // Terminatore
+    };
+
+    while((opts = getopt_long(argc, argv, "hvc", long_opts, NULL)) != -1){
+        switch (opts) {
+            case 'h': {
+                printf("Usage of the command");
+                return EXIT_SUCCESS;
+            };
+            case 'v': {
+                printf("Version number..");
+                return EXIT_SUCCESS;
+            };
+            case 'c': {
+                char *cwd;
+                cwd = getcwd(NULL, 0);
+                cwd = realloc(cwd, strlen(cwd)+2);
+                strcat(cwd, "/");
+                printf("Path of the configuration file: %s%s\n", cwd, DEFAULT_CONFIG);
+                return EXIT_SUCCESS;
+            }
+        
+        }
+    }  
+
+    char tmp[32];
+    getrandom(tmp, 32, GRND_NONBLOCK);
+    //printf("Random string %s\n", tmp);
 
     //fare una funzione che fa il checking che il file di configurazione sia corretto
     /*
@@ -68,6 +117,13 @@ int main(){
     ike_header_t header = {0};
     header.initiator_spi = 0x12345678;
     header.responder_spi = SPI_NULL;
+    header.next_payload = NEXT_PAYLOAD_KE;
+    header.message_id = MID_NULL;
+    header.exchange_type = EXCHANGE_IKE_SA_INIT;
+    header.version = 0x20;
+    header.length = sizeof(ike_header_t);
+
+    //prima di fare il memcopy fare la conversione
 
     memcpy(buff, &header, buff_len);
 
@@ -96,6 +152,7 @@ int main(){
     print_hex(buffer, buffer_len);
     */
     //la gestione della recv e del caso in cui il timeout scade va gestita nella parte network
+    char buffer[32] = {0};
     printf("Waiting...\n");
     retval = recv(initiator.sockfd, &buffer, 32, 0);
     if (retval < 0) {
