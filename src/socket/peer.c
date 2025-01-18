@@ -17,22 +17,27 @@ int responder_ini(ike_responder *responder, peer_options* opts){
         log_fatal("Sthutting down...");
         return EXIT_FAILURE;
     }
-
+    //in base all'AF configurato per il responder devo configurare quello dell'initiator
     socket_set_address(&responder->sk, af, opts->address, port);
     log_info("Peer socket at %s:%d", opts->address, port);
+
+
     return EXIT_SUCCESS;
 }
 
-int initiator_ini(ike_initiator *initiator){
+
+// la configurazione dell'initiator dipende fortemente da quella del responder, per questo motivo per configurare l'inititator gli passiamo anche il responder
+int initiator_ini(ike_initiator *initiator, ike_responder *responder){
     /* 
     **********************************
     Network Configuration of the socket 
     ************************************
     */
     memset(initiator, 0, sizeof(ike_initiator));
-    //fare il check del valore di ritorno di questa funzione
-    socket_up(&initiator->sockfd, (struct sockaddr_in *)&initiator->sk);
-
+    int retv = socket_up(&initiator->sockfd, &initiator->sk, responder->sk.ss_family, &responder->sk);
+    if(retv == -1){
+        printf("Error configuring the socket");
+    }
     return EXIT_SUCCESS;
 
 }

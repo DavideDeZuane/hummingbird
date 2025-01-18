@@ -5,10 +5,11 @@ SRCS = src/main.c \
        src/config/config.c \
 	   src/log/log.c \
 	   src/network/network.c\
-	   src/socket/peer.c
+	   src/socket/peer.c\
+	   src/utils/utils.c
 
 LIBS = -linih -lssl -lcrypto
-CFLAGS = -Wall -I./src/config -I./src/log -I./src/network -I./src/socket
+CFLAGS = -Wall -I./src/config -I./src/log -I./src/network -I./src/socket -I/src/utils
 LDFLAGS = $(LIBS)
 
 # Regola principale per costruire il target, diciamo quali sono tutti i file sorgenti di cui ha bisogno

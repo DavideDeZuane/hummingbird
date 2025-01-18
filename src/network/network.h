@@ -3,6 +3,7 @@
 
 #include <netinet/in.h>
 #include <stdint.h>
+#include <sys/socket.h>
 
 #define AF_INVALID -1
 #define PORT_INVALID 0
@@ -23,16 +24,16 @@ int validate_address(char *ip);
 int validate_port(char *port);
 
 
-int socket_up(int *sockfd, struct sockaddr_in *sk);
+int socket_up(int *sockfd, struct sockaddr_storage *sk_i, int AF, struct sockaddr_storage *sk_r);
 
 /**
 * @brief this function populate the address information of the peer socket
 */
-int socket_setup(int* sockfd);
+int socket_setup(int* sockfd, int AF);
 
 /**
 * @brief this function populate the address information of the peer socket
 */
-int socket_set_address(struct sockaddr_in *sk, int AF, char *ip, int port);
+int socket_set_address(struct sockaddr_storage *sk, int AF, char *ip, int port);
 
 #endif

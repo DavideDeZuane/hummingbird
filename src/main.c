@@ -4,6 +4,7 @@
 #include "./socket/peer.h"
 #include "./log/log.h"
 #include "./ike/header.h"
+#include "./utils/utils.h"
 #include "ike/constant.h"
 
 #include <openssl/dh.h>
@@ -28,24 +29,9 @@ void foo_char(char* d){
     printf("Print di un char\n");
 }
 
-uint64_t generate_spi() {
-    uint8_t buffer[8];
-    uint64_t spi_value = 0;
-    for (int i = 0; i < sizeof(buffer); i++) spi_value = (spi_value << 8) | buffer[i];
-    return spi_value;
-}
-
-
-void print_hex(const unsigned char *data, size_t len) {
-    for (size_t i = 0; i < len; i++) {
-        printf("%02x", data[i]);
-    }
-    printf("\n");
-}
-
 
 int main(int argc, char* argv[]){
-    
+
     //spostare questa parte del codice nella parte di utility (oppure trovare un altro nome )
     int opts;
     struct option long_opts[] = {
@@ -77,10 +63,6 @@ int main(int argc, char* argv[]){
         }
     }  
 
-    char tmp[32];
-    getrandom(tmp, 32, GRND_NONBLOCK);
-    //printf("Random string %s\n", tmp);
-
     //fare una funzione che fa il checking che il file di configurazione sia corretto
     /*
     *********************************************
@@ -104,9 +86,16 @@ int main(int argc, char* argv[]){
     */
     //fare un metodo per esempio exchange_setup() in cui si fa l'init sia di initiator che di responder
     ike_initiator initiator = {0};
-    initiator_ini(&initiator);
     ike_responder responder = {0};
     responder_ini(&responder, &cfg.peer);
+    initiator_ini(&initiator, &responder);
+    //in questo modo facciamo si che il destinatario sia associato al socket, in questo modo possiamo usare direttamente la recv e la send 
+    //inoltre  il socket rifiuterà di inviare e ricevere dati da qualsiasi altro indirizzo o porta (il socket è legato al server specifico)
+    if (connect(initiator.sockfd, (struct sockaddr *)&responder.sk, sizeof(responder.sk)) < 0) {
+        perror("connect failed");
+        close(initiator.sockfd);
+        return EXIT_FAILURE;
+    } 
 
 
     char *buff = malloc(sizeof(ike_header_t));
@@ -126,14 +115,15 @@ int main(int argc, char* argv[]){
     //prima di fare il memcopy fare la conversione
 
     memcpy(buff, &header, buff_len);
+    
+    //print_hex(buff, buff_len);
 
-    printf("Spi generated: %lu \n", header.initiator_spi);
-
-    int retval =  sendto(initiator.sockfd, buff, buff_len, 0, (struct sockaddr *) &responder.sk, sizeof(responder.sk));
+    int retval =  send(initiator.sockfd, buff, buff_len, 0);
     if(retval == -1){
         printf("Errore per la send");
         return -1;
     }
+    //in questo caso il problema è che a questo punto anche se abbiamo fatto la send potrebbe non essere arrivata 
 
     /*
     EVP_PKEY *pkey1 = NULL;

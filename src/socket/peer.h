@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 typedef struct {
-    struct sockaddr_in sk;
+    struct sockaddr_storage sk;
     uint64_t spi;
 } ike_responder;
 
@@ -13,7 +13,7 @@ typedef struct {
 typedef struct {
     int sockfd;
     uint64_t spi;
-    struct sockaddr_in sk;
+    struct sockaddr_storage sk;
 } ike_initiator;
 
 /**
@@ -21,7 +21,7 @@ typedef struct {
 * @param[in] responder The struct wich rapresent the peer 
 * @param[in] opts Options for the peer specified inside the config file
 */
-int initiator_ini(ike_initiator *initiator);
+int initiator_ini(ike_initiator *initiator, ike_responder *responder);
  
 /**
 * @brief This function populate the responder with the option specified inside che configuration file

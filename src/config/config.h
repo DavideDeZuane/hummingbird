@@ -12,7 +12,7 @@
 
 typedef struct {
     char hostname[INET_FQNLEN];
-    char address[INET_ADDRSTRLEN];
+    char address[INET6_ADDRSTRLEN];
     char port[MAX_PORT_LENGTH];
 } peer_options;
 
