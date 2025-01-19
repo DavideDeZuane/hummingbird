@@ -3,6 +3,21 @@
 Nella cartella src è presente il codice dell'implementazione di minimal ike.
 Mentre nella cartella srv è presente la configurazione docker per creare un server strongswan con cui far comunicare la nostra istanza per vedere se tutto sta andando correttamente.
 
+## Minimal IKE
+
+Campi extra che sono presenti nell'SA init 
+
+|             Campo             | Dimensione (Byte) |    Opzione Strongswan    | Value |    RFC   |
+|:-----------------------------:|-------------------|:------------------------:|-------|:--------:|
+| VENDOR\_ID                     |         20        |           send\_vendor\_id |    no |     7296 |
+| MULTIPLE\_AUTH\_SUPPORTED       |         8         |  multiple\_authentication |    no |     4739 |
+| SIGNATURE\_HASH\_ALGORITHMS     |         16        | signature\_authentication |    no |     7427 |
+| REDIRECT\_SUPPORTED            |         8         |           flow\_redirects |    no |     5685 |
+| NAT\_DETECTION\_SOURCE\_IP       |         28        |                        - |     - |     4306 |
+| NAT\_DETECTION\_DESTIONATION\_IP |         28        |                        - |     - |     4306 |
+|                               |                   |                          |       |          |
+|        TOTALE OVERHEAD        |        108        |                          |       |          |
+
 ## Dependencies
 
 - `libinih`: per eseguire il parsing della configurazione

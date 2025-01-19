@@ -81,7 +81,6 @@ int socket_set_address(struct sockaddr_storage *sk, int af, char *ip, int port){
     return retv;
 }
 
-
 //questo combina le funzionalità della socket_setup e della socket_set address
 //dato che qui configuro l'initiator per determinare quale interfaccia utilizzare devo utilizzare la combo chiamata connect e getsockname
 int socket_up(int *sockfd, struct sockaddr_storage *sk_i, int AF, struct sockaddr_storage *sk_r){
