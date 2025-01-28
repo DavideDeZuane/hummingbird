@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <stdint.h>
 
 // Aggiungi qui altre librerie che usi frequentemente
 

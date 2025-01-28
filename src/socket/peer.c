@@ -20,8 +20,6 @@ int responder_ini(ike_responder *responder, peer_options* opts){
     //in base all'AF configurato per il responder devo configurare quello dell'initiator
     socket_set_address(&responder->sk, af, opts->address, port);
     log_info("Peer socket at %s:%d", opts->address, port);
-
-
     return EXIT_SUCCESS;
 }
 

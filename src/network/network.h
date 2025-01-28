@@ -9,6 +9,9 @@
 #define PORT_INVALID 0
 #define EPHEMERAL_PORT 0 
 
+
+void check_endian();
+
 /**
 * @brief This function check the AF of the passed string 
 * @param[in] ip  The string wich contains the ip address to check

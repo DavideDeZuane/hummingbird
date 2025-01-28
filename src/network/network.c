@@ -2,6 +2,7 @@
 #include "../log/log.h"
 #include "network.h"
 #include <arpa/inet.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <netinet/in.h>
@@ -10,7 +11,15 @@
 #include <unistd.h>
 #include <ifaddrs.h>
 #include <ifaddrs.h>
+#include <endian.h>
 
+void check_endian(){
+    #if __BYTE_ORDER == __LITTLE_ENDIAN
+        printf("Il sistema è Little Endian.\n");
+    #elif __BYTE_ORDER == __BIG_ENDIAN
+        printf("Il sistema è Big Endian.\n");
+    #endif
+}
 
 // questa può stare anche qui oppure tocca spostarla su utils
 const char* address_family_to_string(int af) {
