@@ -1,6 +1,8 @@
 #ifndef IKE_ALIASES_H
 #define IKE_ALIASES_H
 
+#include "../common_include.h"
+
 #define MID_NULL 0x00000000
 #define SPI_NULL 0x0000000000000000 //valore speciale del campo che indica che l'initiator non conosce l'SPI del responder
 #define SPI_LENGTH 64
@@ -29,6 +31,18 @@ typedef enum {
     PROTOCOL_ID_AH  = 2,
     PROTOCOL_ID_ESP = 3
 } ProtocolType;
+
+
+typedef enum {
+    PAYLOAD_TYPE_NONE,
+    PAYLOAD_TYPE_NONCE,
+    PAYLOAD_TYPE_KE,
+    PAYLOAD_TYPE_SA,
+    GENERIC_PAYLOAD_HEADER,
+    IKE_HEADER,
+    TRANSFORM,
+} MessageComponent;
+
 
 /**
  * @brief Enum per rappresentare i tipi di trasformazioni.
@@ -80,5 +94,12 @@ typedef enum {
     EXCHANGE_CREATE_CHILD_SA = 36,
     EXCHANGE_INFORMATIONAL   = 37   
 } ExchangeType;
+
+
+typedef struct {
+    size_t offset;  // Offset del campo nella struttura
+    int type;       // Tipo del campo (ad esempio, uint16_t, uint32_t, uint64_t)
+} field_descriptor_t;
+
 
 #endif

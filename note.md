@@ -72,5 +72,18 @@ Per vedere come aggiungere una policy ipsec guardare
 ```strongswan/src/libcharon/kernel/kernel_ipsec.h```
 
 
+### Overload in C
+
+#define foo(X) _Generic((X), int: foo_int, char*: foo_char)(X)
+
+void foo_int(int a){
+    printf("%d\n", a);
+}
+ 
+void foo_char(char* d){
+    printf("Print di un char\n");
+}
+
+
 
 

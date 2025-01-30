@@ -5,10 +5,25 @@
 #include <stdint.h>
 #include <sys/socket.h>
 
+#include "../ike/header.h"
+
 #define AF_INVALID -1
 #define PORT_INVALID 0
 #define EPHEMERAL_PORT 0 
 
+// Macro per gestire il controllo dei bit
+#define CONVERT_TO_BIG_ENDIAN(value, type)  \
+    (type == 16 ? htobe16(value) :          \
+    (type == 32 ? htobe32(value) :          \
+    (type == 64 ? htobe64(value) : value)))
+\
+
+
+#define FIELD_UINT16 16
+#define FIELD_UINT32 32
+#define FIELD_UINT64 6
+
+void convert_to_big_endian(void *data, MessageComponent type);
 
 void check_endian();
 

@@ -21,19 +21,85 @@
 #include <string.h>
 // questo andrà nella parte crypto
 #include <sys/random.h>
+#include <time.h>
 
-/*
-//questa define consente di fare l'overload di un metodo in c, queste sono da utilizzare per implementare il metodo di setup 
-#define foo(X) _Generic((X), int: foo_int, char*: foo_char)(X)
 
-void foo_int(int a){
-    printf("%d\n", a);
+typedef struct {
+    void *next; // Puntatore generico al prossimo payload
+    void *prev; // Puntatore generico al precedente payload
+    void *data;                  // Puntatore generico ai dati del payload
+    size_t length;
+    MessageComponent type; 
+} ike_message_component_t;
+
+typedef struct {
+    ike_message_component_t *head;
+    ike_message_component_t *tail;
+} ike_message_t;
+
+void push_component(ike_message_t* list, MessageComponent type, void *data, size_t length){
+
+    ike_message_component_t* new = malloc(sizeof(ike_message_component_t));
+    if (new == NULL) printf("Error during malloc\n");
+    
+    new->prev = NULL; //dato che faccio il prepend l'elemento che aggiungo diventa il primo e quindi lo posso lasciare qui
+    new->data = data;
+    new->length = length;
+    new->type = type;
+    
+    if(list->head == NULL){
+        list->head = new;
+        list->tail = new;
+        printf("Primo elemento\n");
+        return;
+    }
+    new->next = list->head;
+    list->head->prev = new;
+    list->head = new;
+
+    printf("Added component in head\n");
+
 }
- 
-void foo_char(char* d){
-    printf("Print di un char\n");
+
+uint8_t* create_message(ike_message_t* list, size_t* len){
+
+    size_t buffer_len = 0;
+    uint8_t* buffer = NULL;
+
+    //entro nella create messge
+    printf("Entro nella create message");
+    //pariamo dalla fine della lista
+    ike_message_component_t* scan = list->tail;
+    while(scan != NULL){
+        buffer_len += scan->length;
+        buffer = realloc(buffer, buffer_len);
+
+        //una volta allocato il buffer prima di scriverci sopra facciamo la conversione in big endian di quello che ci vogliamo scrivere
+        if (buffer_len > scan->length) {
+            // Sposta i dati esistenti nel buffer per fare spazio ai nuovi dati
+            memmove(buffer + scan->length, buffer, buffer_len - scan->length);
+        }
+        if(scan->type == IKE_HEADER){
+            ike_header_t * hdr = (ike_header_t *) scan->data;
+            hdr->length = htobe32(buffer_len) ;
+        }
+
+        printf("Sto scorrendo la list e il tipo di quello che scorro è: %d\n", scan->type);
+        memcpy(buffer, scan->data, scan->length);
+        scan = scan->prev;
+    }
+
+    *len = buffer_len;
+    return buffer;
+
+
+
 }
-*/
+
+void pop_component(void **list){
+
+}
+
 
 int main(int argc, char* argv[]){
 
@@ -102,30 +168,39 @@ int main(int argc, char* argv[]){
         return EXIT_FAILURE;
     } 
 
-    char *buff = calloc(1500, sizeof(uint8_t));
-    size_t buff_len = 1500;
     //modificare la sendto in modo tale che l'unico argomento da passare sia il messaggio
 
     // questa parte andrà spostata nella parte che si occupa di ike
     //dopo la send va aggiungo il SA payload, quindi la proposal dato che deve essere minimal definiamo solo una cipher suite
 
+    ike_message_t packet_list = {NULL, NULL};
+
     ike_header_t header = init_header();
-    print_header(&header);
 
-    // quindi
-    header.length = htobe32(header.length);
-    header.message_id = htobe32(header.message_id);
-    header.initiator_spi = htobe64(header.initiator_spi);
-    header.responder_spi = htobe64(header.responder_spi);
+    ike_payload_header_t pd = {0};
+    pd.next_payload = NEXT_PAYLOAD_NONE;
+    pd.length = htobe16(8);
+    
+    
 
-    memcpy(buff, &header, sizeof(ike_header_t));
+    
+    push_component(&packet_list, GENERIC_PAYLOAD_HEADER, &pd, sizeof(ike_payload_header_t));
+    push_component(&packet_list, IKE_HEADER, &header, sizeof(ike_header_t));
+    
+    uint8_t* buff;
+    size_t len = 0;
+    
+    buff = create_message(&packet_list, &len);
+
+
+    //memcpy(buff, &header, sizeof(ike_header_t));
     //memcpy(buff+sizeof(ike_payload_header_t)+8, &sa_payload, sizeof(ike_payload_proposal));
 
 
 
 
 
-    int retval =  send(initiator.sockfd, buff, buff_len, 0);
+    int retval =  send(initiator.sockfd, buff, len, 0);
     if(retval == -1){
         printf("Errore per la send");
         return -1;
@@ -140,6 +215,7 @@ int main(int argc, char* argv[]){
             printf("Timeout scaduto: nessun dato ricevuto entro 1 secondo.\n");
         } else {
             perror("Errore durante la ricezione");
+            return EXIT_FAILURE;
         }
     } 
     printf("Byte Ricevuti dal responder %d\n", n);
@@ -156,6 +232,9 @@ int main(int argc, char* argv[]){
     printf("Length: %d\n", hd->length);
     
 
+    if(header.initiator_spi == hd->initiator_spi){
+        printf("i due spi sono uguali\n");
+    }
     //porcodio
 
     
