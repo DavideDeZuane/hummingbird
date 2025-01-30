@@ -15,15 +15,16 @@
 #include "../ike/constant.h"
 #include "../utils/utils.h"
 
-//io la funzione converto to big endian prende il dato e il tipo, poi chiama l'utility che va a recuperare quelli che sono i campi della struct 
-//da convertire in modo che i dati siano sempre rappresentati in big endian
+/**
+* @brief This function convert the rappresentation of the field of a struct in big-endian.
+* @param[in] data Generic pointer to a buffer of data to convert
+* @param[in] type Type of the data to convert this will be used to deterimnate which fields must be converted
+*/
 void convert_to_big_endian(void *data, MessageComponent type) {
     size_t num_fields = 0;
     field_descriptor_t* fields = fields_to_convert(type, &num_fields);
     for (size_t i = 0; i < num_fields; i++) {
-        
         void *field_ptr = (uint8_t *)data + fields[i].offset;
-
         switch (fields[i].type) {
             case FIELD_UINT16: {
                 uint16_t *value = (uint16_t *)field_ptr;
@@ -36,35 +37,11 @@ void convert_to_big_endian(void *data, MessageComponent type) {
                 break;
             }
             case FIELD_UINT64: {
-                printf("Converto un campo da 64\n");
                 uint64_t *value = (uint64_t *)field_ptr;
-                *value = CONVERT_TO_BIG_ENDIAN(*value, 64);  // Conversione in big-endian per uint64_t
+                *value = CONVERT_TO_BIG_ENDIAN(*value, 64);  
                 break;
             }
         }
-    }
-}
-
-
-
-
-void check_endian(){
-    #if __BYTE_ORDER == __LITTLE_ENDIAN
-        printf("Il sistema è Little Endian.\n");
-    #elif __BYTE_ORDER == __BIG_ENDIAN
-        printf("Il sistema è Big Endian.\n");
-    #endif
-}
-
-// questa può stare anche qui oppure tocca spostarla su utils
-const char* address_family_to_string(int af) {
-    switch (af) {
-        case AF_INET:
-            return "AF_INET";
-        case AF_INET6:
-            return "AF_INET6";
-        default:
-            return "Unknown Address Family";
     }
 }
 
@@ -166,6 +143,11 @@ int socket_up(int *sockfd, struct sockaddr_storage *sk_i, int AF, struct sockadd
     return EXIT_SUCCESS;
 }
 
+/**
+* @brief This function check if the ip address is valid
+* @param[in] ip  The string wich contains the ip address to check
+* @return  Return the AF_INET or AF_INET6 or -1 if the address is not valid 
+*/
 int validate_address(char *ip){
     struct addrinfo hints, *res = NULL;
     memset(&hints, 0, sizeof(hints));
@@ -181,6 +163,11 @@ int validate_address(char *ip){
     return AF_INVALID;  // Non è un indirizzo valido
 }
 
+/**
+* @brief This function check the value of the port passed on the configuration file
+* @param[in] port  The string wich contains the port to check
+* @return Return the port if is valid or 0 if not valid
+*/
 int validate_port(char *port){
     int port_n = atoi(port);
     if(port_n >0 && port_n < 65535)

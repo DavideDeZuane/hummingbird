@@ -3,8 +3,8 @@
 #include <endian.h>
 
 
-ike_payload_proposal create_proposal(){
-    ike_payload_proposal proposal = {0};
+ike_payload_proposal_t create_proposal(){
+    ike_payload_proposal_t proposal = {0};
     proposal.last = 0; //last 
     proposal.protocol = PROTOCOL_ID_IKE;
     proposal.spi_size = 0;
@@ -30,7 +30,7 @@ ike_payload_proposal create_proposal(){
     proposal.prf.type = htobe16(2);
     proposal.prf.last = LAST; //no ce ne sono ancora
 
-    proposal.length = sizeof(ike_payload_proposal);
+    proposal.length = sizeof(ike_payload_proposal_t);
 
     return proposal;
 }

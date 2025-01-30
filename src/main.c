@@ -5,10 +5,8 @@
 #include "./socket/peer.h"
 #include "./log/log.h"
 #include "./ike/header.h"
-#include "./utils/utils.h"
-#include "./crypto/crypto.h"
+#include "crypto/crypto.h"
 #include "ike/constant.h"
-#include "./network/network.h"
 #include "./ike/header.h"
 #include "ike/payload.h"
 
@@ -20,8 +18,6 @@
 #include <stdlib.h>
 #include <string.h>
 // questo andrà nella parte crypto
-#include <sys/random.h>
-#include <time.h>
 
 
 typedef struct {
@@ -62,29 +58,34 @@ void push_component(ike_message_t* list, MessageComponent type, void *data, size
 }
 
 uint8_t* create_message(ike_message_t* list, size_t* len){
-
+    printf("Stampo il messaggio\n");
     size_t buffer_len = 0;
-    uint8_t* buffer = NULL;
+    size_t offset = 0;
 
-    //entro nella create messge
-    printf("Entro nella create message");
-    //pariamo dalla fine della lista
+    uint8_t* buffer = NULL;
     ike_message_component_t* scan = list->tail;
+
     while(scan != NULL){
         buffer_len += scan->length;
         buffer = realloc(buffer, buffer_len);
-
+        offset += scan->length;
         //una volta allocato il buffer prima di scriverci sopra facciamo la conversione in big endian di quello che ci vogliamo scrivere
-        if (buffer_len > scan->length) {
-            // Sposta i dati esistenti nel buffer per fare spazio ai nuovi dati
-            memmove(buffer + scan->length, buffer, buffer_len - scan->length);
+        if (buffer_len > scan->length) memmove(buffer + scan->length, buffer, buffer_len - scan->length);
+
+        if(scan->type == GENERIC_PAYLOAD_HEADER) {
+            //se il componente che andiamo a considerare è quello del generic payload allora vuol dire che il componente che lo precedeva 
+            //ha questo come header e quindi dato che ci server conoscere la sua lunhgezza utilizziamo il campo offset per determinare la dimensione del 
+            //payload precedente in modo da non dover scrivere a mano la lunghezza. Una volta aggiornato il compo del generic header resettiamo l'offset
+            //dato che passiamo al prossimo payload
+            ike_payload_header_t* hd = (ike_payload_header_t*) scan->data;
+            hd->length = htobe16(offset);
+            offset = 0;
         }
         if(scan->type == IKE_HEADER){
             ike_header_t * hdr = (ike_header_t *) scan->data;
             hdr->length = htobe32(buffer_len) ;
         }
 
-        printf("Sto scorrendo la list e il tipo di quello che scorro è: %d\n", scan->type);
         memcpy(buffer, scan->data, scan->length);
         scan = scan->prev;
     }
@@ -103,7 +104,6 @@ void pop_component(void **list){
 
 int main(int argc, char* argv[]){
 
-    check_endian();
     //spostare questa parte del codice nella parte di utility (oppure trovare un altro nome )
     int opts;
     struct option long_opts[] = {
@@ -177,13 +177,22 @@ int main(int argc, char* argv[]){
 
     ike_header_t header = init_header();
 
+    header.next_payload = NEXT_PAYLOAD_KE;
+
     ike_payload_header_t pd = {0};
     pd.next_payload = NEXT_PAYLOAD_NONE;
-    pd.length = htobe16(8);
     
+    ike_payload_kex_t kd = {0};
+    kd.dh_group = htobe16(31);
+    size_t prova = 0;
+    uint8_t* buff1 = NULL;
+    memcpy(&kd.ke_data, "4576e13695eb9f231cfc5e09c5ee96f91d1d6a66e1103a370343f059f6b3ee48", 32);
+    printf("Lunghezza della struct %zu\n", sizeof(ike_payload_kex_t));
     
+    print_hex(buff1, prova);
+    generate_kex();
 
-    
+    push_component(&packet_list, PAYLOAD_TYPE_KE, &kd, sizeof(ike_payload_kex_t));
     push_component(&packet_list, GENERIC_PAYLOAD_HEADER, &pd, sizeof(ike_payload_header_t));
     push_component(&packet_list, IKE_HEADER, &header, sizeof(ike_header_t));
     
@@ -192,19 +201,18 @@ int main(int argc, char* argv[]){
     
     buff = create_message(&packet_list, &len);
 
+    print_hex(buff, len);
 
     //memcpy(buff, &header, sizeof(ike_header_t));
     //memcpy(buff+sizeof(ike_payload_header_t)+8, &sa_payload, sizeof(ike_payload_proposal));
-
-
-
-
 
     int retval =  send(initiator.sockfd, buff, len, 0);
     if(retval == -1){
         printf("Errore per la send");
         return -1;
     }
+    //il free non azzera il contenuto dice solamente che la memoria ora è disponibile, quindi la rilascia al sistema operativo
+    free(buff);
 
     //la gestione della recv e del caso in cui il timeout scade va gestita nella parte network
     uint8_t* buffer = calloc(70, sizeof(uint8_t));

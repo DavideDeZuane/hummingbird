@@ -3,9 +3,7 @@
 #include "../crypto/crypto.h"
 #include <endian.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <sys/types.h>
-#include "../network/network.h"
 
 ike_header_t init_header(){
     uint8_t flag, version = 0;

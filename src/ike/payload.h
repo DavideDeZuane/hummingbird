@@ -40,9 +40,16 @@ typedef struct {
     ike_transofrm_t kex;
     ike_transofrm_t aut;
     ike_transofrm_t prf;
-} __attribute__((packed)) ike_payload_proposal;
+} __attribute__((packed)) ike_payload_proposal_t;
+
+typedef struct {
+    uint16_t dh_group;
+    uint16_t reserved;
+    uint8_t ke_data[32]; //contiene la chiave pubblica generata
+} __attribute__((packed)) ike_payload_kex_t;
 
 
-ike_payload_proposal create_proposal();
+
+ike_payload_proposal_t create_proposal();
 
 #endif
