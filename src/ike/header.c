@@ -13,6 +13,7 @@ ike_header_t init_header(){
     } 
     version |= IKEV2;
    
+    //qui va modificato, per fare l'init dell'header dobbiamo passargli il ressponder
     ike_header_t header = {
         generate_spi(),
         SPI_NULL,

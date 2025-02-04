@@ -4,16 +4,22 @@
 #include "../config/config.h"
 #include <stdint.h>
 
+
+typedef struct {
+    uint64_t spi;
+    uint8_t* key;
+    uint8_t* nonce;
+} ike_state_t;
+
 typedef struct {
     struct sockaddr_storage sk;
-    uint64_t spi;
+    ike_state_t sa;;
 } ike_responder;
-
 
 typedef struct {
     int sockfd;
-    uint64_t spi;
     struct sockaddr_storage sk;
+    ike_state_t sa;
 } ike_initiator;
 
 /**

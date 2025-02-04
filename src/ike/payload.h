@@ -5,8 +5,7 @@
 
 
 typedef struct {
-    uint16_t fixed :1;
-    uint16_t type :15;
+    uint16_t type;
     uint16_t value;
 } __attribute__((packed)) ike_transofrm_attribute_t;
 

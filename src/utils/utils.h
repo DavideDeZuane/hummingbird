@@ -15,6 +15,12 @@
 field_descriptor_t* fields_to_convert(MessageComponent type, size_t* num);
 
 /**
+* @brief This function print the value passed in a big endian rappresentation
+* @param[in] data The data to print in big-endian format
+* @param[in] size The length of the data to print
+*/
+void dump_memory(const void *mem, size_t len);
+/**
 * @brief This function securely remove all the content of a pointer 
 * @param[in] ptr Pointer to the memory area to free
 * @param[in] size  Size of the memory to replace with all 0

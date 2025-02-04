@@ -1,4 +1,5 @@
 #include "crypto.h" // IWYU pragma: keep
+#include <stdint.h>
 #include <stdio.h>
 #include <sys/random.h>
 #include <openssl/dh.h>
@@ -15,6 +16,15 @@ uint64_t generate_spi() {
         exit(EXIT_FAILURE);
     }
     return spi;
+}
+
+
+void generate_nonce(uint8_t *nonce, size_t length) {
+    ssize_t result = getrandom(nonce, length, 0);
+    if (result == -1) {
+        perror("getrandom");
+        exit(EXIT_FAILURE);
+    }
 }
 
 /**

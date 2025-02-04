@@ -1,5 +1,6 @@
 #include "utils.h"
 #include "../network/network.h"
+#include "../ike/payload.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -42,7 +43,6 @@ field_descriptor_t* fields_to_convert(MessageComponent type, size_t* num_fields)
     field_descriptor_t* fields = NULL;
     size_t num = 0;
 
-    // Switch per determinare i campi da convertire in base al tipo di Payload
     switch(type) {
         case IKE_HEADER: {
             field_descriptor_t tmp[] = {
@@ -57,11 +57,45 @@ field_descriptor_t* fields_to_convert(MessageComponent type, size_t* num_fields)
             break;
         }
         case GENERIC_PAYLOAD_HEADER: {
+            field_descriptor_t tmp[] = {
+                { offsetof(ike_payload_header_t, length), FIELD_UINT16 },
+            };
+            num = sizeof(tmp) / sizeof(tmp[0]);
+            fields = malloc(num * sizeof(field_descriptor_t));
+            memcpy(fields, tmp, num * sizeof(field_descriptor_t));
+            break;
+        }
+        case PAYLOAD_TYPE_KE: {
+            field_descriptor_t tmp[] = {
+                { offsetof(ike_payload_kex_t, dh_group), FIELD_UINT16 },
+            };
+            num = sizeof(tmp) / sizeof(tmp[0]);
+            fields = malloc(num * sizeof(field_descriptor_t));
+            memcpy(fields, tmp, num * sizeof(field_descriptor_t));
+            break;
+        }
+        case PAYLOAD_TYPE_NONCE: {
 
         }
-        default:
+        default:{
             break;
+        }
     }
     *num_fields = num;
     return fields;
+}
+
+void dump_memory(const void *mem, size_t len) {
+    const unsigned char *ptr = (const unsigned char*) mem;
+    for (size_t i = 0; i < len; i += 16) {
+        // Stampa i byte in esadecimale (16 byte per riga)
+        for (size_t j = 0; j < 16; j++) {
+            if (i + j < len)
+                printf("%02x", ptr[i + j]);
+            else
+            printf("   ");
+        }
+        printf("\n");
+    }
+    printf("\n");
 }

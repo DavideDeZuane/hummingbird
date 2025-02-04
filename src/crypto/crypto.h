@@ -9,6 +9,8 @@
 */
 uint64_t generate_spi();
 
+void generate_nonce(uint8_t *nonce, size_t length);
+
 /**
 * @brief This function print a baffer passed as input in hex format
 * @param[in] data Buffer of data to convert in hexadecimal

@@ -9,10 +9,12 @@
 #include "ike/constant.h"
 #include "./ike/header.h"
 #include "ike/payload.h"
+#include "utils/utils.h"
 
 #include <openssl/dh.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/params.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -104,7 +106,11 @@ void pop_component(void **list){
 
 int main(int argc, char* argv[]){
 
-    //spostare questa parte del codice nella parte di utility (oppure trovare un altro nome )
+    /*
+    *********************************************
+    Command Line arguments
+    ********************************************* 
+    */
     int opts;
     struct option long_opts[] = {
         {"version", no_argument, 0, 'v'},
@@ -112,7 +118,6 @@ int main(int argc, char* argv[]){
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0} // Terminatore
     };
-
     while((opts = getopt_long(argc, argv, "hvc", long_opts, NULL)) != -1){
         switch (opts) {
             case 'h': {
@@ -155,7 +160,6 @@ int main(int argc, char* argv[]){
     Setting initiator
     ********************************************* 
     */
-    //fare un metodo per esempio exchange_setup() in cui si fa l'init sia di initiator che di responder
     ike_initiator initiator = {0};
     ike_responder responder = {0};
     responder_ini(&responder, &cfg.peer);
@@ -168,8 +172,6 @@ int main(int argc, char* argv[]){
         return EXIT_FAILURE;
     } 
 
-    //modificare la sendto in modo tale che l'unico argomento da passare sia il messaggio
-
     // questa parte andrà spostata nella parte che si occupa di ike
     //dopo la send va aggiungo il SA payload, quindi la proposal dato che deve essere minimal definiamo solo una cipher suite
 
@@ -177,10 +179,10 @@ int main(int argc, char* argv[]){
 
     ike_header_t header = init_header();
 
-    header.next_payload = NEXT_PAYLOAD_KE;
+    header.next_payload = NEXT_PAYLOAD_SA;
 
     ike_payload_header_t pd = {0};
-    pd.next_payload = NEXT_PAYLOAD_NONE;
+    pd.next_payload = NEXT_PAYLOAD_NONCE;
     
     ike_payload_kex_t kd = {0};
     kd.dh_group = htobe16(31);
@@ -189,11 +191,27 @@ int main(int argc, char* argv[]){
     memcpy(&kd.ke_data, "4576e13695eb9f231cfc5e09c5ee96f91d1d6a66e1103a370343f059f6b3ee48", 32);
     printf("Lunghezza della struct %zu\n", sizeof(ike_payload_kex_t));
     
-    print_hex(buff1, prova);
-    generate_kex();
+    //print_hex(buff1, prova);
+    //generate_kex();
 
+    uint8_t* nonce = malloc(16);
+    generate_nonce(nonce, 16);
+    printf("\n");
+    print_hex(nonce, 16);
+
+    ike_payload_header_t np = {0};
+    np.next_payload = NEXT_PAYLOAD_NONE;
+
+    ike_payload_proposal_t proposal = create_proposal();
+    ike_payload_header_t header_1 = {0} ;
+    header_1.next_payload = NEXT_PAYLOAD_KE;
+
+    push_component(&packet_list, PAYLOAD_TYPE_NONCE, nonce, 16);
+    push_component(&packet_list, GENERIC_PAYLOAD_HEADER, &np, sizeof(ike_payload_header_t));
     push_component(&packet_list, PAYLOAD_TYPE_KE, &kd, sizeof(ike_payload_kex_t));
     push_component(&packet_list, GENERIC_PAYLOAD_HEADER, &pd, sizeof(ike_payload_header_t));
+    push_component(&packet_list, PAYLOAD_TYPE_SA, &proposal, sizeof(ike_payload_proposal_t));
+    push_component(&packet_list, GENERIC_PAYLOAD_HEADER, &header_1, sizeof(ike_payload_header_t));
     push_component(&packet_list, IKE_HEADER, &header, sizeof(ike_header_t));
     
     uint8_t* buff;
@@ -201,7 +219,7 @@ int main(int argc, char* argv[]){
     
     buff = create_message(&packet_list, &len);
 
-    print_hex(buff, len);
+    dump_memory(buff, len);
 
     //memcpy(buff, &header, sizeof(ike_header_t));
     //memcpy(buff+sizeof(ike_payload_header_t)+8, &sa_payload, sizeof(ike_payload_proposal));
@@ -230,16 +248,18 @@ int main(int argc, char* argv[]){
     buffer = realloc(buffer, n);
     buffer[n] = '\0'; 
 
+    //qunado vado a fare il parsing dei vari elementi vorrei fare in modo di confrontare il payload dal buffer per aggiornare quello che ho inviato io 
     ike_header_t* hd = parse_header(buffer, n);
-
     
     printf("Initiator SPI: 0x%llx\n", (long long unsigned int) hd->initiator_spi);
     printf("Responder SPI: 0x%llx\n", (long long unsigned int) hd->responder_spi);
     printf("Next Payload: %d\n", hd->next_payload);
     printf("Message ID: %d\n", hd->message_id);
-    printf("Length: %d\n", hd->length);
+    printf("Length: %d\n", htobe32(hd->length));
     
-
+    dump_memory(&header.initiator_spi, sizeof(uint64_t));
+    dump_memory(&hd->responder_spi, sizeof(uint64_t));
+    
     if(header.initiator_spi == hd->initiator_spi){
         printf("i due spi sono uguali\n");
     }
