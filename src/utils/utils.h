@@ -33,5 +33,6 @@ void secure_free(void* ptr, size_t size);
 */
 const char* address_family_to_string(int af);
 
+const char* next_payload_to_string(NextPayload type);
 
 #endif

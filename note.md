@@ -85,5 +85,8 @@ void foo_char(char* d){
 }
 
 
+### Endianess 
 
+. Le CPU eseguono le operazioni aritmetiche nel formato nativo (host endian, che in un sistema little-endian è little-endian). Quindi, se vuoi ottenere il risultato corretto, devi assicurarti che gli operandi siano convertiti nel formato host prima dell’operazione e, se necessario, convertire il risultato in big-endian dopo l’operazione.
+Quindi la soluzione migliore è convertire i dati prima di inviarli se necessario altrimenti mantenerli in memoria sulla base dell'host
 

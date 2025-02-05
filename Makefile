@@ -9,7 +9,8 @@ SRCS = src/main.c \
 	   src/utils/utils.c \
 	   src/crypto/crypto.c \
 	   src/ike/header.c \
-	   src/ike/payload.c
+	   src/ike/payload.c \
+	   src/ike/packet.c
 
 LIBS = -linih -lssl -lcrypto
 CFLAGS = -Wall -I./src/config -I./src/log -I./src/network -I./src/socket -I./src/utils -I./src/crypto -I./src/ike

@@ -3,12 +3,15 @@
 
 #include "../config/config.h"
 #include <stdint.h>
+#include <stdio.h>
 
 
 typedef struct {
     uint64_t spi;
     uint8_t* key;
+    size_t key_len;
     uint8_t* nonce;
+    size_t nonce_len;
 } ike_state_t;
 
 typedef struct {

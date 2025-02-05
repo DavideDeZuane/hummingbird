@@ -99,3 +99,25 @@ void dump_memory(const void *mem, size_t len) {
     }
     printf("\n");
 }
+
+/**
+* @brief This function return the corisponding text of next payload
+*/
+const char* next_payload_to_string(NextPayload type){
+    switch (type){
+        case NEXT_PAYLOAD_NONE:    return "None";
+        case NEXT_PAYLOAD_SA:      return "Security Association (SA)";
+        case NEXT_PAYLOAD_KE:      return "Key Exchange (KE)";
+        case NEXT_PAYLOAD_IDi:     return "Identity (ID)";
+        case NEXT_PAYLOAD_IDr:     return "Identity (ID)";
+        case NEXT_PAYLOAD_CERT:    return "Key Exchange (KE)";
+        case NEXT_PAYLOAD_CERTREQ: return "Key Exchange (KE)";
+        case NEXT_PAYLOAD_AUTH:    return "Key Exchange (KE)";
+        case NEXT_PAYLOAD_NONCE:   return "Nonce (N)";
+        case NEXT_PAYLOAD_NOTIFIY: return "Notify";
+        case NEXT_PAYLOAD_DELETE:  return "";
+        case NEXT_PAYLOAD_TSi:     return "";
+        case NEXT_PAYLOAD_TSr:     return "";
+        case NEXT_PAYLOAD_SK:      return "";
+    }
+}

@@ -19,8 +19,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-// questo andrà nella parte crypto
 
+#define MAX_PAYLOAD 1444
+
+//spostare questo nel modulo packet, questa è quella parte che si occupa di creare il messaggio e il creeate message ritorna il buffer che poi verrò inviato tramite socket sulla rete 
 
 typedef struct {
     void *next; // Puntatore generico al prossimo payload
@@ -103,6 +105,7 @@ void pop_component(void **list){
 
 }
 
+// spostare fino a qua
 
 int main(int argc, char* argv[]){
 
@@ -233,9 +236,9 @@ int main(int argc, char* argv[]){
     free(buff);
 
     //la gestione della recv e del caso in cui il timeout scade va gestita nella parte network
-    uint8_t* buffer = calloc(70, sizeof(uint8_t));
+    uint8_t* buffer = calloc(MAX_PAYLOAD, sizeof(uint8_t));
     printf("Waiting...\n");
-    n = recv(initiator.sockfd, buffer, 70, 0);
+    n = recv(initiator.sockfd, buffer, MAX_PAYLOAD, 0);
     if (n < 0) {
         if (errno == EAGAIN ) {
             printf("Timeout scaduto: nessun dato ricevuto entro 1 secondo.\n");
@@ -250,23 +253,55 @@ int main(int argc, char* argv[]){
 
     //qunado vado a fare il parsing dei vari elementi vorrei fare in modo di confrontare il payload dal buffer per aggiornare quello che ho inviato io 
     ike_header_t* hd = parse_header(buffer, n);
-    
+    /*
     printf("Initiator SPI: 0x%llx\n", (long long unsigned int) hd->initiator_spi);
     printf("Responder SPI: 0x%llx\n", (long long unsigned int) hd->responder_spi);
     printf("Next Payload: %d\n", hd->next_payload);
     printf("Message ID: %d\n", hd->message_id);
     printf("Length: %d\n", htobe32(hd->length));
-    
-    dump_memory(&header.initiator_spi, sizeof(uint64_t));
-    dump_memory(&hd->responder_spi, sizeof(uint64_t));
+    */
+    dump_memory(buffer, n);
+    //dump_memory(&header.initiator_spi, sizeof(uint64_t));
+    //dump_memory(&hd->responder_spi, sizeof(uint64_t));
     
     if(header.initiator_spi == hd->initiator_spi){
         printf("i due spi sono uguali\n");
     }
     //porcodio
+    responder.sa.spi = hd->responder_spi;
+    printf("Next Payload nell'header: %s\n", next_payload_to_string(hd->next_payload));
+    // funzione che fa il parsing, quello che fa è prendere la strucct del responder e il buffer che poi utilizzeremo per pooplarla
+    uint8_t *ptr = buffer+28; 
+    // 
+    uint8_t next_payload = ptr[0];         
+    uint8_t current_payload = hd->next_payload;
 
-    
-    
-    
+    while (next_payload != 0){
+        current_payload = next_payload;
+        printf("Il payload corrente è %s\n", next_payload_to_string(current_payload));
+        ike_payload_header_t *payload = (ike_payload_header_t *)ptr;
+
+        if(current_payload == NEXT_PAYLOAD_KE){
+            responder.sa.key_len = 32;
+            responder.sa.key = malloc(responder.sa.key_len);
+            memcpy(responder.sa.key, ptr+8, responder.sa.key_len);
+        }
+        
+        if(current_payload == NEXT_PAYLOAD_NONCE){
+            printf("sono al payload nonce\n");
+            responder.sa.nonce_len = be16toh(payload->length) -4;
+            responder.sa.nonce = malloc(responder.sa.nonce_len);
+            memcpy(responder.sa.nonce, ptr+4, 32);
+        }
+
+        printf("Next payload di tipo %s, tra %d byte\n", next_payload_to_string(payload->next_payload), be16toh(payload->length));
+        next_payload = payload->next_payload;
+        ptr += be16toh(payload->length);
+        printf("passiamo al successivo\n");
+    }
+
+    dump_memory(responder.sa.nonce, responder.sa.nonce_len);
+    dump_memory(responder.sa.key, responder.sa.key_len);
+
     return 0;
 }
