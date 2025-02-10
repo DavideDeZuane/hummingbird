@@ -1,7 +1,7 @@
 services:
   vpn-server:
-    image: strongx509/strongswan
-    container_name: vpn-server
+    build: .
+    container_name: strongswan
     network_mode: host
     cap_add:
       - NET_ADMIN
@@ -10,7 +10,7 @@ services:
     stdin_open: true
     tty: true
     volumes:
-      - ./log:/var/log
-      - ./swanctl:/etc/swanctl
-      - ./strongswan.conf:/etc/strongswan.conf
-    command: ["./charon", "&"]
+      - "./log:/var/log"
+      - "./swanctl:/etc/swanctl"
+      - "./strongswan.conf:/etc/strongswan.conf"
+    command: ["sh", "-c", "/usr/libexec/ipsec/charon"]

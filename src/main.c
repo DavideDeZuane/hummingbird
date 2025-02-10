@@ -22,6 +22,11 @@
 
 #define MAX_PAYLOAD 1444
 
+    void print_file(const unsigned char *data, size_t length, FILE *file) {
+        for (size_t i = 0; i < length; i++) {
+            fprintf(file, "%02x", data[i]);
+        }
+    }
 //spostare questo nel modulo packet, questa è quella parte che si occupa di creare il messaggio e il creeate message ritorna il buffer che poi verrò inviato tramite socket sulla rete 
 
 typedef struct {
@@ -50,19 +55,15 @@ void push_component(ike_message_t* list, MessageComponent type, void *data, size
     if(list->head == NULL){
         list->head = new;
         list->tail = new;
-        printf("Primo elemento\n");
         return;
     }
     new->next = list->head;
     list->head->prev = new;
     list->head = new;
-
-    printf("Added component in head\n");
-
 }
 
 uint8_t* create_message(ike_message_t* list, size_t* len){
-    printf("Stampo il messaggio\n");
+
     size_t buffer_len = 0;
     size_t offset = 0;
 
@@ -191,16 +192,20 @@ int main(int argc, char* argv[]){
     kd.dh_group = htobe16(31);
     size_t prova = 0;
     uint8_t* buff1 = NULL;
-    memcpy(&kd.ke_data, "4576e13695eb9f231cfc5e09c5ee96f91d1d6a66e1103a370343f059f6b3ee48", 32);
-    printf("Lunghezza della struct %zu\n", sizeof(ike_payload_kex_t));
-    
-    //print_hex(buff1, prova);
-    //generate_kex();
 
-    uint8_t* nonce = malloc(16);
+
+    //questa parte di popolazione delle chiavi e del nonce va spostata nella parte dell'init dato che andranno a popolare quella che è la struct 
+    //state che è presente nel reposnder
+    initiator.sa.key_len = 32;
+    initiator.sa.key = malloc(initiator.sa.key_len);
+    memcpy(initiator.sa.key, "d09109773ea05e472104617cc4dda9642f7aa4af5e3651a82f920383f97e4e7d", initiator.sa.key_len);
+    memcpy(&kd.ke_data, "00f9b203403fbbd98885d182c8629c675ac792de90208def138299dbf28c8c65", 32);
+    
+    initiator.sa.nonce_len = 16;
+    initiator.sa.nonce = malloc(initiator.sa.nonce_len);
+    uint8_t* nonce = malloc(initiator.sa.nonce_len);
     generate_nonce(nonce, 16);
-    printf("\n");
-    print_hex(nonce, 16);
+    memcpy(initiator.sa.nonce, nonce, initiator.sa.nonce_len);
 
     ike_payload_header_t np = {0};
     np.next_payload = NEXT_PAYLOAD_NONE;
@@ -264,12 +269,9 @@ int main(int argc, char* argv[]){
     //dump_memory(&header.initiator_spi, sizeof(uint64_t));
     //dump_memory(&hd->responder_spi, sizeof(uint64_t));
     
-    if(header.initiator_spi == hd->initiator_spi){
-        printf("i due spi sono uguali\n");
-    }
     //porcodio
     responder.sa.spi = hd->responder_spi;
-    printf("Next Payload nell'header: %s\n", next_payload_to_string(hd->next_payload));
+    //printf("Next Payload nell'header: %s\n", next_payload_to_string(hd->next_payload));
     // funzione che fa il parsing, quello che fa è prendere la strucct del responder e il buffer che poi utilizzeremo per pooplarla
     uint8_t *ptr = buffer+28; 
     // 
@@ -278,7 +280,7 @@ int main(int argc, char* argv[]){
 
     while (next_payload != 0){
         current_payload = next_payload;
-        printf("Il payload corrente è %s\n", next_payload_to_string(current_payload));
+        //printf("Il payload corrente è %s\n", next_payload_to_string(current_payload));
         ike_payload_header_t *payload = (ike_payload_header_t *)ptr;
 
         if(current_payload == NEXT_PAYLOAD_KE){
@@ -288,20 +290,78 @@ int main(int argc, char* argv[]){
         }
         
         if(current_payload == NEXT_PAYLOAD_NONCE){
-            printf("sono al payload nonce\n");
+            //printf("sono al payload nonce\n");
             responder.sa.nonce_len = be16toh(payload->length) -4;
             responder.sa.nonce = malloc(responder.sa.nonce_len);
             memcpy(responder.sa.nonce, ptr+4, 32);
         }
 
-        printf("Next payload di tipo %s, tra %d byte\n", next_payload_to_string(payload->next_payload), be16toh(payload->length));
+        //printf("Next payload di tipo %s, tra %d byte\n", next_payload_to_string(payload->next_payload), be16toh(payload->length));
         next_payload = payload->next_payload;
         ptr += be16toh(payload->length);
-        printf("passiamo al successivo\n");
     }
 
+    printf("Responder SPI \n");
+    dump_memory(&responder.sa.spi, 8);
+    printf("Initator SPI \n");
+    dump_memory(&hd->initiator_spi, 8);
+
+    printf("##################################################\n");
+    printf("Initiator Nonce\n");
+    printf("##################################################\n");
+    dump_memory(initiator.sa.nonce, initiator.sa.nonce_len);
+    printf("##################################################\n");
+    printf("Initiator PriKey\n");
+    printf("##################################################\n");
+    dump_memory(initiator.sa.key, initiator.sa.key_len);
+
+    printf("##################################################\n");
+    printf("Responder Nonce\n");
+    printf("##################################################\n");
     dump_memory(responder.sa.nonce, responder.sa.nonce_len);
+    printf("##################################################\n");
+    printf("Responder PubKey\n");
+    printf("##################################################\n");
     dump_memory(responder.sa.key, responder.sa.key_len);
 
+    FILE *file = fopen("key.txt", "w");
+    if (file == NULL) {
+        perror("Errore nell'aprire il file");
+        return EXIT_FAILURE;
+    }
+
+
+    // Stampa i valori di Ni, Nr e g^ir in formato esadecimale nel file
+    fprintf(file, "Ni: ");
+    print_file(initiator.sa.nonce, initiator.sa.nonce_len, file);
+    fprintf(file, "\n");
+
+    fprintf(file, "Nr: ");
+    print_file(responder.sa.nonce, responder.sa.nonce_len, file);
+    fprintf(file, "\n");
+
+    fprintf(file, "Publickey: ");
+    print_file(responder.sa.key, responder.sa.key_len, file);
+    fprintf(file, "\n");
+    
+    fprintf(file, "Privatekey: ");
+    print_file(initiator.sa.key, initiator.sa.key_len, file);
+    fprintf(file, "\n");
+    //ora ho ottenuto il key material adesso vediamo se riesco a derivare il segreto condiviso corretto
+
+    fprintf(file, "SPIr: ");
+    print_file((const unsigned char *)&responder.sa.spi, 8, file);
+    fprintf(file, "\n");
+
+    hd->exchange_type = EXCHANGE_IKE_AUTH;
+    hd->message_id = htobe32(1);
+    uint8_t flags[] = {FLAG_I, 0};
+
+    set_flags(hd, flags);
+    memset(buff, 0, len);
+
+    memcpy(buff, hd, 28);
+    
+    retval =  send(initiator.sockfd, buff, len, 0);
     return 0;
 }

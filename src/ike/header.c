@@ -5,6 +5,14 @@
 #include <stdint.h>
 #include <sys/types.h>
 
+
+void set_flags(ike_header_t* hd, uint8_t flags[]){
+    hd->flags = 0; 
+    for (size_t i = 0; flags[i] != 0; i++){
+        hd->flags |= flags[i]; 
+    } 
+}
+
 ike_header_t init_header(){
     uint8_t flag, version = 0;
     uint8_t flags[] = { FLAG_I };

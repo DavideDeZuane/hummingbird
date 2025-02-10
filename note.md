@@ -90,3 +90,8 @@ void foo_char(char* d){
 . Le CPU eseguono le operazioni aritmetiche nel formato nativo (host endian, che in un sistema little-endian è little-endian). Quindi, se vuoi ottenere il risultato corretto, devi assicurarti che gli operandi siano convertiti nel formato host prima dell’operazione e, se necessario, convertire il risultato in big-endian dopo l’operazione.
 Quindi la soluzione migliore è convertire i dati prima di inviarli se necessario altrimenti mantenerli in memoria sulla base dell'host
 
+## Docker
+
+Quando facciamo il dockerfile abbiamo una cosa da considerare. Quando facciamo un comando Dockerfile RUN, ogni comando è eseguito in una nuova shell se facciamo ./configure ma prima non facciamo un cd o lo specifichiamo correttamente il file otteniamo l'erroe not found 
+
+

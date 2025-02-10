@@ -120,4 +120,5 @@ const char* next_payload_to_string(NextPayload type){
         case NEXT_PAYLOAD_TSr:     return "";
         case NEXT_PAYLOAD_SK:      return "";
     }
+    return "";
 }

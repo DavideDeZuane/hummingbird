@@ -33,6 +33,10 @@ void secure_free(void* ptr, size_t size);
 */
 const char* address_family_to_string(int af);
 
+/**
+* @brief This function convert the numeric value of a Next Payload field of a header in to a string 
+* @param[in] type Value of the Next Payload to print
+*/
 const char* next_payload_to_string(NextPayload type);
 
 #endif

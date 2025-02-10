@@ -35,4 +35,5 @@ void print_header(ike_header_t* hd);
 ike_header_t* parse_header(uint8_t* buffer, size_t size);
 //void parse_header(ike_header_t *header, uint8_t* buffer, size_t* buffer_len);
 
+void set_flags(ike_header_t* hd, uint8_t flags[]);
 #endif
