@@ -139,8 +139,8 @@ if __name__ == "__main__":
     print("Resetting file.")
     #reset_files(files_to_reset)
 
-    #subprocess.run(["./hummingbird"])
-
+    subprocess.run(["./hummingbird"])
+    # after running hummingbird is necessary a sleep
 
     # Estrai il contenuto tra le due righe
     log_file = "srv/log/charon.log"
