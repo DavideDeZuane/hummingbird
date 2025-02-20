@@ -41,25 +41,25 @@ RUN rm -rf /var/lib/apt/lists/*
 # Download and extract StrongSwan source code next configure and compile StrongSwan
 RUN wget https://download.strongswan.org/strongswan-${VERSION}.tar.bz2 && tar xjf strongswan-${VERSION}.tar.bz2 
 WORKDIR /strongswan-${VERSION}
-RUN ./configure --prefix=/usr --sysconfdir=/etc \
-	--with-systemdsystemunitdir                 \
-	--enable-save-keys                          \
-	--enable-charon                             \
-	--enable-systemd                            \
-	--enable-ikev2                              \
-	--enable-vici                               \
-	--enable-swanctl                            \
-    --enable-nonce                              \
-	--enable-random                             \
-	--enable-drbg                               \   
-	--enable-openssl                            \    
-	--enable-curl                               \
-	--enable-pem                                \
-	--enable-x509                               \
-	--enable-constraints                        \
-   	--enable-pubkey                             \   
-	--enable-socket-default                     \
-	--enable-kernel-netlink                     \
+RUN ./configure --prefix=/usr --sysconfdir=/etc 	\
+	--with-systemdsystemunitdir                 	\
+	--enable-save-keys                          	\
+	--enable-charon                             	\
+	--enable-systemd                            	\
+	--enable-ikev2                              	\
+	--enable-vici                               	\
+	--enable-swanctl                            	\
+    --enable-nonce                              	\
+	--enable-random                             	\
+	--enable-drbg                               	\  	 
+	--enable-openssl                            	\  	  
+	--enable-curl                               	\
+	--enable-pem                                	\
+	--enable-x509                               	\
+	--enable-constraints                        	\
+   	--enable-pubkey                             	\  	 
+	--enable-socket-default                     	\
+	--enable-kernel-netlink                     	\
 	--enable-resolve        
 RUN make && make install
 

@@ -15,10 +15,15 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/params.h>
+#include <openssl/hmac.h>
+
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+
 
 #define MAX_PAYLOAD 1444
 
@@ -100,6 +105,11 @@ uint8_t* create_message(ike_message_t* list, size_t* len){
 
 
 
+}
+
+void handleErrors() {
+    ERR_print_errors_fp(stderr);
+    abort();
 }
 
 void pop_component(void **list){
@@ -198,13 +208,35 @@ int main(int argc, char* argv[]){
     //state che è presente nel reposnder
     initiator.sa.key_len = 32;
     initiator.sa.key = malloc(initiator.sa.key_len);
-    memcpy(initiator.sa.key, "d09109773ea05e472104617cc4dda9642f7aa4af5e3651a82f920383f97e4e7d", initiator.sa.key_len);
-    memcpy(&kd.ke_data, "00f9b203403fbbd98885d182c8629c675ac792de90208def138299dbf28c8c65", 32);
+
+    EVP_PKEY *key = NULL;
+    printf("----------------------------------------\n");
+    printf("Generating Key\n");
+    printf("----------------------------------------\n");
+
+    EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_X25519, NULL);
+
+    if (!pctx || EVP_PKEY_keygen_init(pctx) <= 0 || EVP_PKEY_keygen(pctx, &key) <= 0) printf("Errore nel generare la chiave");
+    if(key == NULL) printf("Errore nella creazione della chiave");
+    //la dimensione del buffer è 32 byte dato che x25519 produce sempre chiavi pubbliche di questa dimensione
+    unsigned char chiave[32];
+    size_t chiave_len = sizeof(chiave);
+    if (EVP_PKEY_get_raw_private_key(key, chiave, &chiave_len) <= 0) printf("Errore extracting the private key");
+    printf("Chiave privata (X25519):\n");
+    print_hex(chiave, chiave_len);
+    memcpy(initiator.sa.key, chiave, chiave_len);
+    // Estrai la chiave pubblica, quindi gli passiamo il contenitore e il buffer da popolare
+    if (EVP_PKEY_get_raw_public_key(key, chiave, &chiave_len) <= 0) printf("Errore extracting the public key");
+    // Stampa la chiave pubblica in formato esadecimale
+    printf("Chiave pubblica (X25519):\n");
+    print_hex(chiave, chiave_len);
+   	EVP_PKEY_CTX_free(pctx); 
+    memcpy(&kd.ke_data, chiave, chiave_len);
     
-    initiator.sa.nonce_len = 16;
+    initiator.sa.nonce_len = 32;
     initiator.sa.nonce = malloc(initiator.sa.nonce_len);
     uint8_t* nonce = malloc(initiator.sa.nonce_len);
-    generate_nonce(nonce, 16);
+    generate_nonce(nonce, 32);
     memcpy(initiator.sa.nonce, nonce, initiator.sa.nonce_len);
 
     ike_payload_header_t np = {0};
@@ -214,7 +246,7 @@ int main(int argc, char* argv[]){
     ike_payload_header_t header_1 = {0} ;
     header_1.next_payload = NEXT_PAYLOAD_KE;
 
-    push_component(&packet_list, PAYLOAD_TYPE_NONCE, nonce, 16);
+    push_component(&packet_list, PAYLOAD_TYPE_NONCE, nonce, 32);
     push_component(&packet_list, GENERIC_PAYLOAD_HEADER, &np, sizeof(ike_payload_header_t));
     push_component(&packet_list, PAYLOAD_TYPE_KE, &kd, sizeof(ike_payload_kex_t));
     push_component(&packet_list, GENERIC_PAYLOAD_HEADER, &pd, sizeof(ike_payload_header_t));
@@ -361,7 +393,54 @@ int main(int argc, char* argv[]){
     memset(buff, 0, len);
 
     memcpy(buff, hd, 28);
-    
     retval =  send(initiator.sockfd, buff, len, 0);
+    
+    EVP_PKEY *peer = EVP_PKEY_new_raw_public_key(EVP_PKEY_X25519, NULL, responder.sa.key, responder.sa.key_len);
+    if (!peer) handleErrors();
+    
+    EVP_PKEY *my_key = EVP_PKEY_new_raw_private_key(EVP_PKEY_X25519, NULL, initiator.sa.key, initiator.sa.key_len);
+    if(!my_key) printf("La mia chiave non è stata generata correttamente");
+    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new(key, NULL);
+    if (!ctx || EVP_PKEY_derive_init(ctx) <= 0 || EVP_PKEY_derive_set_peer(ctx, peer) <= 0){
+        handleErrors();
+    }
+
+    // Ottenere la dimensione del segreto condiviso
+    size_t secret_len;
+    if (EVP_PKEY_derive(ctx, NULL, &secret_len) <= 0)
+        handleErrors();
+    // Derivare il segreto condiviso
+    unsigned char shared_secret[secret_len];
+    if (EVP_PKEY_derive(ctx, shared_secret, &secret_len) <= 0)
+        handleErrors();
+    // Stampa del segreto condiviso
+    printf("Segreto condiviso: \n");
+    for (size_t i = 0; i < secret_len; i++)
+        printf("%02X", shared_secret[i]);
+    printf("\n");
+
+    // Pulizia
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(my_key);
+    EVP_PKEY_free(peer);
+
+    //concateno i nonce 
+
+    uint8_t* wa = malloc(32+32);
+    memcpy(wa, initiator.sa.nonce, 32);
+    mempcpy(wa+32, responder.sa.nonce, responder.sa.nonce_len);
+
+
+    unsigned char skeyseed[EVP_MAX_MD_SIZE];  // Buffer di output (max 20 byte per SHA-1)
+    unsigned int skeyseed_len = 0;
+    print_hex(wa, 32+32);
+    HMAC(EVP_sha1(), shared_secret, 32, wa, 32+32, skeyseed, &skeyseed_len);
+
+    printf("Lunghezza del digest %d\n", skeyseed_len);
+    // 🔹 Stampa il valore derivato
+    printf("SKEYSEED: ");
+    print_hex(skeyseed, skeyseed_len);
+
+
     return 0;
 }

@@ -5,13 +5,10 @@ import subprocess
 
 files_to_reset = ['srv/log/charon.log', 'srv/log/ikev2_decryption_table', 'key.txt']
 
-
 def clean_hex_string(line):
     cleaned_line = re.sub(r'(\s{2,}).*$', '', line)
-    
     return cleaned_line
 
-# Funzione per resettare i file
 def reset_files(files):
     for file in files:
         with open(file, 'w') as f:
@@ -58,24 +55,6 @@ def extract_and_modify_ike_lines(input_text):
     # Ritorniamo il testo modificato con le righe modificate
     return "\n".join(modified_lines)
 
-def extract_key_names(input_text):
-    # Split del testo in righe
-    lines = input_text.splitlines()
-    
-    # Variabili per raccogliere i risultati
-    key_names = []
-    capturing = False  # Flag per sapere se siamo nella sezione da catturare
-
-    # Iteriamo su tutte le righe
-    for line in lines:
-        # Inizia a catturare dalla riga che contiene 'key exchange secret' o simili
-        if re.search(r"\b(?:key exchange secret|SKEYSEED|Sk_[a-z]+ secret)\b", line):
-            # Estrai solo il nome della chiave (prima del '=>')
-            key_name = re.split(r"\s*=>", line)[0].strip()
-            key_names.append(key_name)
-        
-    # Restituiamo la lisA
-    return key_names
 
 def read_file(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
@@ -90,11 +69,11 @@ def extract_key_lengths(input_text):
         match = re.match(r"^(key exchange secret|SKEYSEED|Sk_[a-z]+ secret)\s*=>\s*(\d+)\s*bytes", line)
         if match:
             key_name = match.group(1)
+            
             key_length = int(match.group(2))
             shared_key[key_name] = key_length
 
     return shared_key
-
 
 def extract_key_values(input_text, key_lengths):
     lines = input_text.splitlines()
@@ -108,6 +87,7 @@ def extract_key_values(input_text, key_lengths):
         match = re.match(r"^(key exchange secret|SKEYSEED|Sk_[a-z]+ secret)\s*=>\s*(\d+)\s*bytes", line)
         if match:
             key_name = match.group(1).strip()  # Nome della chiave
+            key_name = re.sub(r"\bsecret\b", "", key_name).strip()
             key_length = int(match.group(2))  # Lunghezza della chiave
 
             # Calcola quante righe leggere in base alla lunghezza della chiave
@@ -120,11 +100,11 @@ def extract_key_values(input_text, key_lengths):
                 if j < len(lines):  # Assicurati di non superare la fine delle righe
                     line_data = lines[j]
                     cleaned_line = clean_hex_string(line_data)  # Pulisci la riga
-                    print(cleaned_line)
                     # Estrai la parte esadecimale dopo "0:"
                     hex_value += ' '.join(re.findall(r'[0-9A-Fa-f]{2}', cleaned_line.split(":", 1)[1]))
 
             # Aggiungi il valore esadecimale nel dizionario
+            hex_value = re.sub(r"\s+", "", hex_value)
             key_values[key_name] = hex_value
 
             # Salta le righe già lette
@@ -136,24 +116,19 @@ def extract_key_values(input_text, key_lengths):
 
 
 if __name__ == "__main__":
-    print("Resetting file.")
-    #reset_files(files_to_reset)
-
-    subprocess.run(["./hummingbird"])
-    # after running hummingbird is necessary a sleep
-
-    # Estrai il contenuto tra le due righe
+    # call to reset file
     log_file = "srv/log/charon.log"
     input_text = read_file(log_file)
     
     extracted_content = extract_and_modify_ike_lines(input_text)
     parse = extract_relevant_content(extracted_content)
-
     key_lengths = extract_key_lengths(parse)
     key_values = extract_key_values(parse, key_lengths)
-    # Estrai i valori esadecimali delle chiavi
 
-# Stampa i risultati
+    print("\n")
+    print("##################################################")
+    print("Keys from srv/log/charon.log")
+    print("##################################################")
+
     for key_name, hex_value in key_values.items():
-        print(f"Key: {key_name}")
-        print(f"Value: {hex_value}\n")
+        print(f"{key_name}: \t{hex_value}")
