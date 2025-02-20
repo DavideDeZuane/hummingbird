@@ -8,7 +8,7 @@ The implementation of IKEv2 strongswan in the init exchange has different option
 The most significant are the payload that deal with nat detection that there are the most significant in terms of byte sended
 
 |             Campo                | Dimensione (Byte) |    Opzione Strongswan      | Value |    RFC   |
-|:--------------------------------:|-------------------|:--------------------------:|-------|:--------:|
+|:---------------------------------|:-----------------:|---------------------------:|-------|:--------:|
 | VENDOR\_ID                       |         20        |           send\_vendor\_id |    no |     7296 |
 | MULTIPLE\_AUTH\_SUPPORTED        |         8         |   multiple\_authentication |    no |     4739 |
 | SIGNATURE\_HASH\_ALGORITHMS      |         16        |  signature\_authentication |    no |     7427 |
