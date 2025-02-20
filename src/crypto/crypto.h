@@ -2,10 +2,14 @@
 #define CRYPTO_H
 
 #include "../common_include.h"
+#include <openssl/evp.h>
 
 typedef struct {
     uint64_t spi;
-    uint8_t* key;
+    union {
+        EVP_PKEY *private_key;
+        uint8_t *public_key;  
+    };
     uint8_t* nonce;
     size_t key_len;
     size_t nonce_len;

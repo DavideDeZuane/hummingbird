@@ -515,3 +515,14 @@
 15[KNL] fe80::9ede:155:d6c3:5f05 appeared on wlp2s0
 11[KNL] 192.168.0.198 appeared on wlp2s0
 11[KNL] flags changed for fe80::9ede:155:d6c3:5f05 on wlp2s0
+14[KNL] interface enp1s0f0 deactivated
+01[KNL] fe80::9ede:155:d6c3:5f05 disappeared from wlp2s0
+14[KNL] interface wlp2s0 deactivated
+08[KNL] interface wlp2s0 activated
+09[KNL] 192.168.0.198 disappeared from wlp2s0
+14[KNL] interface wlp2s0 deactivated
+08[KNL] interface wlp2s0 activated
+07[KNL] interface enp1s0f0 activated
+14[KNL] fe80::9ede:155:d6c3:5f05 appeared on wlp2s0
+09[KNL] 192.168.0.198 appeared on wlp2s0
+09[KNL] flags changed for fe80::9ede:155:d6c3:5f05 on wlp2s0
