@@ -1,0 +1,7 @@
+SK_ei: 58278becbca2f5825ad1cc68175b7645
+SK_er: a1cb8fe746f6930f2766ffbad6e319b2
+SK_ai: 6a5064f3862064cbbdc7120942788a4b115cf0ce
+SK_ar: f126425037944929a4fff127625a28cbf95ae0f8
+Encryption Algorithm: AES-CBC-128 [RFC3602]
+Authentication Algorithm: HMAC_SHA1_96 [RFC2404]
+

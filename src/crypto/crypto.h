@@ -3,6 +3,15 @@
 
 #include "../common_include.h"
 
+typedef struct {
+    uint64_t spi;
+    uint8_t* key;
+    uint8_t* nonce;
+    size_t key_len;
+    size_t nonce_len;
+} crypto_context_t;
+
+
 /**
 * @brief This function return a secure random string to use as security parameter index for the initiator using random material generated from /dev/urandom
 * @return Return 64 bit to use as index for initiator

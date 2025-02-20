@@ -11,6 +11,11 @@
 #define MAX_PORT_LENGTH 6
 
 typedef struct {
+    int level;
+    char file_name[30];
+} logging_options;
+
+typedef struct {
     char hostname[INET_FQNLEN];
     char address[INET6_ADDRSTRLEN];
     char port[MAX_PORT_LENGTH];
@@ -27,6 +32,9 @@ typedef struct {
 typedef struct {
     peer_options peer;
     cipher_options suite;
+    logging_options log;
+    int nonce_len;
+    
 } config;
 
 /**
@@ -39,5 +47,6 @@ typedef struct {
 int handler(void* cfg, const char* section, const char* name, const char* value);
 
 
+config init_config();
 
 #endif

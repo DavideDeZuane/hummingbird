@@ -116,15 +116,12 @@ void pop_component(void **list){
 
 }
 
-// spostare fino a qua
 
 int main(int argc, char* argv[]){
 
-    /*
-    *********************************************
+    /*---------------------------------------------
     Command Line arguments
-    ********************************************* 
-    */
+    ---------------------------------------------*/
     int opts;
     struct option long_opts[] = {
         {"version", no_argument, 0, 'v'},
@@ -154,12 +151,10 @@ int main(int argc, char* argv[]){
         }
     }  
 
-    /*
-    *********************************************
+    /*--------------------------------------------
     Loading configuration file
-    ********************************************* 
-    */
-    config cfg = {0};
+    --------------------------------------------*/
+    config cfg = init_config();
     log_set_level(LOG_INFO);
     int n;
     if ((n = ini_parse(DEFAULT_CONFIG, handler, &cfg)) < 0) {
@@ -168,6 +163,12 @@ int main(int argc, char* argv[]){
         return 1;
     }
     log_info("Configuration file %s loaded successfully", COLOR_TEXT(ANSI_COLOR_YELLOW,DEFAULT_CONFIG));
+
+    /*
+    endpoint local = {0};
+    endpoint remote  = {0};
+    partecipants_ini(&local, &remote, &cfg.peer);
+    */
 
     /*
     *********************************************
@@ -210,9 +211,7 @@ int main(int argc, char* argv[]){
     initiator.sa.key = malloc(initiator.sa.key_len);
 
     EVP_PKEY *key = NULL;
-    printf("----------------------------------------\n");
-    printf("Generating Key\n");
-    printf("----------------------------------------\n");
+
 
     EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_X25519, NULL);
 
@@ -222,14 +221,11 @@ int main(int argc, char* argv[]){
     unsigned char chiave[32];
     size_t chiave_len = sizeof(chiave);
     if (EVP_PKEY_get_raw_private_key(key, chiave, &chiave_len) <= 0) printf("Errore extracting the private key");
-    printf("Chiave privata (X25519):\n");
-    print_hex(chiave, chiave_len);
     memcpy(initiator.sa.key, chiave, chiave_len);
+
     // Estrai la chiave pubblica, quindi gli passiamo il contenitore e il buffer da popolare
     if (EVP_PKEY_get_raw_public_key(key, chiave, &chiave_len) <= 0) printf("Errore extracting the public key");
     // Stampa la chiave pubblica in formato esadecimale
-    printf("Chiave pubblica (X25519):\n");
-    print_hex(chiave, chiave_len);
    	EVP_PKEY_CTX_free(pctx); 
     memcpy(&kd.ke_data, chiave, chiave_len);
     
@@ -333,28 +329,6 @@ int main(int argc, char* argv[]){
         ptr += be16toh(payload->length);
     }
 
-    printf("Responder SPI \n");
-    dump_memory(&responder.sa.spi, 8);
-    printf("Initator SPI \n");
-    dump_memory(&hd->initiator_spi, 8);
-
-    printf("##################################################\n");
-    printf("Initiator Nonce\n");
-    printf("##################################################\n");
-    dump_memory(initiator.sa.nonce, initiator.sa.nonce_len);
-    printf("##################################################\n");
-    printf("Initiator PriKey\n");
-    printf("##################################################\n");
-    dump_memory(initiator.sa.key, initiator.sa.key_len);
-
-    printf("##################################################\n");
-    printf("Responder Nonce\n");
-    printf("##################################################\n");
-    dump_memory(responder.sa.nonce, responder.sa.nonce_len);
-    printf("##################################################\n");
-    printf("Responder PubKey\n");
-    printf("##################################################\n");
-    dump_memory(responder.sa.key, responder.sa.key_len);
 
     FILE *file = fopen("key.txt", "w");
     if (file == NULL) {
@@ -431,15 +405,28 @@ int main(int argc, char* argv[]){
     mempcpy(wa+32, responder.sa.nonce, responder.sa.nonce_len);
 
 
-    unsigned char skeyseed[EVP_MAX_MD_SIZE];  // Buffer di output (max 20 byte per SHA-1)
+    uint8_t skeyseed[EVP_MAX_MD_SIZE];  // Buffer di output (max 20 byte per SHA-1)
     unsigned int skeyseed_len = 0;
     print_hex(wa, 32+32);
-    HMAC(EVP_sha1(), shared_secret, 32, wa, 32+32, skeyseed, &skeyseed_len);
+    //with the notation prf(Ni|Nr, g^ir) the first argument is the key, the second the data
+    HMAC(EVP_sha1(), wa, 32+32, shared_secret, 32, skeyseed, &skeyseed_len);
 
     printf("Lunghezza del digest %d\n", skeyseed_len);
     // 🔹 Stampa il valore derivato
     printf("SKEYSEED: ");
-    print_hex(skeyseed, skeyseed_len);
+    dump_memory(skeyseed, skeyseed_len);
+    
+    wa = realloc(wa, 32+32+8+8);
+    memcpy(wa+64, &initiator.sa.spi, 8);
+    memcpy(wa+72, &responder.sa.spi, 8);
+
+    //now i have the shared secret use the prf+ function
+
+    unsigned char T[EVP_MAX_MD_SIZE]; // Buffer temporaneo
+    unsigned int T_len;
+    int generated = 0, i = 1;
+    int out_len = 64; //lunghezza delle chiavi da ottenere 
+    int seed_len = 80;
 
 
     return 0;

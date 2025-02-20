@@ -1,19 +1,25 @@
 # Nome del target eseguibile
 TARGET = hummingbird
 
-SRCS = src/main.c \
-       src/config/config.c \
-	   src/log/log.c \
-	   src/network/network.c\
-	   src/socket/peer.c\
-	   src/utils/utils.c \
-	   src/crypto/crypto.c \
-	   src/ike/header.c \
-	   src/ike/payload.c \
+SRCS = src/main.c 				\
+       src/config/config.c 		\
+	   src/log/log.c 			\
+	   src/network/network.c	\
+	   src/socket/peer.c		\
+	   src/utils/utils.c 		\
+	   src/crypto/crypto.c 		\
+	   src/ike/header.c 		\
+	   src/ike/payload.c 		\
 	   src/ike/packet.c
 
 LIBS = -linih -lssl -lcrypto
-CFLAGS = -Wall -I./src/config -I./src/log -I./src/network -I./src/socket -I./src/utils -I./src/crypto -I./src/ike
+CFLAGS = -Wall -I./src/config 	\
+			   -I./src/log 		\
+			   -I./src/network 	\
+			   -I./src/socket 	\
+			   -I./src/utils 	\
+			   -I./src/crypto 	\
+			   -I./src/ike
 LDFLAGS = $(LIBS)
 
 # Regola principale per costruire il target, diciamo quali sono tutti i file sorgenti di cui ha bisogno

@@ -4,6 +4,32 @@
 
 #define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
 
+enum { CURVE_X25519, AES_128_CBC, HMAC_SHA1 };
+
+config init_config(){
+    config def = {
+        .peer = {
+            "localhost",
+            "127.0.0.1",
+            "500"
+        },
+        .suite = {
+            AES_128_CBC,
+            HMAC_SHA1,
+            HMAC_SHA1,
+            CURVE_X25519,
+        },
+        .log = {
+            3,
+            "minimal.log"
+        },
+        32
+
+    };
+
+    return def;
+}
+
 int peer_handler(peer_options* responder, const char* section, const char* name, const char* value){
 
     if (MATCH("Peer", "hostname")) {
@@ -27,6 +53,7 @@ int handler(void* cfg, const char* section, const char* name, const char* value)
     if (MATCH("Logging", "level")) {
         log_set_level(atoi(value));    
     }
+
 
     return 1;
 
