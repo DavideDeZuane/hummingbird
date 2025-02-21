@@ -16,13 +16,10 @@
 #include <openssl/err.h>
 #include <openssl/params.h>
 #include <openssl/hmac.h>
-
-
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 
 //QUESTO INSIEME ALLA PARTE DI SEND E RECEVE DEVE ANDARE NELLA PARTE DI NETWORK 
 #define MAX_PAYLOAD 1444
@@ -106,13 +103,7 @@ void handleErrors() {
     abort();
 }
 
-void pop_component(void **list){
-
-}
-
-
 int main(int argc, char* argv[]){
-
     /*---------------------------------------------
     Command Line arguments
     ---------------------------------------------*/
@@ -144,7 +135,6 @@ int main(int argc, char* argv[]){
         
         }
     }  
-
     /*--------------------------------------------
     Loading configuration file
     --------------------------------------------*/
@@ -157,13 +147,11 @@ int main(int argc, char* argv[]){
         return 1;
     }
     log_info("Configuration file %s loaded successfully", COLOR_TEXT(ANSI_COLOR_YELLOW,DEFAULT_CONFIG));
-
     /*
     endpoint local = {0};
     endpoint remote  = {0};
     partecipants_ini(&local, &remote, &cfg.peer);
     */
-
     /*
     *********************************************
     Setting initiator
@@ -181,34 +169,24 @@ int main(int argc, char* argv[]){
         return EXIT_FAILURE;
     } 
 
-    // questa parte andrà spostata nella parte che si occupa di ike
-    //dopo la send va aggiungo il SA payload, quindi la proposal dato che deve essere minimal definiamo solo una cipher suite
-
     ike_message_t packet_list = {NULL, NULL};
-
     ike_header_t header = init_header();
-
     header.next_payload = NEXT_PAYLOAD_SA;
-
     ike_payload_header_t pd = {0};
     pd.next_payload = NEXT_PAYLOAD_NONCE;
-    
     ike_payload_kex_t kd = {0};
     kd.dh_group = htobe16(31);
     size_t prova = 0;
     uint8_t* buff1 = NULL;
-
 
     //questa parte di popolazione delle chiavi e del nonce va spostata nella parte dell'init dato che andranno a popolare quella che è la struct 
     //state che è presente nel reposnder
     initiator.sa.key_len = 32;
     initiator.sa.key = malloc(initiator.sa.key_len);
 
+    //THIS PIECE OF CODE GENERATE THE PRIVATE KEY FOR THE INITIATOR AND WE HAVE TO MOVE THIS IN THE CRYPTO MODULES
     EVP_PKEY *key = NULL;
-
-
     EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_X25519, NULL);
-
     if (!pctx || EVP_PKEY_keygen_init(pctx) <= 0 || EVP_PKEY_keygen(pctx, &key) <= 0) printf("Errore nel generare la chiave");
     if(key == NULL) printf("Errore nella creazione della chiave");
     //la dimensione del buffer è 32 byte dato che x25519 produce sempre chiavi pubbliche di questa dimensione
@@ -216,12 +194,12 @@ int main(int argc, char* argv[]){
     size_t chiave_len = sizeof(chiave);
     if (EVP_PKEY_get_raw_private_key(key, chiave, &chiave_len) <= 0) printf("Errore extracting the private key");
     memcpy(initiator.sa.key, chiave, chiave_len);
-
     // Estrai la chiave pubblica, quindi gli passiamo il contenitore e il buffer da popolare
     if (EVP_PKEY_get_raw_public_key(key, chiave, &chiave_len) <= 0) printf("Errore extracting the public key");
     // Stampa la chiave pubblica in formato esadecimale
    	EVP_PKEY_CTX_free(pctx); 
     memcpy(&kd.ke_data, chiave, chiave_len);
+    //END
     
     initiator.sa.nonce_len = 32;
     initiator.sa.nonce = malloc(initiator.sa.nonce_len);
@@ -280,17 +258,12 @@ int main(int argc, char* argv[]){
 
     //qunado vado a fare il parsing dei vari elementi vorrei fare in modo di confrontare il payload dal buffer per aggiornare quello che ho inviato io 
     ike_header_t* hd = parse_header(buffer, n);
-
-    //dump_memory(buffer, n);
-    //dump_memory(&header.initiator_spi, sizeof(uint64_t));
-    //dump_memory(&hd->responder_spi, sizeof(uint64_t));
     
     //porcodio
     responder.sa.spi = hd->responder_spi;
-    //printf("Next Payload nell'header: %s\n", next_payload_to_string(hd->next_payload));
     // funzione che fa il parsing, quello che fa è prendere la strucct del responder e il buffer che poi utilizzeremo per pooplarla
+    //CONVERT THIS PIECE OF CODE UNTIL THE END TO A FUNCTION
     uint8_t *ptr = buffer+28; 
-    // 
     uint8_t next_payload = ptr[0];         
     uint8_t current_payload = hd->next_payload;
 
@@ -316,30 +289,30 @@ int main(int argc, char* argv[]){
         next_payload = payload->next_payload;
         ptr += be16toh(payload->length);
     }
-
+    //END
 
     //ora ho ottenuto il key material adesso vediamo se riesco a derivare il segreto condiviso corretto
 
+    //THIS EXCHANGE IS NECESSARY BECAUSE STRONGSWAN USE COOKIE AS DDOS PREVENTION
+    //SO BEFORE GENERATING THE SKEYSEED AND OTHER THINGS HE WAIT THE IKE_AUTH_INIT 
     hd->exchange_type = EXCHANGE_IKE_AUTH;
     hd->message_id = htobe32(1);
     uint8_t flags[] = {FLAG_I, 0};
-
     set_flags(hd, flags);
     memset(buff, 0, len);
-
     memcpy(buff, hd, 28);
     retval =  send(initiator.sockfd, buff, len, 0);
+    //END - THIS PIECE OF CODE GENERATE THE IKE AUTH MOCK
     
+    // THIS IS THE PIECE OF CODE TO GENERATE THE SHARED SECRET 
     EVP_PKEY *peer = EVP_PKEY_new_raw_public_key(EVP_PKEY_X25519, NULL, responder.sa.key, responder.sa.key_len);
     if (!peer) handleErrors();
-    
     EVP_PKEY *my_key = EVP_PKEY_new_raw_private_key(EVP_PKEY_X25519, NULL, initiator.sa.key, initiator.sa.key_len);
     if(!my_key) printf("La mia chiave non è stata generata correttamente");
     EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new(key, NULL);
     if (!ctx || EVP_PKEY_derive_init(ctx) <= 0 || EVP_PKEY_derive_set_peer(ctx, peer) <= 0){
         handleErrors();
     }
-
     // Ottenere la dimensione del segreto condiviso
     size_t secret_len;
     if (EVP_PKEY_derive(ctx, NULL, &secret_len) <= 0)
@@ -353,18 +326,16 @@ int main(int argc, char* argv[]){
     for (size_t i = 0; i < secret_len; i++)
         printf("%02X", shared_secret[i]);
     printf("\n");
-
     // Pulizia
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(my_key);
     EVP_PKEY_free(peer);
+    // AT THE HAND WE HAVE THE SHARED SECRET
 
     //concateno i nonce 
-
     uint8_t* wa = malloc(32+32);
     memcpy(wa, initiator.sa.nonce, 32);
     mempcpy(wa+32, responder.sa.nonce, responder.sa.nonce_len);
-
 
     uint8_t skeyseed[EVP_MAX_MD_SIZE];  // Buffer di output (max 20 byte per SHA-1)
     unsigned int skeyseed_len = 0;
@@ -387,7 +358,6 @@ int main(int argc, char* argv[]){
     int generated = 0, i = 1;
     int out_len = 64; //lunghezza delle chiavi da ottenere 
     int seed_len = 80;
-
 
     return 0;
 }
