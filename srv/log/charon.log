@@ -3,21 +3,19 @@
 00[DMN] !!
 00[DMN] !! WARNING: SAVING IKE AND ESP KEYS TO '/var/log'
 00[DMN] !!
-00[KNL] unable to create IPv4 routing table rule
-00[KNL] unable to create IPv6 routing table rule
 00[LIB] loaded plugins: charon random nonce openssl pem pkcs1 curl vici kernel-netlink socket-default updown pubkey save-keys
 00[DMN] removing pidfile '/var/run/charon.pid', process not running
 00[JOB] spawning 16 worker threads
 00[DMN] executing start script 'swanctl' (swanctl --load-all --noprompt)
-05[CFG] loaded certificate 'CN=Docker Peer'
-11[CFG] loaded certificate 'CN=Test CA'
-01[LIB]   file coded in unknown format, discarded
-01[LIB] building CRED_CERTIFICATE - X509 failed, tried 2 builders
+07[CFG] loaded certificate 'CN=Docker Peer'
+12[CFG] loaded certificate 'CN=Test CA'
+15[LIB]   file coded in unknown format, discarded
+15[LIB] building CRED_CERTIFICATE - X509 failed, tried 2 builders
 08[CFG] loaded certificate '2a:9c:64:70:3d:42:4a:da:1f:3f:44:33:ff:c2:d2:24:e8:fd:73:74'
-12[CFG] loaded certificate 'b6:f0:65:cc:7b:da:73:07:0a:df:3c:27:bf:74:97:c1:49:1d:d0:5b'
+11[CFG] loaded certificate 'b6:f0:65:cc:7b:da:73:07:0a:df:3c:27:bf:74:97:c1:49:1d:d0:5b'
 01[CFG] loaded ANY private key
-05[CFG] loaded ANY private key
-11[CFG] added vici connection: minimal
+07[CFG] loaded ANY private key
+12[CFG] added vici connection: minimal
 01[CFG]   id not specified, defaulting to cert subject 'CN=Docker Peer'
 01[CFG] added vici connection: certificate
 00[DMN] swanctl: loaded certificate from '/etc/swanctl/x509/my-local-cert.pem'
@@ -31,498 +29,78 @@
 00[DMN] swanctl: loaded connection 'minimal'
 00[DMN] swanctl: loaded connection 'certificate'
 00[DMN] swanctl: successfully loaded 2 connections, 0 unloaded
-10[MGR] checkout IKEv2 SA by message with SPIs 5e838af83ae7b6d6_i 0000000000000000_r
-10[MGR] created IKE_SA (unnamed)[1]
-10[NET] received packet: from 127.0.0.1[52693] to 127.0.0.1[500] (152 bytes)
-10[ENC] parsed IKE_SA_INIT request 0 [ SA KE No ]
-10[IKE] local endpoint changed from 0.0.0.0[500] to 127.0.0.1[500]
-10[IKE] remote endpoint changed from 0.0.0.0 to 127.0.0.1[52693]
-10[IKE] 127.0.0.1 is initiating an IKE_SA
-10[IKE] IKE_SA (unnamed)[1] state change: CREATED => CONNECTING
-10[CFG] selected proposal: IKE:AES_CBC_128/HMAC_SHA1_96/PRF_HMAC_SHA1/CURVE_25519
-10[IKE] natd_chunk => 22 bytes @ 0x7c5a08030dc0
-10[IKE]    0: 5E 83 8A F8 3A E7 B6 D6 00 00 00 00 00 00 00 00  ^...:...........
-10[IKE]   16: 7F 00 00 01 01 F4                                ......
-10[IKE] natd_hash => 20 bytes @ 0x7c5a08030d10
-10[IKE]    0: EE CA F8 B6 40 8D C3 B9 FF 64 A6 DA EB 3E DD DB  ....@....d...>..
-10[IKE]   16: 38 AF E2 1F                                      8...
-10[IKE] natd_chunk => 22 bytes @ 0x7c5a08030dc0
-10[IKE]    0: 5E 83 8A F8 3A E7 B6 D6 00 00 00 00 00 00 00 00  ^...:...........
-10[IKE]   16: 7F 00 00 01 CD D5                                ......
-10[IKE] natd_hash => 20 bytes @ 0x7c5a08030d30
-10[IKE]    0: A0 2A 00 F2 4A AF 3B 44 DF 64 3C 9B E6 D1 9C 24  .*..J.;D.d<....$
-10[IKE]   16: FC CA 3F 7B                                      ..?{
-10[IKE] precalculated src_hash => 20 bytes @ 0x7c5a08030d30
-10[IKE]    0: A0 2A 00 F2 4A AF 3B 44 DF 64 3C 9B E6 D1 9C 24  .*..J.;D.d<....$
-10[IKE]   16: FC CA 3F 7B                                      ..?{
-10[IKE] precalculated dst_hash => 20 bytes @ 0x7c5a08030d10
-10[IKE]    0: EE CA F8 B6 40 8D C3 B9 FF 64 A6 DA EB 3E DD DB  ....@....d...>..
-10[IKE]   16: 38 AF E2 1F                                      8...
-10[ENC] generating IKE_SA_INIT response 0 [ SA KE No N(CHDLESS_SUP) ]
-10[NET] sending packet: from 127.0.0.1[500] to 127.0.0.1[52693] (160 bytes)
-10[MGR] checkin IKEv2 SA (unnamed)[1] with SPIs 5e838af83ae7b6d6_i 49d9e948f88a9e5d_r
-10[MGR] checkin of IKE_SA successful
-09[MGR] checkout IKEv2 SA by message with SPIs 5e838af83ae7b6d6_i 49d9e948f88a9e5d_r
-09[MGR] IKE_SA (unnamed)[1] successfully checked out
-09[NET] received packet: from 127.0.0.1[52693] to 127.0.0.1[500] (152 bytes)
-09[IKE] key exchange secret => 32 bytes @ 0x7c5a20004940
-09[IKE]    0: 38 69 53 48 E7 7A 80 DE 73 44 A6 DE BF E6 08 4F  8iSH.z..sD.....O
-09[IKE]   16: 50 BA 10 2A 57 A4 EF BA 6A BD DA 91 B4 BF 7F 30  P..*W...j......0
-09[IKE] additional key exchange secret => 0 bytes @ (nil)
-09[IKE] nonces => 64 bytes @ 0x7c5a20005fd0
-09[IKE]    0: 04 95 65 C1 18 B4 7A EE BB 29 37 45 92 7D C0 DE  ..e...z..)7E.}..
-09[IKE]   16: F2 65 AF 9F 82 7D 1D F6 25 0A 76 2C DF FC 46 5A  .e...}..%.v,..FZ
-09[IKE]   32: A4 C2 0D 78 36 FD 0A F6 81 76 67 26 98 43 2F 7B  ...x6....vg&.C/{
-09[IKE]   48: 62 4B 2B 1F 37 C4 5F 17 C9 11 2A AC 59 04 62 61  bK+.7._...*.Y.ba
-09[IKE] SKEYSEED => 20 bytes @ 0x7c5a20007020
-09[IKE]    0: 60 1F 4B AC 2E 09 68 4A 49 CD B1 C2 7F 1B EA EA  `.K...hJI.......
-09[IKE]   16: AA 03 28 42                                      ..(B
-09[IKE] Sk_d secret => 20 bytes @ 0x7c5a20009520
-09[IKE]    0: 12 71 72 D3 0B 73 E1 65 B8 15 47 67 FB ED E2 F0  .qr..s.e..Gg....
-09[IKE]   16: 97 DA CC 9E                                      ....
-09[IKE] Sk_ai secret => 20 bytes @ 0x7c5a20009554
-09[IKE]    0: 6A 50 64 F3 86 20 64 CB BD C7 12 09 42 78 8A 4B  jPd.. d.....Bx.K
-09[IKE]   16: 11 5C F0 CE                                      .\..
-09[IKE] Sk_ar secret => 20 bytes @ 0x7c5a20009568
-09[IKE]    0: F1 26 42 50 37 94 49 29 A4 FF F1 27 62 5A 28 CB  .&BP7.I)...'bZ(.
-09[IKE]   16: F9 5A E0 F8                                      .Z..
-09[IKE] Sk_ei secret => 16 bytes @ 0x7c5a2000957c
-09[IKE]    0: 58 27 8B EC BC A2 F5 82 5A D1 CC 68 17 5B 76 45  X'......Z..h.[vE
-09[IKE] Sk_er secret => 16 bytes @ 0x7c5a2000958c
-09[IKE]    0: A1 CB 8F E7 46 F6 93 0F 27 66 FF BA D6 E3 19 B2  ....F...'f......
-09[IKE] Sk_pi secret => 20 bytes @ 0x7c5a20007020
-09[IKE]    0: 6D 56 55 5C 9B F4 23 E8 00 5C 99 E5 21 9E BC F5  mVU\..#..\..!...
-09[IKE]   16: DE E2 94 0E                                      ....
-09[IKE] Sk_pr secret => 20 bytes @ 0x7c5a200095d0
-09[IKE]    0: 4A 01 DB 35 E3 D6 E3 90 F9 24 A4 5C CC 42 84 97  J..5.....$.\.B..
-09[IKE]   16: 54 5B CF 70                                      T[.p
-09[ENC] payload type SECURITY_ASSOCIATION could not be parsed
-09[IKE] message parsing failed
-09[ENC] generating IKE_AUTH response 1 [ N(INVAL_SYN) ]
-09[NET] sending packet: from 127.0.0.1[500] to 127.0.0.1[52693] (76 bytes)
-09[IKE] IKE_AUTH request with message ID 1 processing failed
-09[MGR] checkin and destroy IKE_SA (unnamed)[1]
-09[IKE] IKE_SA (unnamed)[1] state change: CONNECTING => DESTROYING
-09[MGR] checkin and destroy of IKE_SA successful
-14[MGR] checkout IKEv2 SA with SPIs 5e838af83ae7b6d6_i 49d9e948f88a9e5d_r
-14[MGR] IKE_SA checkout not successful
-11[MGR] checkout IKEv2 SA by message with SPIs bfff1a2052ca8d44_i 0000000000000000_r
-11[MGR] created IKE_SA (unnamed)[2]
-11[NET] received packet: from 127.0.0.1[41213] to 127.0.0.1[500] (152 bytes)
-11[ENC] parsed IKE_SA_INIT request 0 [ SA KE No ]
-11[IKE] local endpoint changed from 0.0.0.0[500] to 127.0.0.1[500]
-11[IKE] remote endpoint changed from 0.0.0.0 to 127.0.0.1[41213]
-11[IKE] 127.0.0.1 is initiating an IKE_SA
-11[IKE] IKE_SA (unnamed)[2] state change: CREATED => CONNECTING
-11[CFG] selected proposal: IKE:AES_CBC_128/HMAC_SHA1_96/PRF_HMAC_SHA1/CURVE_25519
-11[IKE] natd_chunk => 22 bytes @ 0x7c5a140071b0
-11[IKE]    0: BF FF 1A 20 52 CA 8D 44 00 00 00 00 00 00 00 00  ... R..D........
-11[IKE]   16: 7F 00 00 01 01 F4                                ......
-11[IKE] natd_hash => 20 bytes @ 0x7c5a14007150
-11[IKE]    0: 41 CF 09 B8 0B F0 8F CB 67 50 51 C5 3F DA 6F AE  A.......gPQ.?.o.
-11[IKE]   16: 13 C9 C7 97                                      ....
-11[IKE] natd_chunk => 22 bytes @ 0x7c5a140071b0
-11[IKE]    0: BF FF 1A 20 52 CA 8D 44 00 00 00 00 00 00 00 00  ... R..D........
-11[IKE]   16: 7F 00 00 01 A0 FD                                ......
-11[IKE] natd_hash => 20 bytes @ 0x7c5a14006920
-11[IKE]    0: B3 63 B9 74 60 9A 93 13 33 37 B1 5D BA 4C B2 40  .c.t`...37.].L.@
-11[IKE]   16: 00 BA B3 B5                                      ....
-11[IKE] precalculated src_hash => 20 bytes @ 0x7c5a14006920
-11[IKE]    0: B3 63 B9 74 60 9A 93 13 33 37 B1 5D BA 4C B2 40  .c.t`...37.].L.@
-11[IKE]   16: 00 BA B3 B5                                      ....
-11[IKE] precalculated dst_hash => 20 bytes @ 0x7c5a14007150
-11[IKE]    0: 41 CF 09 B8 0B F0 8F CB 67 50 51 C5 3F DA 6F AE  A.......gPQ.?.o.
-11[IKE]   16: 13 C9 C7 97                                      ....
-11[ENC] generating IKE_SA_INIT response 0 [ SA KE No N(CHDLESS_SUP) ]
-11[NET] sending packet: from 127.0.0.1[500] to 127.0.0.1[41213] (160 bytes)
-11[MGR] checkin IKEv2 SA (unnamed)[2] with SPIs bfff1a2052ca8d44_i ea105d1ab41a4400_r
-11[MGR] checkin of IKE_SA successful
-14[MGR] checkout IKEv2 SA by message with SPIs bfff1a2052ca8d44_i ea105d1ab41a4400_r
-14[MGR] IKE_SA (unnamed)[2] successfully checked out
-14[NET] received packet: from 127.0.0.1[41213] to 127.0.0.1[500] (152 bytes)
-14[IKE] key exchange secret => 32 bytes @ 0x7c59fc003140
-14[IKE]    0: 4D 3B 46 16 47 28 5E 86 8C 89 B8 21 6D E3 6D 0D  M;F.G(^....!m.m.
-14[IKE]   16: E0 B4 46 9D 11 A2 73 EC CF B3 D1 BA 3E A6 17 1B  ..F...s.....>...
-14[IKE] additional key exchange secret => 0 bytes @ (nil)
-14[IKE] nonces => 64 bytes @ 0x7c59fc003170
-14[IKE]    0: 59 EF 77 9F E7 56 73 CA 68 30 0E A4 19 3D FE 94  Y.w..Vs.h0...=..
-14[IKE]   16: 6F 47 A8 0D E5 98 5A 69 7B 89 6F CA 55 9D AE 2F  oG....Zi{.o.U../
-14[IKE]   32: 4C D2 0F F8 1C E5 77 AB FF F4 C3 29 E2 00 54 1D  L.....w....)..T.
-14[IKE]   48: 61 91 B3 58 1E 2E 9D 38 D5 83 21 8C FC B2 34 E9  a..X...8..!...4.
-14[IKE] SKEYSEED => 20 bytes @ 0x7c59fc003120
-14[IKE]    0: 78 38 8B E3 5E 49 C3 35 63 BD 25 D7 F6 35 FC E9  x8..^I.5c.%..5..
-14[IKE]   16: D5 19 0D E7                                      ....
-14[IKE] Sk_d secret => 20 bytes @ 0x7c59fc0033c0
-14[IKE]    0: A0 96 B0 13 D2 AE C2 A9 03 2B 2F 81 C6 56 D1 D7  .........+/..V..
-14[IKE]   16: 6D 87 F6 5E                                      m..^
-14[IKE] Sk_ai secret => 20 bytes @ 0x7c59fc001304
-14[IKE]    0: 0C FA 72 FE 8F 7F 98 FA BE DD 54 E1 67 7B C9 76  ..r.......T.g{.v
-14[IKE]   16: 86 10 D4 FE                                      ....
-14[IKE] Sk_ar secret => 20 bytes @ 0x7c59fc001318
-14[IKE]    0: 7B 02 56 8B 2A 06 E0 B8 21 E4 64 C2 11 2D 40 B3  {.V.*...!.d..-@.
-14[IKE]   16: 8B C7 92 B6                                      ....
-14[IKE] Sk_ei secret => 16 bytes @ 0x7c59fc00132c
-14[IKE]    0: 23 01 3D C1 A9 4C 3D 72 B1 30 C5 B9 89 B6 41 72  #.=..L=r.0....Ar
-14[IKE] Sk_er secret => 16 bytes @ 0x7c59fc00133c
-14[IKE]    0: 1C AB FE 7A 84 86 AD 20 A1 77 58 C5 EE 73 B1 28  ...z... .wX..s.(
-14[IKE] Sk_pi secret => 20 bytes @ 0x7c59fc003120
-14[IKE]    0: 27 A2 69 19 C0 F3 43 3F 24 AF 1B 62 DF 73 87 C9  '.i...C?$..b.s..
-14[IKE]   16: F4 D8 88 05                                      ....
-14[IKE] Sk_pr secret => 20 bytes @ 0x7c59fc0033e0
-14[IKE]    0: C8 62 93 6F E2 21 4C E6 D9 A7 57 BD 02 12 59 CF  .b.o.!L...W...Y.
-14[IKE]   16: AA 2F DA CC                                      ./..
-14[ENC] payload type SECURITY_ASSOCIATION could not be parsed
-14[IKE] message parsing failed
-14[ENC] generating IKE_AUTH response 1 [ N(INVAL_SYN) ]
-14[NET] sending packet: from 127.0.0.1[500] to 127.0.0.1[41213] (76 bytes)
-14[IKE] IKE_AUTH request with message ID 1 processing failed
-14[MGR] checkin and destroy IKE_SA (unnamed)[2]
-14[IKE] IKE_SA (unnamed)[2] state change: CONNECTING => DESTROYING
-14[MGR] checkin and destroy of IKE_SA successful
-13[MGR] checkout IKEv2 SA with SPIs bfff1a2052ca8d44_i ea105d1ab41a4400_r
-13[MGR] IKE_SA checkout not successful
-14[MGR] checkout IKEv2 SA by message with SPIs 44151dd005476b6b_i 0000000000000000_r
-14[MGR] created IKE_SA (unnamed)[3]
-14[NET] received packet: from 127.0.0.1[37279] to 127.0.0.1[500] (152 bytes)
-14[ENC] parsed IKE_SA_INIT request 0 [ SA KE No ]
-14[IKE] local endpoint changed from 0.0.0.0[500] to 127.0.0.1[500]
-14[IKE] remote endpoint changed from 0.0.0.0 to 127.0.0.1[37279]
-14[IKE] 127.0.0.1 is initiating an IKE_SA
-14[IKE] IKE_SA (unnamed)[3] state change: CREATED => CONNECTING
-14[CFG] selected proposal: IKE:AES_CBC_128/HMAC_SHA1_96/PRF_HMAC_SHA1/CURVE_25519
-14[IKE] natd_chunk => 22 bytes @ 0x7c59fc0013c0
-14[IKE]    0: 44 15 1D D0 05 47 6B 6B 00 00 00 00 00 00 00 00  D....Gkk........
-14[IKE]   16: 7F 00 00 01 01 F4                                ......
-14[IKE] natd_hash => 20 bytes @ 0x7c59fc0023d0
-14[IKE]    0: DB 0D 7C D3 AB 16 12 99 78 F7 0F 9D 0D 61 F1 73  ..|.....x....a.s
-14[IKE]   16: 23 1A AE 4B                                      #..K
-14[IKE] natd_chunk => 22 bytes @ 0x7c59fc0013c0
-14[IKE]    0: 44 15 1D D0 05 47 6B 6B 00 00 00 00 00 00 00 00  D....Gkk........
-14[IKE]   16: 7F 00 00 01 91 9F                                ......
-14[IKE] natd_hash => 20 bytes @ 0x7c59fc0013a0
-14[IKE]    0: 55 26 18 D8 0D C2 35 1F 3D A9 56 21 14 2C AE 49  U&....5.=.V!.,.I
-14[IKE]   16: 95 AE D7 99                                      ....
-14[IKE] precalculated src_hash => 20 bytes @ 0x7c59fc0013a0
-14[IKE]    0: 55 26 18 D8 0D C2 35 1F 3D A9 56 21 14 2C AE 49  U&....5.=.V!.,.I
-14[IKE]   16: 95 AE D7 99                                      ....
-14[IKE] precalculated dst_hash => 20 bytes @ 0x7c59fc0023d0
-14[IKE]    0: DB 0D 7C D3 AB 16 12 99 78 F7 0F 9D 0D 61 F1 73  ..|.....x....a.s
-14[IKE]   16: 23 1A AE 4B                                      #..K
-14[ENC] generating IKE_SA_INIT response 0 [ SA KE No N(CHDLESS_SUP) ]
-14[NET] sending packet: from 127.0.0.1[500] to 127.0.0.1[37279] (160 bytes)
-14[MGR] checkin IKEv2 SA (unnamed)[3] with SPIs 44151dd005476b6b_i 3dc1137cd1cdaa3e_r
-14[MGR] checkin of IKE_SA successful
-12[MGR] checkout IKEv2 SA by message with SPIs 44151dd005476b6b_i 3dc1137cd1cdaa3e_r
-12[MGR] IKE_SA (unnamed)[3] successfully checked out
-12[NET] received packet: from 127.0.0.1[37279] to 127.0.0.1[500] (152 bytes)
-12[IKE] key exchange secret => 32 bytes @ 0x7c5a10001590
-12[IKE]    0: 68 5C FD 57 4A E8 D6 DF 08 61 BB A6 8E D0 CA 1A  h\.WJ....a......
-12[IKE]   16: 0F 28 8A 14 15 CA CA A8 DD 89 55 37 2D BE CE 11  .(........U7-...
-12[IKE] additional key exchange secret => 0 bytes @ (nil)
-12[IKE] nonces => 64 bytes @ 0x7c5a10004480
-12[IKE]    0: D3 87 0B 13 D3 03 70 BB BF C8 6D A6 52 38 F5 02  ......p...m.R8..
-12[IKE]   16: A3 3F BB C0 B4 14 E2 8D 40 2A 10 E5 7B 5E 91 AA  .?......@*..{^..
-12[IKE]   32: BE 00 CD 1B C3 C6 0A FE D5 1F FC AF 84 15 71 82  ..............q.
-12[IKE]   48: E5 41 8B AB 92 D5 9C 8E 0D A2 49 B7 70 32 EA CF  .A........I.p2..
-12[IKE] SKEYSEED => 20 bytes @ 0x7c5a10001f90
-12[IKE]    0: B0 05 0D 45 E6 66 A2 7E 08 9D 7E EF 15 6D 22 9F  ...E.f.~..~..m".
-12[IKE]   16: BD 0B 79 B9                                      ..y.
-12[IKE] Sk_d secret => 20 bytes @ 0x7c5a10004690
-12[IKE]    0: 63 76 CD EB A7 50 2D 75 9D 86 DF 79 33 7C 58 22  cv...P-u...y3|X"
-12[IKE]   16: 6D E5 26 72                                      m.&r
-12[IKE] Sk_ai secret => 20 bytes @ 0x7c5a10002094
-12[IKE]    0: 8E CD E0 56 D4 8A B8 FE D2 70 DC 6B 42 DC 22 B5  ...V.....p.kB.".
-12[IKE]   16: 72 27 FD 1B                                      r'..
-12[IKE] Sk_ar secret => 20 bytes @ 0x7c5a100020a8
-12[IKE]    0: 13 1B 4E F6 9F 8F 54 F9 06 C5 F5 BE EF 52 0F 72  ..N...T......R.r
-12[IKE]   16: 8A E0 3D 81                                      ..=.
-12[IKE] Sk_ei secret => 16 bytes @ 0x7c5a100020bc
-12[IKE]    0: 68 4F E6 CE 99 DD B1 27 DC D9 0E DA 54 EF 42 C0  hO.....'....T.B.
-12[IKE] Sk_er secret => 16 bytes @ 0x7c5a100020cc
-12[IKE]    0: 74 BB 32 5D 4D 4B A8 E6 64 3C 5C 62 32 58 E2 07  t.2]MK..d<\b2X..
-12[IKE] Sk_pi secret => 20 bytes @ 0x7c5a10001f90
-12[IKE]    0: 8B 69 73 40 DF 87 0B 0B 3F 2B 37 9C 91 07 AF 30  .is@....?+7....0
-12[IKE]   16: 47 93 7E EC                                      G.~.
-12[IKE] Sk_pr secret => 20 bytes @ 0x7c5a100046b0
-12[IKE]    0: 1A 92 65 92 07 33 89 44 6B 8F B8 24 0A D5 22 E7  ..e..3.Dk..$..".
-12[IKE]   16: 43 2A 1C 61                                      C*.a
-12[ENC] payload type SECURITY_ASSOCIATION could not be parsed
-12[IKE] message parsing failed
-12[ENC] generating IKE_AUTH response 1 [ N(INVAL_SYN) ]
-12[NET] sending packet: from 127.0.0.1[500] to 127.0.0.1[37279] (76 bytes)
-12[IKE] IKE_AUTH request with message ID 1 processing failed
-12[MGR] checkin and destroy IKE_SA (unnamed)[3]
-12[IKE] IKE_SA (unnamed)[3] state change: CONNECTING => DESTROYING
-12[MGR] checkin and destroy of IKE_SA successful
-15[MGR] checkout IKEv2 SA with SPIs 44151dd005476b6b_i 3dc1137cd1cdaa3e_r
-15[MGR] IKE_SA checkout not successful
-01[MGR] checkout IKEv2 SA by message with SPIs 92c2bfcaabf84aaa_i 0000000000000000_r
-01[MGR] created IKE_SA (unnamed)[4]
-01[NET] received packet: from 127.0.0.1[59990] to 127.0.0.1[500] (152 bytes)
-01[ENC] parsed IKE_SA_INIT request 0 [ SA KE No ]
-01[IKE] local endpoint changed from 0.0.0.0[500] to 127.0.0.1[500]
-01[IKE] remote endpoint changed from 0.0.0.0 to 127.0.0.1[59990]
-01[IKE] 127.0.0.1 is initiating an IKE_SA
-01[IKE] IKE_SA (unnamed)[4] state change: CREATED => CONNECTING
-01[CFG] selected proposal: IKE:AES_CBC_128/HMAC_SHA1_96/PRF_HMAC_SHA1/CURVE_25519
-01[IKE] natd_chunk => 22 bytes @ 0x7c5a0c003600
-01[IKE]    0: 92 C2 BF CA AB F8 4A AA 00 00 00 00 00 00 00 00  ......J.........
-01[IKE]   16: 7F 00 00 01 01 F4                                ......
-01[IKE] natd_hash => 20 bytes @ 0x7c5a0c003450
-01[IKE]    0: 9E 7C 66 72 2A F3 2B 02 C9 72 BD 26 36 D9 C7 DB  .|fr*.+..r.&6...
-01[IKE]   16: 08 19 E5 26                                      ...&
-01[IKE] natd_chunk => 22 bytes @ 0x7c5a0c003600
-01[IKE]    0: 92 C2 BF CA AB F8 4A AA 00 00 00 00 00 00 00 00  ......J.........
-01[IKE]   16: 7F 00 00 01 EA 56                                .....V
-01[IKE] natd_hash => 20 bytes @ 0x7c5a0c0035a0
-01[IKE]    0: B8 C4 57 4F 2C CF 05 CE 97 3D DC F0 7F 78 64 CE  ..WO,....=...xd.
-01[IKE]   16: 44 D4 D4 64                                      D..d
-01[IKE] precalculated src_hash => 20 bytes @ 0x7c5a0c0035a0
-01[IKE]    0: B8 C4 57 4F 2C CF 05 CE 97 3D DC F0 7F 78 64 CE  ..WO,....=...xd.
-01[IKE]   16: 44 D4 D4 64                                      D..d
-01[IKE] precalculated dst_hash => 20 bytes @ 0x7c5a0c003450
-01[IKE]    0: 9E 7C 66 72 2A F3 2B 02 C9 72 BD 26 36 D9 C7 DB  .|fr*.+..r.&6...
-01[IKE]   16: 08 19 E5 26                                      ...&
-01[ENC] generating IKE_SA_INIT response 0 [ SA KE No N(CHDLESS_SUP) ]
-01[NET] sending packet: from 127.0.0.1[500] to 127.0.0.1[59990] (160 bytes)
-01[MGR] checkin IKEv2 SA (unnamed)[4] with SPIs 92c2bfcaabf84aaa_i 237b9363d68d394f_r
-01[MGR] checkin of IKE_SA successful
-06[MGR] checkout IKEv2 SA by message with SPIs 92c2bfcaabf84aaa_i 237b9363d68d394f_r
-06[MGR] IKE_SA (unnamed)[4] successfully checked out
-06[NET] received packet: from 127.0.0.1[59990] to 127.0.0.1[500] (152 bytes)
-06[IKE] key exchange secret => 32 bytes @ 0x7c5a24002920
-06[IKE]    0: FC 95 71 92 31 75 F0 E0 AC 92 1F 06 AD 67 52 EF  ..q.1u.......gR.
-06[IKE]   16: D5 F0 A4 DF B8 04 FB 3F F1 CD 21 34 C7 7F 45 3E  .......?..!4..E>
-06[IKE] additional key exchange secret => 0 bytes @ (nil)
-06[IKE] nonces => 64 bytes @ 0x7c5a24002950
-06[IKE]    0: 41 FF 80 B8 86 26 40 56 BE 81 4B A0 CD 71 37 22  A....&@V..K..q7"
-06[IKE]   16: 90 AC BA B3 9F 73 E1 D5 FA 03 FD BF 26 C9 99 CA  .....s......&...
-06[IKE]   32: 43 D2 B1 AF AD 06 D1 63 15 50 DC 04 B9 4C 1E 62  C......c.P...L.b
-06[IKE]   48: A1 21 00 D3 EE CD A1 DB 3F 1F 21 B3 B3 57 50 6A  .!......?.!..WPj
-06[IKE] SKEYSEED => 20 bytes @ 0x7c5a24002900
-06[IKE]    0: 2B 1A 6E ED 9B 9C EE 99 93 90 35 A1 E1 E6 82 C7  +.n.......5.....
-06[IKE]   16: 97 25 BE B2                                      .%..
-06[IKE] Sk_d secret => 20 bytes @ 0x7c5a24002b60
-06[IKE]    0: 5F 1F BC C0 25 64 49 8B 49 8E 26 BA ED 8A C7 94  _...%dI.I.&.....
-06[IKE]   16: 7C E8 74 48                                      |.tH
-06[IKE] Sk_ai secret => 20 bytes @ 0x7c5a24002b94
-06[IKE]    0: 68 96 DE F8 0D EB F3 5A D4 CD 50 AF 2A F8 B9 B1  h......Z..P.*...
-06[IKE]   16: 9D C4 2D 0C                                      ..-.
-06[IKE] Sk_ar secret => 20 bytes @ 0x7c5a24002ba8
-06[IKE]    0: 5B 4E 6F 1F 25 D8 E2 B4 F5 3D BB E8 1E 39 26 86  [No.%....=...9&.
-06[IKE]   16: 50 D8 71 CE                                      P.q.
-06[IKE] Sk_ei secret => 16 bytes @ 0x7c5a24002bbc
-06[IKE]    0: CB 8D 07 AF 4D 6E 46 13 7B C9 00 D9 54 5B B8 E8  ....MnF.{...T[..
-06[IKE] Sk_er secret => 16 bytes @ 0x7c5a24002bcc
-06[IKE]    0: 42 8D 3F F8 D1 76 2E 4F 12 C8 5C 8E D1 43 A7 A0  B.?..v.O..\..C..
-06[IKE] Sk_pi secret => 20 bytes @ 0x7c5a24002900
-06[IKE]    0: 70 6C B4 97 7E B2 72 4D A0 CB E9 00 AF AD 93 AB  pl..~.rM........
-06[IKE]   16: F3 05 83 D4                                      ....
-06[IKE] Sk_pr secret => 20 bytes @ 0x7c5a24002c10
-06[IKE]    0: 4C 52 F5 D9 8F 1B E9 8F EF 9C F0 C1 D9 7B 02 05  LR...........{..
-06[IKE]   16: C6 8B D8 E4                                      ....
-06[ENC] payload type SECURITY_ASSOCIATION could not be parsed
-06[IKE] message parsing failed
-06[ENC] generating IKE_AUTH response 1 [ N(INVAL_SYN) ]
-06[NET] sending packet: from 127.0.0.1[500] to 127.0.0.1[59990] (76 bytes)
-06[IKE] IKE_AUTH request with message ID 1 processing failed
-06[MGR] checkin and destroy IKE_SA (unnamed)[4]
-06[IKE] IKE_SA (unnamed)[4] state change: CONNECTING => DESTROYING
-06[MGR] checkin and destroy of IKE_SA successful
-07[MGR] checkout IKEv2 SA with SPIs 92c2bfcaabf84aaa_i 237b9363d68d394f_r
-07[MGR] IKE_SA checkout not successful
-08[KNL] interface enp1s0f0 deactivated
-05[KNL] 2001:760:4018:5a:a0ed:50e3:56aa:4dae disappeared from wlp2s0
-11[KNL] fe80::39e6:d2c3:312d:72e1 disappeared from wlp2s0
-14[KNL] interface wlp2s0 deactivated
-13[KNL] interface wlp2s0 activated
-07[KNL] 192.168.16.42 disappeared from wlp2s0
-14[KNL] interface wlp2s0 deactivated
-13[KNL] interface wlp2s0 activated
-09[KNL] interface enp1s0f0 activated
-13[KNL] interface wlp2s0 deactivated
-09[KNL] interface wlp2s0 activated
-08[KNL] interface wlp2s0 deactivated
-01[KNL] interface wlp2s0 activated
-07[KNL] fe80::39e6:d2c3:312d:72e1 appeared on wlp2s0
-01[KNL] 192.168.16.42 appeared on wlp2s0
-01[KNL] flags changed for fe80::39e6:d2c3:312d:72e1 on wlp2s0
-06[KNL] 2001:760:4018:5a:a0ed:50e3:56aa:4dae appeared on wlp2s0
-08[KNL] flags changed for 2001:760:4018:5a:a0ed:50e3:56aa:4dae on wlp2s0
-09[MGR] checkout IKEv2 SA by message with SPIs 4d2a4e532b841318_i 0000000000000000_r
-09[MGR] created IKE_SA (unnamed)[5]
-09[NET] received packet: from 127.0.0.1[36848] to 127.0.0.1[500] (152 bytes)
-09[ENC] parsed IKE_SA_INIT request 0 [ SA KE No ]
-09[IKE] local endpoint changed from 0.0.0.0[500] to 127.0.0.1[500]
-09[IKE] remote endpoint changed from 0.0.0.0 to 127.0.0.1[36848]
-09[IKE] 127.0.0.1 is initiating an IKE_SA
-09[IKE] IKE_SA (unnamed)[5] state change: CREATED => CONNECTING
-09[CFG] selected proposal: IKE:AES_CBC_128/HMAC_SHA1_96/PRF_HMAC_SHA1/CURVE_25519
-09[IKE] natd_chunk => 22 bytes @ 0x7c5a20003570
-09[IKE]    0: 4D 2A 4E 53 2B 84 13 18 00 00 00 00 00 00 00 00  M*NS+...........
-09[IKE]   16: 7F 00 00 01 01 F4                                ......
-09[IKE] natd_hash => 20 bytes @ 0x7c5a200040d0
-09[IKE]    0: C1 65 F9 15 4B 8F CB B2 F3 A8 94 75 69 38 ED 19  .e..K......ui8..
-09[IKE]   16: 38 F1 48 95                                      8.H.
-09[IKE] natd_chunk => 22 bytes @ 0x7c5a20003570
-09[IKE]    0: 4D 2A 4E 53 2B 84 13 18 00 00 00 00 00 00 00 00  M*NS+...........
-09[IKE]   16: 7F 00 00 01 8F F0                                ......
-09[IKE] natd_hash => 20 bytes @ 0x7c5a20003550
-09[IKE]    0: B7 67 DE AB FD 36 05 1F 4C F6 09 FA 6A 75 E8 95  .g...6..L...ju..
-09[IKE]   16: 2F B6 35 56                                      /.5V
-09[IKE] precalculated src_hash => 20 bytes @ 0x7c5a20003550
-09[IKE]    0: B7 67 DE AB FD 36 05 1F 4C F6 09 FA 6A 75 E8 95  .g...6..L...ju..
-09[IKE]   16: 2F B6 35 56                                      /.5V
-09[IKE] precalculated dst_hash => 20 bytes @ 0x7c5a200040d0
-09[IKE]    0: C1 65 F9 15 4B 8F CB B2 F3 A8 94 75 69 38 ED 19  .e..K......ui8..
-09[IKE]   16: 38 F1 48 95                                      8.H.
-09[ENC] generating IKE_SA_INIT response 0 [ SA KE No N(CHDLESS_SUP) ]
-09[NET] sending packet: from 127.0.0.1[500] to 127.0.0.1[36848] (160 bytes)
-09[MGR] checkin IKEv2 SA (unnamed)[5] with SPIs 4d2a4e532b841318_i 7e4b082e2e4ef24b_r
-09[MGR] checkin of IKE_SA successful
-10[MGR] checkout IKEv2 SA by message with SPIs 4d2a4e532b841318_i 7e4b082e2e4ef24b_r
-10[MGR] IKE_SA (unnamed)[5] successfully checked out
-10[NET] received packet: from 127.0.0.1[36848] to 127.0.0.1[500] (152 bytes)
-10[IKE] key exchange secret => 32 bytes @ 0x7c5a080309c0
-10[IKE]    0: 05 F7 CC 4E 59 2B 8B 23 11 BF 7E E5 02 44 AA 20  ...NY+.#..~..D. 
-10[IKE]   16: 1A 2F 23 9A 99 DD 82 BA 42 4F 58 12 79 33 9C 01  ./#.....BOX.y3..
+08[MGR] checkout IKEv2 SA by message with SPIs 687c1bc725c90650_i 0000000000000000_r
+08[MGR] created IKE_SA (unnamed)[1]
+08[NET] received packet: from 127.0.0.1[49867] to 127.0.0.1[500] (152 bytes)
+08[ENC] parsed IKE_SA_INIT request 0 [ SA KE No ]
+08[IKE] local endpoint changed from 0.0.0.0[500] to 127.0.0.1[500]
+08[IKE] remote endpoint changed from 0.0.0.0 to 127.0.0.1[49867]
+08[IKE] 127.0.0.1 is initiating an IKE_SA
+08[IKE] IKE_SA (unnamed)[1] state change: CREATED => CONNECTING
+08[CFG] selected proposal: IKE:AES_CBC_128/HMAC_SHA1_96/PRF_HMAC_SHA1/CURVE_25519
+08[IKE] natd_chunk => 22 bytes @ 0x7ebf68040800
+08[IKE]    0: 68 7C 1B C7 25 C9 06 50 00 00 00 00 00 00 00 00  h|..%..P........
+08[IKE]   16: 7F 00 00 01 01 F4                                ......
+08[IKE] natd_hash => 20 bytes @ 0x7ebf68040750
+08[IKE]    0: A3 BE 97 EF 8B 18 48 B8 E1 7B BE 1A D5 83 EB F2  ......H..{......
+08[IKE]   16: 1A 37 15 1D                                      .7..
+08[IKE] natd_chunk => 22 bytes @ 0x7ebf68040800
+08[IKE]    0: 68 7C 1B C7 25 C9 06 50 00 00 00 00 00 00 00 00  h|..%..P........
+08[IKE]   16: 7F 00 00 01 C2 CB                                ......
+08[IKE] natd_hash => 20 bytes @ 0x7ebf68040770
+08[IKE]    0: 5C A2 A1 0A 94 0D FD 4C 2C E3 7E 4C 26 0F 20 D7  \......L,.~L&. .
+08[IKE]   16: 2E 19 1C F7                                      ....
+08[IKE] precalculated src_hash => 20 bytes @ 0x7ebf68040770
+08[IKE]    0: 5C A2 A1 0A 94 0D FD 4C 2C E3 7E 4C 26 0F 20 D7  \......L,.~L&. .
+08[IKE]   16: 2E 19 1C F7                                      ....
+08[IKE] precalculated dst_hash => 20 bytes @ 0x7ebf68040750
+08[IKE]    0: A3 BE 97 EF 8B 18 48 B8 E1 7B BE 1A D5 83 EB F2  ......H..{......
+08[IKE]   16: 1A 37 15 1D                                      .7..
+08[ENC] generating IKE_SA_INIT response 0 [ SA KE No N(CHDLESS_SUP) ]
+08[NET] sending packet: from 127.0.0.1[500] to 127.0.0.1[49867] (160 bytes)
+08[MGR] checkin IKEv2 SA (unnamed)[1] with SPIs 687c1bc725c90650_i 1200d24549e2c79c_r
+08[MGR] checkin of IKE_SA successful
+10[MGR] checkout IKEv2 SA by message with SPIs 687c1bc725c90650_i 1200d24549e2c79c_r
+10[MGR] IKE_SA (unnamed)[1] successfully checked out
+10[NET] received packet: from 127.0.0.1[49867] to 127.0.0.1[500] (152 bytes)
+10[IKE] key exchange secret => 32 bytes @ 0x7ebf5c004770
+10[IKE]    0: 12 A8 04 BB 9F D4 46 E3 40 1F E6 6F 45 A6 A4 67  ......F.@..oE..g
+10[IKE]   16: 3D D1 57 61 64 30 8F AF 08 FA CE 50 9C 68 C0 4D  =.Wad0.....P.h.M
 10[IKE] additional key exchange secret => 0 bytes @ (nil)
-10[IKE] nonces => 64 bytes @ 0x7c5a0802f660
-10[IKE]    0: B6 1D 31 46 93 48 93 80 86 FB A5 73 93 BC B6 99  ..1F.H.....s....
-10[IKE]   16: 80 49 75 36 DB D4 C8 B9 94 44 A9 23 9E 67 08 22  .Iu6.....D.#.g."
-10[IKE]   32: CE 7A 0C 85 A9 F5 8C AA 36 F4 64 2C 9B C3 EC 08  .z......6.d,....
-10[IKE]   48: 06 14 67 1E A1 54 47 AF C5 AD CD ED D7 A7 10 73  ..g..TG........s
-10[IKE] SKEYSEED => 20 bytes @ 0x7c5a08002b90
-10[IKE]    0: 90 B0 7F 36 18 5F C3 68 FD 4E 13 50 96 6F A0 22  ...6._.h.N.P.o."
-10[IKE]   16: 02 DB 46 3A                                      ..F:
-10[IKE] Sk_d secret => 20 bytes @ 0x7c5a0802ec00
-10[IKE]    0: 42 C7 76 D5 0D 26 97 17 50 38 62 85 74 13 89 F2  B.v..&..P8b.t...
-10[IKE]   16: 54 01 25 C4                                      T.%.
-10[IKE] Sk_ai secret => 20 bytes @ 0x7c5a0802f9a4
-10[IKE]    0: 5D 4F CC CB F0 B7 24 7D D0 D2 1C 38 86 5C DF 2A  ]O....$}...8.\.*
-10[IKE]   16: 23 6D AB A7                                      #m..
-10[IKE] Sk_ar secret => 20 bytes @ 0x7c5a0802f9b8
-10[IKE]    0: 2B 85 8E 0F 9E 66 B3 D3 AC BB C4 C6 4B 1A 4D 44  +....f......K.MD
-10[IKE]   16: E7 A5 C0 75                                      ...u
-10[IKE] Sk_ei secret => 16 bytes @ 0x7c5a0802f9cc
-10[IKE]    0: 44 BE AA DD 3E 89 13 C4 43 D4 DA CC 44 74 B2 F5  D...>...C...Dt..
-10[IKE] Sk_er secret => 16 bytes @ 0x7c5a0802f9dc
-10[IKE]    0: 27 B0 6F 08 3F 96 C9 16 51 D5 02 ED 02 1A 46 73  '.o.?...Q.....Fs
-10[IKE] Sk_pi secret => 20 bytes @ 0x7c5a08002b90
-10[IKE]    0: 1B 06 F6 BE 9A 79 DC 4A 76 2E C3 4A 53 97 67 E7  .....y.Jv..JS.g.
-10[IKE]   16: AD D0 76 62                                      ..vb
-10[IKE] Sk_pr secret => 20 bytes @ 0x7c5a0802fce0
-10[IKE]    0: 6D 9C B4 37 22 5D 65 9D EC 9D 5B FD A8 28 F7 CE  m..7"]e...[..(..
-10[IKE]   16: CE 15 D0 93                                      ....
+10[IKE] nonces => 64 bytes @ 0x7ebf5c005e00
+10[IKE]    0: 55 69 0A E6 25 16 CC E3 77 D3 E9 EB 32 64 DE 99  Ui..%...w...2d..
+10[IKE]   16: 40 A6 B9 4B 59 A9 2A BE 54 BC 3A 3A 72 F4 BB 6A  @..KY.*.T.::r..j
+10[IKE]   32: E2 9D 35 20 6A 63 64 C3 35 16 EF 5F 2D 40 13 66  ..5 jcd.5.._-@.f
+10[IKE]   48: 70 FB F3 2B A1 95 88 A3 5B 19 99 B3 D2 71 15 20  p..+....[....q. 
+10[IKE] SKEYSEED => 20 bytes @ 0x7ebf5c006e50
+10[IKE]    0: AD 7B A2 52 78 87 49 19 0E AD 08 D9 D8 D4 D9 2C  .{.Rx.I........,
+10[IKE]   16: EE D6 E2 79                                      ...y
+10[IKE] Sk_d secret => 20 bytes @ 0x7ebf5c009350
+10[IKE]    0: 45 F3 93 E2 1C AE DD 0E D3 6C 22 1C 45 B7 BB 6B  E........l".E..k
+10[IKE]   16: 22 6B 10 2E                                      "k..
+10[IKE] Sk_ai secret => 20 bytes @ 0x7ebf5c009384
+10[IKE]    0: 9C C1 CA 93 FF 06 61 EA 0B E7 DD E2 2B AF 52 5A  ......a.....+.RZ
+10[IKE]   16: A1 87 45 EB                                      ..E.
+10[IKE] Sk_ar secret => 20 bytes @ 0x7ebf5c009398
+10[IKE]    0: 06 D6 C1 AB C9 BD 6A 36 62 F6 AB 3E 5E 8E 27 3D  ......j6b..>^.'=
+10[IKE]   16: 6E 84 09 78                                      n..x
+10[IKE] Sk_ei secret => 16 bytes @ 0x7ebf5c0093ac
+10[IKE]    0: 96 7B 9F DA 23 97 3D F1 A7 FD CA A2 C9 FE 21 C3  .{..#.=.......!.
+10[IKE] Sk_er secret => 16 bytes @ 0x7ebf5c0093bc
+10[IKE]    0: 82 A6 26 01 C2 06 7A F7 6A 7E 8B D8 08 0A C4 5B  ..&...z.j~.....[
+10[IKE] Sk_pi secret => 20 bytes @ 0x7ebf5c006e50
+10[IKE]    0: 1C 95 9B A4 8D B8 04 8A B2 D0 EB 76 1F E3 DE 85  ...........v....
+10[IKE]   16: 37 69 6B 7D                                      7ik}
+10[IKE] Sk_pr secret => 20 bytes @ 0x7ebf5c009400
+10[IKE]    0: A8 F2 6D 50 A5 96 ED 9E E7 AE D2 3F 60 71 48 FF  ..mP.......?`qH.
+10[IKE]   16: DC 74 FF 4D                                      .t.M
 10[ENC] payload type SECURITY_ASSOCIATION could not be parsed
 10[IKE] message parsing failed
 10[ENC] generating IKE_AUTH response 1 [ N(INVAL_SYN) ]
-10[NET] sending packet: from 127.0.0.1[500] to 127.0.0.1[36848] (76 bytes)
+10[NET] sending packet: from 127.0.0.1[500] to 127.0.0.1[49867] (76 bytes)
 10[IKE] IKE_AUTH request with message ID 1 processing failed
-10[MGR] checkin and destroy IKE_SA (unnamed)[5]
-10[IKE] IKE_SA (unnamed)[5] state change: CONNECTING => DESTROYING
+10[MGR] checkin and destroy IKE_SA (unnamed)[1]
+10[IKE] IKE_SA (unnamed)[1] state change: CONNECTING => DESTROYING
 10[MGR] checkin and destroy of IKE_SA successful
-15[MGR] checkout IKEv2 SA with SPIs 4d2a4e532b841318_i 7e4b082e2e4ef24b_r
-15[MGR] IKE_SA checkout not successful
-10[MGR] checkout IKEv2 SA by message with SPIs 77f62736cc6dc50d_i 0000000000000000_r
-10[MGR] created IKE_SA (unnamed)[6]
-10[NET] received packet: from 127.0.0.1[38146] to 127.0.0.1[500] (152 bytes)
-10[ENC] parsed IKE_SA_INIT request 0 [ SA KE No ]
-10[IKE] local endpoint changed from 0.0.0.0[500] to 127.0.0.1[500]
-10[IKE] remote endpoint changed from 0.0.0.0 to 127.0.0.1[38146]
-10[IKE] 127.0.0.1 is initiating an IKE_SA
-10[IKE] IKE_SA (unnamed)[6] state change: CREATED => CONNECTING
-10[CFG] selected proposal: IKE:AES_CBC_128/HMAC_SHA1_96/PRF_HMAC_SHA1/CURVE_25519
-10[IKE] natd_chunk => 22 bytes @ 0x7c5a08032410
-10[IKE]    0: 77 F6 27 36 CC 6D C5 0D 00 00 00 00 00 00 00 00  w.'6.m..........
-10[IKE]   16: 7F 00 00 01 01 F4                                ......
-10[IKE] natd_hash => 20 bytes @ 0x7c5a0802e580
-10[IKE]    0: 2C 0F E2 3D C8 16 0E 00 CE 0A A4 A1 26 5B 7E 36  ,..=........&[~6
-10[IKE]   16: C8 42 A7 98                                      .B..
-10[IKE] natd_chunk => 22 bytes @ 0x7c5a08032410
-10[IKE]    0: 77 F6 27 36 CC 6D C5 0D 00 00 00 00 00 00 00 00  w.'6.m..........
-10[IKE]   16: 7F 00 00 01 95 02                                ......
-10[IKE] natd_hash => 20 bytes @ 0x7c5a080323f0
-10[IKE]    0: D8 FE F4 62 96 4B 3C D4 DE F5 DF E1 53 3F 44 0C  ...b.K<.....S?D.
-10[IKE]   16: 2C E1 CD 06                                      ,...
-10[IKE] precalculated src_hash => 20 bytes @ 0x7c5a080323f0
-10[IKE]    0: D8 FE F4 62 96 4B 3C D4 DE F5 DF E1 53 3F 44 0C  ...b.K<.....S?D.
-10[IKE]   16: 2C E1 CD 06                                      ,...
-10[IKE] precalculated dst_hash => 20 bytes @ 0x7c5a0802e580
-10[IKE]    0: 2C 0F E2 3D C8 16 0E 00 CE 0A A4 A1 26 5B 7E 36  ,..=........&[~6
-10[IKE]   16: C8 42 A7 98                                      .B..
-10[ENC] generating IKE_SA_INIT response 0 [ SA KE No N(CHDLESS_SUP) ]
-10[NET] sending packet: from 127.0.0.1[500] to 127.0.0.1[38146] (160 bytes)
-10[MGR] checkin IKEv2 SA (unnamed)[6] with SPIs 77f62736cc6dc50d_i 7438e70f08e32172_r
-10[MGR] checkin of IKE_SA successful
-15[MGR] checkout IKEv2 SA by message with SPIs 77f62736cc6dc50d_i 7438e70f08e32172_r
-15[MGR] IKE_SA (unnamed)[6] successfully checked out
-15[NET] received packet: from 127.0.0.1[38146] to 127.0.0.1[500] (152 bytes)
-15[IKE] key exchange secret => 32 bytes @ 0x7c5a18002a20
-15[IKE]    0: B7 04 67 D3 C5 97 DC 99 A0 8F 50 FA B7 16 7F BF  ..g.......P.....
-15[IKE]   16: 7C 55 2B 87 4A F1 1D 3A F6 16 D7 4B 12 CE 5A 6F  |U+.J..:...K..Zo
-15[IKE] additional key exchange secret => 0 bytes @ (nil)
-15[IKE] nonces => 64 bytes @ 0x7c5a18002a50
-15[IKE]    0: 65 98 59 DA 02 12 11 9D C4 43 EE 3D A2 64 19 3D  e.Y......C.=.d.=
-15[IKE]   16: 83 7D 35 E7 43 62 28 F2 09 6C B0 A3 80 F3 03 A8  .}5.Cb(..l......
-15[IKE]   32: A7 BE 86 CD 07 E1 AC C5 1E 5B 9D 7D E3 3D 5A 1E  .........[.}.=Z.
-15[IKE]   48: 53 8F B4 38 80 A5 F7 26 97 B2 3C D0 DA 93 9D 8D  S..8...&..<.....
-15[IKE] SKEYSEED => 20 bytes @ 0x7c5a18002a00
-15[IKE]    0: ED 26 AF 94 0D E1 00 C6 4D 4F 21 79 61 40 F9 93  .&......MO!ya@..
-15[IKE]   16: 6A CB 99 43                                      j..C
-15[IKE] Sk_d secret => 20 bytes @ 0x7c5a18002c60
-15[IKE]    0: 89 0F 02 9A DF C0 A2 90 71 73 93 8B 4E E3 EE E0  ........qs..N...
-15[IKE]   16: 19 EB BA BE                                      ....
-15[IKE] Sk_ai secret => 20 bytes @ 0x7c5a18002c94
-15[IKE]    0: DA DB 68 92 8A EB 69 11 35 AD 0A 4F 9C 5B 66 69  ..h...i.5..O.[fi
-15[IKE]   16: D4 1F E1 D7                                      ....
-15[IKE] Sk_ar secret => 20 bytes @ 0x7c5a18002ca8
-15[IKE]    0: 96 10 04 F7 CF E3 FD 4E DF 06 86 47 59 DF 77 3B  .......N...GY.w;
-15[IKE]   16: D9 2F 17 46                                      ./.F
-15[IKE] Sk_ei secret => 16 bytes @ 0x7c5a18002cbc
-15[IKE]    0: 20 66 22 E0 13 D4 FB DA 31 E3 33 01 30 4B 05 E2   f".....1.3.0K..
-15[IKE] Sk_er secret => 16 bytes @ 0x7c5a18002ccc
-15[IKE]    0: 5E DC FA 03 FB EE 5E 1B E1 8F 95 73 14 54 55 8D  ^.....^....s.TU.
-15[IKE] Sk_pi secret => 20 bytes @ 0x7c5a18002a00
-15[IKE]    0: 61 65 65 3A 3F F8 F1 1D 0A 35 DF 16 F2 3A 54 DE  aee:?....5...:T.
-15[IKE]   16: A9 14 56 75                                      ..Vu
-15[IKE] Sk_pr secret => 20 bytes @ 0x7c5a18002d10
-15[IKE]    0: F2 AB 6E 7E 2C A2 8F AD 4E DF 38 4E E0 57 F1 C2  ..n~,...N.8N.W..
-15[IKE]   16: 13 8B 50 40                                      ..P@
-15[ENC] payload type SECURITY_ASSOCIATION could not be parsed
-15[IKE] message parsing failed
-15[ENC] generating IKE_AUTH response 1 [ N(INVAL_SYN) ]
-15[NET] sending packet: from 127.0.0.1[500] to 127.0.0.1[38146] (76 bytes)
-15[IKE] IKE_AUTH request with message ID 1 processing failed
-15[MGR] checkin and destroy IKE_SA (unnamed)[6]
-15[IKE] IKE_SA (unnamed)[6] state change: CONNECTING => DESTROYING
-15[MGR] checkin and destroy of IKE_SA successful
-06[MGR] checkout IKEv2 SA with SPIs 77f62736cc6dc50d_i 7438e70f08e32172_r
-06[MGR] IKE_SA checkout not successful
-12[KNL] interface enp1s0f0 deactivated
-01[KNL] 2001:760:4018:5a:a0ed:50e3:56aa:4dae disappeared from wlp2s0
-15[KNL] fe80::39e6:d2c3:312d:72e1 disappeared from wlp2s0
-14[KNL] interface wlp2s0 deactivated
-05[KNL] interface wlp2s0 activated
-09[KNL] 192.168.16.42 disappeared from wlp2s0
-14[KNL] interface wlp2s0 deactivated
-08[KNL] interface wlp2s0 activated
-07[KNL] interface enp1s0f0 activated
-09[KNL] interface wlp2s0 deactivated
-07[KNL] interface wlp2s0 activated
-12[KNL] interface wlp2s0 deactivated
-11[KNL] interface wlp2s0 activated
-15[KNL] fe80::9ede:155:d6c3:5f05 appeared on wlp2s0
-11[KNL] 192.168.0.198 appeared on wlp2s0
-11[KNL] flags changed for fe80::9ede:155:d6c3:5f05 on wlp2s0
-14[KNL] interface enp1s0f0 deactivated
-01[KNL] fe80::9ede:155:d6c3:5f05 disappeared from wlp2s0
-14[KNL] interface wlp2s0 deactivated
-08[KNL] interface wlp2s0 activated
-09[KNL] 192.168.0.198 disappeared from wlp2s0
-14[KNL] interface wlp2s0 deactivated
-08[KNL] interface wlp2s0 activated
-07[KNL] interface enp1s0f0 activated
-14[KNL] fe80::9ede:155:d6c3:5f05 appeared on wlp2s0
-09[KNL] 192.168.0.198 appeared on wlp2s0
-09[KNL] flags changed for fe80::9ede:155:d6c3:5f05 on wlp2s0
+11[MGR] checkout IKEv2 SA with SPIs 687c1bc725c90650_i 1200d24549e2c79c_r
+11[MGR] IKE_SA checkout not successful

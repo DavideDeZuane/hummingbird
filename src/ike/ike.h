@@ -16,6 +16,11 @@ typedef enum {
     IKE_RESPONDER
 } ike_role_t;
 
+/**
+* @brief questo struct rapprenta la ike security association
+* quindi lo stato condiviso tra i due partecipanti uno dei parametri significativi
+* è la lunghezza delle chiavi dato che dipende dalla funzione prf utilizzata
+*/
 typedef struct {
     uint8_t *sk_d;  
     uint8_t *sk_ai;
@@ -27,6 +32,12 @@ typedef struct {
     size_t key_len;
 } ike_sa_t;
 
+/**
+* @brief questo struct rapprenta la struttura che ha un partecipante al protocollo IKE, ovvero:
+* è un endpoint, quindi ha delle informazioni di rete 
+* ha un crypto_context ovvero ha del materiale crittografico che verrà utilizzato per derivare lo stato condiivisi tra i due
+* il security parameter index
+*/
 typedef struct {
     uint64_t spi;
     endpoint node;
@@ -34,6 +45,9 @@ typedef struct {
     crypto_context_t ctx;
 } ike_partecipant_t;
 
+/**
+* @brief This is the logical pairing between the two endpoint
+*/
 typedef struct {
     ike_partecipant_t initiator;
     ike_partecipant_t responder;

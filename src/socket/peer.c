@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
+//Questa la posto spostare nella parte di rete tanto hanno sempre a che fare con i socket che fanno parte della rete e non includono nessun altro concetto apparte quello della rete
 int partecipants_ini(endpoint *local, endpoint *remote, peer_options* opts){
     /*-------------------------------------------------------------------
     Remote Endpoint configuration
