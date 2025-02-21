@@ -18,6 +18,11 @@ uint64_t generate_spi() {
     return spi;
 }
 
+/**
+* @brief This function return a nonce of the specified length
+* @param[out] nonce The buffer to populate
+* @param[in] length Length of the nonce to generate
+*/
 void generate_nonce(uint8_t *nonce, size_t length) {
     ssize_t result = getrandom(nonce, length, 0);
     if (result == -1) {
@@ -26,39 +31,7 @@ void generate_nonce(uint8_t *nonce, size_t length) {
     }
 }
 
-/**
-* @brief This function print a baffer passed as input in hex format
-* @param[in] data Buffer of data to convert in hexadecimal
-* @param[in] len Length of the buffer to print
-*/
-void print_hex(const unsigned char *data, size_t len) {
-    for (size_t i = 0; i < len; i++) {
-        printf("%02x", data[i]);
-    }
-    printf("\n");
-}
+//ADD THE FUNCTION FOR GENERATE THE PRIVATE KEY FOR THE INITIATOR
 
-void generate_kex(){
-    
-    EVP_PKEY *pkey1 = NULL;
-    printf("----------------------------------------\n");
-    printf("Generating Key\n");
-    printf("----------------------------------------\n");
+//MOVE HERE THE FUNCTION TO GENERATE CHE SKEYSEED
 
-    EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_X25519, NULL);
-
-    if (!pctx || EVP_PKEY_keygen_init(pctx) <= 0 || EVP_PKEY_keygen(pctx, &pkey1) <= 0) printf("Errore nel generare la chiave");
-    if(pkey1 == NULL) printf("Errore nella creazione della chiave");
-    //la dimensione del buffer è 32 byte dato che x25519 produce sempre chiavi pubbliche di questa dimensione
-    unsigned char buffer[32];
-    size_t buffer_len = sizeof(buffer);
-    if (EVP_PKEY_get_raw_private_key(pkey1, buffer, &buffer_len) <= 0) printf("Errore extracting the private key");
-    printf("Chiave privata (X25519):\n");
-    print_hex(buffer, buffer_len);
-    // Estrai la chiave pubblica, quindi gli passiamo il contenitore e il buffer da popolare
-    if (EVP_PKEY_get_raw_public_key(pkey1, buffer, &buffer_len) <= 0) printf("Errore extracting the public key");
-    // Stampa la chiave pubblica in formato esadecimale
-    printf("Chiave pubblica (X25519):\n");
-    print_hex(buffer, buffer_len);
-
-}

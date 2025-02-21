@@ -6,11 +6,14 @@
 #include "constant.h"
 #include "../common_include.h"
 
-#define IKE_HEADER_DIM sizeof(ike_header_t)
+//nel generare il pacchetto utilizzare queste define
+#define IKE_HDR_DIM sizeof(ike_header_t)
+#define GEN_HDR_DIM sizeof(ike_payload_header_t)
 
-/*#######################################################
-IKE Header Struct
-#######################################################*/
+/**
+ * @brief Struct that rapresent the format of the header  of a IKE Packet 
+ * @note The attribute packed is necessary to avoid unwanted padding in the struct
+ */
 typedef struct {
     uint64_t initiator_spi;   
     uint64_t responder_spi;  
@@ -22,6 +25,10 @@ typedef struct {
     uint32_t length;     
 } __attribute__((packed)) ike_header_t;
 
+/**
+ * @brief Struct that rapresent the format of the generic header of a payload
+ * @note The attribute packed is necessary to avoid unwanted padding in the struct
+ */
 typedef struct {
     uint8_t  next_payload;  
     uint8_t  critical :1;  

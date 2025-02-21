@@ -19,21 +19,6 @@ void secure_free(void* ptr, size_t size){
 }
 
 /**
-* @brief This function convert the numeric value of an AF to a string 
-* @param[in] af Value of the AF to print
-*/
-const char* address_family_to_string(int af) {
-    switch (af) {
-        case AF_INET:
-            return "AF_INET";
-        case AF_INET6:
-            return "AF_INET6";
-        default:
-            return "Unknown Address Family";
-    }
-}
-
-/**
 * @brief This function return which fields of a given struct of the IKE packet must be converted for a big endian rappresentation
 * @param[in] type The type of the struct to convert
 * @param[out] num The number of the field to convert
@@ -85,7 +70,15 @@ field_descriptor_t* fields_to_convert(MessageComponent type, size_t* num_fields)
     return fields;
 }
 
+/**
+* @brief This function return the content of a memory pointed by the pointer specified for the length specified 
+* @param[in] mem Pointer to the memory to dump 
+* @param[in] len Length of the memory to dump
+* @note This function is essential to debug the content of the filed converted to big-endian in memory
+* This because the printf function ignore the rappresentation and print as little-endian 
+*/
 void dump_memory(const void *mem, size_t len) {
+    // check on the pointer
     const unsigned char *ptr = (const unsigned char*) mem;
     for (size_t i = 0; i < len; i += 16) {
         // Stampa i byte in esadecimale (16 byte per riga)
@@ -98,6 +91,33 @@ void dump_memory(const void *mem, size_t len) {
         printf("\n");
     }
     printf("\n");
+}
+
+/**
+* @brief This function print a baffer passed as input in hex format
+* @param[in] data Buffer of data to convert in hexadecimal
+* @param[in] len Length of the buffer to print
+*/
+void print_hex(const unsigned char *data, size_t len) {
+    for (size_t i = 0; i < len; i++) {
+        printf("%02x", data[i]);
+    }
+    printf("\n");
+}
+
+/**
+* @brief This function convert the numeric value of an AF to a string 
+* @param[in] af Value of the AF to print
+*/
+const char* address_family_to_string(int af) {
+    switch (af) {
+        case AF_INET:
+            return "AF_INET";
+        case AF_INET6:
+            return "AF_INET6";
+        default:
+            return "Unknown Address Family";
+    }
 }
 
 /**

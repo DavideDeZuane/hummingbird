@@ -24,14 +24,8 @@
 #include <string.h>
 
 
-
+//QUESTO INSIEME ALLA PARTE DI SEND E RECEVE DEVE ANDARE NELLA PARTE DI NETWORK 
 #define MAX_PAYLOAD 1444
-
-    void print_file(const unsigned char *data, size_t length, FILE *file) {
-        for (size_t i = 0; i < length; i++) {
-            fprintf(file, "%02x", data[i]);
-        }
-    }
 //spostare questo nel modulo packet, questa è quella parte che si occupa di creare il messaggio e il creeate message ritorna il buffer che poi verrò inviato tramite socket sulla rete 
 
 typedef struct {
@@ -286,14 +280,8 @@ int main(int argc, char* argv[]){
 
     //qunado vado a fare il parsing dei vari elementi vorrei fare in modo di confrontare il payload dal buffer per aggiornare quello che ho inviato io 
     ike_header_t* hd = parse_header(buffer, n);
-    /*
-    printf("Initiator SPI: 0x%llx\n", (long long unsigned int) hd->initiator_spi);
-    printf("Responder SPI: 0x%llx\n", (long long unsigned int) hd->responder_spi);
-    printf("Next Payload: %d\n", hd->next_payload);
-    printf("Message ID: %d\n", hd->message_id);
-    printf("Length: %d\n", htobe32(hd->length));
-    */
-    dump_memory(buffer, n);
+
+    //dump_memory(buffer, n);
     //dump_memory(&header.initiator_spi, sizeof(uint64_t));
     //dump_memory(&hd->responder_spi, sizeof(uint64_t));
     
@@ -330,34 +318,7 @@ int main(int argc, char* argv[]){
     }
 
 
-    FILE *file = fopen("key.txt", "w");
-    if (file == NULL) {
-        perror("Errore nell'aprire il file");
-        return EXIT_FAILURE;
-    }
-
-
-    // Stampa i valori di Ni, Nr e g^ir in formato esadecimale nel file
-    fprintf(file, "Ni: ");
-    print_file(initiator.sa.nonce, initiator.sa.nonce_len, file);
-    fprintf(file, "\n");
-
-    fprintf(file, "Nr: ");
-    print_file(responder.sa.nonce, responder.sa.nonce_len, file);
-    fprintf(file, "\n");
-
-    fprintf(file, "Publickey: ");
-    print_file(responder.sa.key, responder.sa.key_len, file);
-    fprintf(file, "\n");
-    
-    fprintf(file, "Privatekey: ");
-    print_file(initiator.sa.key, initiator.sa.key_len, file);
-    fprintf(file, "\n");
     //ora ho ottenuto il key material adesso vediamo se riesco a derivare il segreto condiviso corretto
-
-    fprintf(file, "SPIr: ");
-    print_file((const unsigned char *)&responder.sa.spi, 8, file);
-    fprintf(file, "\n");
 
     hd->exchange_type = EXCHANGE_IKE_AUTH;
     hd->message_id = htobe32(1);
@@ -407,7 +368,6 @@ int main(int argc, char* argv[]){
 
     uint8_t skeyseed[EVP_MAX_MD_SIZE];  // Buffer di output (max 20 byte per SHA-1)
     unsigned int skeyseed_len = 0;
-    print_hex(wa, 32+32);
     //with the notation prf(Ni|Nr, g^ir) the first argument is the key, the second the data
     HMAC(EVP_sha1(), wa, 32+32, shared_secret, 32, skeyseed, &skeyseed_len);
 

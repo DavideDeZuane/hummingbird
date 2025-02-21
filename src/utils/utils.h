@@ -20,6 +20,12 @@ field_descriptor_t* fields_to_convert(MessageComponent type, size_t* num);
 * @param[in] size The length of the data to print
 */
 void dump_memory(const void *mem, size_t len);
+
+/**
+* @brief Print the content in hex format
+*/
+void print_hex(const unsigned char *data, size_t len);
+
 /**
 * @brief This function securely remove all the content of a pointer 
 * @param[in] ptr Pointer to the memory area to free
