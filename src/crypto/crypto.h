@@ -48,4 +48,6 @@ void generate_nonce(uint8_t *nonce, size_t length);
 void print_hex(const unsigned char *data, size_t len);
 
 
+void derive_secret(EVP_PKEY** pri, uint8_t** pub, uint8_t** secret);
+
 #endif

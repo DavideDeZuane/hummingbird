@@ -2,12 +2,13 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/random.h>
 #include <openssl/dh.h>
 #include <openssl/evp.h>
 #include <time.h>
 #include "../log/log.h"
-#include "../utils/utils.h"
+//#include "../utils/utils.h"
 
 /**
 * @brief This function return a secure random string to use as security parameter index for the initiator using random material generated from /dev/urandom
@@ -54,8 +55,10 @@ void generate_key(EVP_PKEY** pri, uint8_t** pub){
         printf("Errore extracting the private key");
         log_error("Errore");
     }
+    /*    
     printf("Private key: \n");
     dump_memory(dump, 32);
+    */
     // estraiamo la chiave pubblica da quella privata in modo tale da metterla all'interno di un buffer per poi inviarla nel payload KE
     if (EVP_PKEY_get_raw_public_key(*pri, *pub, &len) <= 0){
         printf("Errore extracting the public key");
@@ -78,9 +81,28 @@ void initiate_crypto(crypto_context_t* ctx){
     ctx->key_len = X25519_KEY_LENGTH;
     generate_key(&ctx->private_key, &ctx->public_key);
 
-    log_info("Cryptographyc Material generated for the initiator");
 }
 
+void derive_secret(EVP_PKEY** pri, uint8_t** pub, uint8_t** secret){
+
+    size_t size = X25519_KEY_LENGTH;
+    *secret = malloc(X25519_KEY_LENGTH);
+
+    EVP_PKEY *peer = EVP_PKEY_new_raw_public_key(EVP_PKEY_X25519, NULL, *pub, size);
+    if(!peer){ printf("Error"); }
+    
+    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new(*pri, NULL);
+    if (!ctx || EVP_PKEY_derive_init(ctx) <= 0 || EVP_PKEY_derive_set_peer(ctx, peer) <= 0){
+        printf("Error");
+    }   
+    
+    if (EVP_PKEY_derive(ctx, *secret, &size) <= 0) { printf("Errore");}
+
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(peer);
+
+
+}
 //PRF FUNCTION HERE
 int prf(){
     return 1;

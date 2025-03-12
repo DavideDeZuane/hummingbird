@@ -3,6 +3,7 @@
 
 #include "constant.h"
 #include "header.h"
+#include "../network/network.h"
 #include "../socket/peer.h"
 #include "../crypto/crypto.h"
 
@@ -39,7 +40,7 @@ typedef struct {
 * il security parameter index
 */
 typedef struct {
-    endpoint node;
+    net_endpoint_t node;
     ike_role_t role;
     crypto_context_t ctx;
 } ike_partecipant_t;
@@ -53,6 +54,6 @@ typedef struct {
     ike_sa_t association;
 } ike_session_t;
 
-void initiate_ike(ike_partecipant_t* left, ike_partecipant_t* rigth);
+void initiate_ike(ike_partecipant_t* left, ike_partecipant_t* rigth, config* cfg);
 
 #endif

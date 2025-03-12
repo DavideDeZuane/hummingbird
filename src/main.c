@@ -151,34 +151,13 @@ int main(int argc, char* argv[]){
         return 1;
     }
     log_info("Configuration file %s loaded successfully", COLOR_TEXT(ANSI_COLOR_YELLOW,DEFAULT_CONFIG));
-    /*
-    endpoint local = {0};
-    endpoint remote  = {0};
-    partecipants_ini(&local, &remote, &cfg.peer);
-    */
-    /*
-    *********************************************
-    Setting initiator
-    ********************************************* 
-    */
 
     ike_partecipant_t left = {0};
     ike_partecipant_t rigth = {0};
-    initiate_ike(&left, &rigth);
+    initiate_ike(&left, &rigth, &cfg);
 
-
-
-    ike_initiator initiator = {0};
     ike_responder responder = {0};
-    responder_ini(&responder, &cfg.peer);
-    initiator_ini(&initiator, &responder);
-    //in questo modo facciamo si che il destinatario sia associato al socket, in questo modo possiamo usare direttamente la recv e la send 
-    //inoltre  il socket rifiuterà di inviare e ricevere dati da qualsiasi altro indirizzo o porta (il socket è legato al server specifico)
-    if (connect(initiator.sockfd, (struct sockaddr *)&responder.sk, sizeof(responder.sk)) < 0) {
-        perror("connect failed");
-        close(initiator.sockfd);
-        return EXIT_FAILURE;
-    } 
+
 
     ike_message_t packet_list = {NULL, NULL};
     ike_header_t header = init_header();
@@ -212,23 +191,19 @@ int main(int argc, char* argv[]){
     
     buff = create_message(&packet_list, &len);
 
-    dump_memory(buff, len);
-
-    //memcpy(buff, &header, sizeof(ike_header_t));
-    //memcpy(buff+sizeof(ike_payload_header_t)+8, &sa_payload, sizeof(ike_payload_proposal));
-
-    int retval =  send(initiator.sockfd, buff, len, 0);
+    int retval =  send(left.node.fd, buff, len, 0);
     if(retval == -1){
         printf("Errore per la send");
         return -1;
     }
     //il free non azzera il contenuto dice solamente che la memoria ora è disponibile, quindi la rilascia al sistema operativo
+    // questo buffer molto probabilmente servirà per la fase di auth
     free(buff);
 
     //la gestione della recv e del caso in cui il timeout scade va gestita nella parte network
     uint8_t* buffer = calloc(MAX_PAYLOAD, sizeof(uint8_t));
     printf("Waiting...\n");
-    n = recv(initiator.sockfd, buffer, MAX_PAYLOAD, 0);
+    n = recv(left.node.fd, buffer, MAX_PAYLOAD, 0);
     if (n < 0) {
         if (errno == EAGAIN ) {
             printf("Timeout scaduto: nessun dato ricevuto entro 1 secondo.\n");
@@ -286,38 +261,18 @@ int main(int argc, char* argv[]){
     set_flags(hd, flags);
     memset(buff, 0, len);
     memcpy(buff, hd, 28);
-    retval =  send(initiator.sockfd, buff, len, 0);
+    retval =  send(left.node.fd, buff, len, 0);
     //END - THIS PIECE OF CODE GENERATE THE IKE AUTH MOCK
 
 
+    uint8_t *secret = NULL;
 
-    
-    // THIS IS THE PIECE OF CODE TO GENERATE THE SHARED SECRET 
-    EVP_PKEY *peer = EVP_PKEY_new_raw_public_key(EVP_PKEY_X25519, NULL, responder.sa.key, responder.sa.key_len);
-    if (!peer) handleErrors();
-    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new(left.ctx.private_key, NULL);
-    if (!ctx || EVP_PKEY_derive_init(ctx) <= 0 || EVP_PKEY_derive_set_peer(ctx, peer) <= 0){
-        handleErrors();
-    }
-    // Ottenere la dimensione del segreto condiviso
-    size_t secret_len;
-    if (EVP_PKEY_derive(ctx, NULL, &secret_len) <= 0)
-        handleErrors();
-    // Derivare il segreto condiviso
-    unsigned char shared_secret[secret_len];
-    if (EVP_PKEY_derive(ctx, shared_secret, &secret_len) <= 0)
-        handleErrors();
-    // Stampa del segreto condiviso
+    derive_secret(&left.ctx.private_key, &responder.sa.key, &secret);
+
     printf("Segreto condiviso: \n");
-    for (size_t i = 0; i < secret_len; i++)
-        printf("%02X", shared_secret[i]);
+    for (size_t i = 0; i < X25519_KEY_LENGTH; i++)
+        printf("%02X", secret[i]);
     printf("\n");
-    // Pulizia
-    EVP_PKEY_CTX_free(ctx);
-    EVP_PKEY_free(peer);
-    // AT THE HAND WE HAVE THE SHARED SECRET
-
-
 
 
 
@@ -331,7 +286,7 @@ int main(int argc, char* argv[]){
 
     //with the notation prf(Ni|Nr, g^ir) the first argument is the key, the second the data
     //spostare questa funzione nella sezione crypto e chiamarla anche prf
-    HMAC(EVP_sha1(), wa, 32+32, shared_secret, 32, skeyseed,  &skeyseed_len);
+    HMAC(EVP_sha1(), wa, 32+32, secret, 32, skeyseed,  &skeyseed_len);
 
 
     printf("SKEYSEED: ");
@@ -355,7 +310,6 @@ int main(int argc, char* argv[]){
     printf("T1 \n");
     dump_memory(output, SHA1_DIGEST_LENGTH);
 
-    dump_memory(data, data_len);
 
     //il +1 non ci va basta aggiornare il valore del contatore, dunque quello che facciamo è spostare tutto della dimensione del digest
     //spostare quello che c'era prima e cambiare l'ultimo bit che è quello del contatore
@@ -370,7 +324,6 @@ int main(int argc, char* argv[]){
     printf("T2 \n");
     dump_memory(output, SHA1_DIGEST_LENGTH);
 
-    dump_memory(data, data_len);
     
     memcpy(data, output, output_len);
     data[data_len-1] = 0x03; //aggiorniamo il contatore 

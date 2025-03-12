@@ -14,6 +14,7 @@
 #include <endian.h>
 #include "../ike/constant.h"
 #include "../utils/utils.h"
+#include "../config/config.h"
 
 
 /**
@@ -187,8 +188,7 @@ int socket_up(int *sockfd, struct sockaddr_storage *sk_i, int AF, struct sockadd
     return EXIT_SUCCESS;
 }
 
-/*
-int initiate_netwok(endpoint *local, endpoint *remote, peer_options* opts){
+int initiate_netwok(net_endpoint_t *local, net_endpoint_t *remote, peer_options* opts){
     //Remote Endpoint configuration
     int af, port = 0;
     af = validate_address(opts->address);
@@ -219,4 +219,3 @@ int initiate_netwok(endpoint *local, endpoint *remote, peer_options* opts){
     } 
     return EXIT_SUCCESS;
 }
-    */

@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <sys/socket.h>
 #include "../ike/header.h"
+#include "../config/config.h"
 
 #define AF_INVALID -1
 #define PORT_INVALID 0
@@ -20,12 +21,10 @@
  * @note Assumpution for the remote endpoint the file descritor is set to -1 ()
  *
 */
-/*
 typedef struct {
     int fd;    
     struct sockaddr_storage addr;
-} endpoint;
-*/
+} net_endpoint_t;
 
 /**
 * @brief The generic pointer to data with the specified type will be converted to big-endin if necessary
@@ -60,5 +59,10 @@ int socket_setup(int* sockfd, int AF);
 * @brief this function populate the address information of the peer socket
 */
 int socket_set_address(struct sockaddr_storage *sk, int AF, char *ip, int port);
+
+
+
+int initiate_netwok(net_endpoint_t *local, net_endpoint_t *remote, peer_options* opts);
+
 
 #endif
