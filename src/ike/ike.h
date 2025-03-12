@@ -39,7 +39,6 @@ typedef struct {
 * il security parameter index
 */
 typedef struct {
-    uint64_t spi;
     endpoint node;
     ike_role_t role;
     crypto_context_t ctx;
@@ -54,5 +53,6 @@ typedef struct {
     ike_sa_t association;
 } ike_session_t;
 
+void initiate_ike(ike_partecipant_t* left, ike_partecipant_t* rigth);
 
 #endif

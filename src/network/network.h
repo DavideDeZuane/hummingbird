@@ -19,6 +19,8 @@
  * @brief Rappresenta un endpoint di rete (Initiator o Responder).
  * @note Assumpution for the remote endpoint the file descritor is set to -1 ()
  *
+*/
+/*
 typedef struct {
     int fd;    
     struct sockaddr_storage addr;

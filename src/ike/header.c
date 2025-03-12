@@ -1,6 +1,5 @@
 #include "header.h"
 #include "constant.h"
-#include "../crypto/crypto.h"
 #include <endian.h>
 #include <stdint.h>
 #include <sys/types.h>
@@ -23,7 +22,7 @@ ike_header_t init_header(){
    
     //qui va modificato, per fare l'init dell'header dobbiamo passargli il ressponder
     ike_header_t header = {
-        generate_spi(),
+        SPI_NULL,
         SPI_NULL,
         NEXT_PAYLOAD_SA,
         version,

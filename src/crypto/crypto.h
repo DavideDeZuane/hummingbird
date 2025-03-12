@@ -3,6 +3,12 @@
 
 #include "../common_include.h"
 #include <openssl/evp.h>
+#include <stdint.h>
+
+#define X25519_KEY_LENGTH 32
+#define DEFAULT_NONCE_LENGTH 32
+
+
 
 /**
 * @brief This struct rappresent the required key material to a ike initiator
@@ -11,14 +17,15 @@
 */
 typedef struct {
     uint64_t spi;
-    union {
-        EVP_PKEY *private_key;
-        uint8_t *public_key;  
-    };
+    EVP_PKEY *private_key;
+    uint8_t *public_key;  
     uint8_t* nonce;
     size_t key_len;
     size_t nonce_len;
 } crypto_context_t;
+
+
+void initiate_crypto(crypto_context_t* ctx);
 
 /**
 * @brief This function return a secure random string to use as security parameter index for the initiator using random material generated from /dev/urandom

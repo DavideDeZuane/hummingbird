@@ -15,6 +15,7 @@
 #include "../ike/constant.h"
 #include "../utils/utils.h"
 
+
 /**
 * @brief This function check if the ip address is valid
 * @param[in] ip  The string wich contains the ip address to check
@@ -187,7 +188,7 @@ int socket_up(int *sockfd, struct sockaddr_storage *sk_i, int AF, struct sockadd
 }
 
 /*
-int partecipants_ini(endpoint *local, endpoint *remote, peer_options* opts){
+int initiate_netwok(endpoint *local, endpoint *remote, peer_options* opts){
     //Remote Endpoint configuration
     int af, port = 0;
     af = validate_address(opts->address);
@@ -211,11 +212,11 @@ int partecipants_ini(endpoint *local, endpoint *remote, peer_options* opts){
     // se entrambi vanno a buon fine provo a fare la connect
     //in questo modo facciamo si che il destinatario sia associato al socket, in questo modo possiamo usare direttamente la recv e la send 
     //inoltre  il socket rifiuterà di inviare e ricevere dati da qualsiasi altro indirizzo o porta (il socket è legato al server specifico)
-    if (connect(*sockfd, (struct sockaddr *) sk_r, sizeof(*sk_r)) < 0) {
+    if (connect(local->fd, (struct sockaddr *) &remote->addr, sizeof(struct sockaddr_storage)) < 0) {
         perror("connect failed");
-        close(*sockfd);
+        close(local->fd);
         return EXIT_FAILURE;
     } 
     return EXIT_SUCCESS;
 }
-*/
+    */
