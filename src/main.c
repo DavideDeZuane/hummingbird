@@ -24,7 +24,8 @@
 
 //QUESTO INSIEME ALLA PARTE DI SEND E RECEVE DEVE ANDARE NELLA PARTE DI NETWORK 
 #define MAX_PAYLOAD 1444
-#define SHA1_DIGEST_LENGTH 20
+
+
 #define NUM_KEYS 7
 //spostare questo nel modulo packet, questa è quella parte che si occupa di creare il messaggio e il creeate message ritorna il buffer che poi verrò inviato tramite socket sulla rete 
 
@@ -154,6 +155,7 @@ int main(int argc, char* argv[]){
 
     ike_partecipant_t left = {0};
     ike_partecipant_t rigth = {0};
+    
     initiate_ike(&left, &rigth, &cfg);
 
     ike_responder responder = {0};
@@ -168,6 +170,7 @@ int main(int argc, char* argv[]){
     kd.dh_group = htobe16(31);
 
 
+    // questa parte andrà spostata nella creazione del pacchetto
     memcpy(&kd.ke_data, left.ctx.public_key, 32);
     memcpy(&header.initiator_spi, &left.ctx.spi, 8);
 
@@ -178,13 +181,13 @@ int main(int argc, char* argv[]){
     ike_payload_header_t header_1 = {0} ;
     header_1.next_payload = NEXT_PAYLOAD_KE;
 
-    push_component(&packet_list, PAYLOAD_TYPE_NONCE,        left.ctx.nonce,      left.ctx.nonce_len);
-    push_component(&packet_list, GENERIC_PAYLOAD_HEADER,    &np,        sizeof(ike_payload_header_t));
-    push_component(&packet_list, PAYLOAD_TYPE_KE,           &kd,        sizeof(ike_payload_kex_t));
-    push_component(&packet_list, GENERIC_PAYLOAD_HEADER,    &pd,        sizeof(ike_payload_header_t));
-    push_component(&packet_list, PAYLOAD_TYPE_SA,           &proposal,  sizeof(ike_payload_proposal_t));
-    push_component(&packet_list, GENERIC_PAYLOAD_HEADER,    &header_1,  sizeof(ike_payload_header_t));
-    push_component(&packet_list, IKE_HEADER,                &header,    sizeof(ike_header_t));
+    push_component(&packet_list, PAYLOAD_TYPE_NONCE,        left.ctx.nonce,         left.ctx.nonce_len);
+    push_component(&packet_list, GENERIC_PAYLOAD_HEADER,    &np,                    sizeof(ike_payload_header_t));
+    push_component(&packet_list, PAYLOAD_TYPE_KE,           &kd,                    sizeof(ike_payload_kex_t));
+    push_component(&packet_list, GENERIC_PAYLOAD_HEADER,    &pd,                    sizeof(ike_payload_header_t));
+    push_component(&packet_list, PAYLOAD_TYPE_SA,           &proposal,              sizeof(ike_payload_proposal_t));
+    push_component(&packet_list, GENERIC_PAYLOAD_HEADER,    &header_1,              sizeof(ike_payload_header_t));
+    push_component(&packet_list, IKE_HEADER,                &header,                sizeof(ike_header_t));
     
     uint8_t* buff;
     size_t len = 0;
@@ -265,8 +268,10 @@ int main(int argc, char* argv[]){
     //END - THIS PIECE OF CODE GENERATE THE IKE AUTH MOCK
 
 
-    uint8_t *secret = NULL;
 
+    //fare una funzione che si chiama derive keys che deriva tutte le chiavi necessarie per le fasi successive
+    // al cui interno metto tutta la parte di derivazione del segreto e concatenazione dei nonce
+    uint8_t *secret = NULL;
     derive_secret(&left.ctx.private_key, &responder.sa.key, &secret);
 
     printf("Segreto condiviso: \n");
@@ -274,62 +279,71 @@ int main(int argc, char* argv[]){
         printf("%02X", secret[i]);
     printf("\n");
 
-
-
+    
     //concateno i nonce 
     uint8_t* wa = malloc(32+32);
     memcpy(wa, left.ctx.nonce, 32);
     mempcpy(wa+32, responder.sa.nonce, responder.sa.nonce_len);
 
-    uint8_t skeyseed[20];  // Buffer di output (max 20 byte per SHA-1)
+    uint8_t* skeyseed = malloc(20);  // Buffer di output (max 20 byte per SHA-1)
     unsigned int skeyseed_len = 0;
 
-    //with the notation prf(Ni|Nr, g^ir) the first argument is the key, the second the data
-    //spostare questa funzione nella sezione crypto e chiamarla anche prf
-    HMAC(EVP_sha1(), wa, 32+32, secret, 32, skeyseed,  &skeyseed_len);
-
-
+    prf(&wa, 64, &secret, 32, &skeyseed, &skeyseed_len );
+    
     printf("SKEYSEED: ");
     for (size_t i = 0; i < skeyseed_len; i++)
         printf("%02X", skeyseed[i]);
     printf("\n");
     
+
+
+
     wa = realloc(wa, 32+32+8+8);
     memcpy(wa+64, &left.ctx.spi, 8);
     memcpy(wa+72, &responder.sa.spi, 8);
 
-
-    uint8_t *data = calloc(81, 1);
-    size_t data_len = 81;
-    memcpy(data, wa, 80);
-    data[80] = 0x01;
-
-    unsigned int output_len = 20;
-    uint8_t *output = calloc(SHA1_DIGEST_LENGTH, 1);
-    HMAC(EVP_sha1(), skeyseed, skeyseed_len, data, data_len, output, &output_len );
-    printf("T1 \n");
-    dump_memory(output, SHA1_DIGEST_LENGTH);
-
-
-    //il +1 non ci va basta aggiornare il valore del contatore, dunque quello che facciamo è spostare tutto della dimensione del digest
-    //spostare quello che c'era prima e cambiare l'ultimo bit che è quello del contatore
-    data_len += SHA1_DIGEST_LENGTH;
-
-    data = realloc(data, data_len);
-    memmove(data +20, data, data_len-20);
-    memcpy(data, output, output_len);
-    data[data_len-1] = 0x02; //aggiorniamo il contatore 
-    HMAC(EVP_sha1(), skeyseed, skeyseed_len, data, data_len, output, &output_len );
+    //nel caso di T1 devo fare solo un append del counter, quindi incremdento la lunghezza di 1
+    size_t msg_len = 32 + 32 + SPI_LENGTH_BYTE + SPI_LENGTH_BYTE + 1;
+    uint8_t *msg = malloc(msg_len);
     
-    printf("T2 \n");
-    dump_memory(output, SHA1_DIGEST_LENGTH);
+    memcpy(msg, wa, msg_len-1);
+    msg[msg_len-1] = 0x01;
+
+    uint8_t *T_buffer = calloc(NUM_KEYS * SHA1_DIGEST_LENGTH, 1);
+    size_t generated = 0;
+    
+    unsigned int digest_len = SHA1_DIGEST_LENGTH;
+    uint8_t *digest = malloc(digest_len);
+    
+
+    while(generated < NUM_KEYS*SHA1_DIGEST_LENGTH){
+
+        if(generated == 0){
+            prf(&skeyseed, skeyseed_len, &msg, msg_len, &digest, &digest_len);
+            //quindi se questa andrà a buon fine vuol dire che ho generato la prima parte perciò aggiungo l'output al buffer 
+            //ma a questo punto devo anche aggiornare il msg_len
+            memcpy(T_buffer, digest, digest_len);
+            generated += digest_len;
+
+            msg_len += SHA1_DIGEST_LENGTH;
+            msg = realloc(msg, msg_len);
+            
+            memmove(msg +20, msg, msg_len-20);
+            continue;
+        }
+            
+        memcpy(msg, digest, digest_len);
+        msg[msg_len-1]++;
+        prf(&skeyseed, skeyseed_len, &msg, msg_len, &digest, &digest_len);
+        memcpy(T_buffer+generated, digest, digest_len);
+        generated += 20;
+
+    }
+    printf("\n");
+    dump_memory(T_buffer, NUM_KEYS*SHA1_DIGEST_LENGTH);
+
+    //a questo punto posso popolare le chiavi 
 
     
-    memcpy(data, output, output_len);
-    data[data_len-1] = 0x03; //aggiorniamo il contatore 
-    HMAC(EVP_sha1(), skeyseed, skeyseed_len, data, data_len, output, &output_len );
-
-    printf("T3 \n");
-    dump_memory(output, SHA1_DIGEST_LENGTH);
     return 0;
 }

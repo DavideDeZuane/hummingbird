@@ -6,6 +6,7 @@
 #include <sys/random.h>
 #include <openssl/dh.h>
 #include <openssl/evp.h>
+#include <openssl/hmac.h>
 #include <time.h>
 #include "../log/log.h"
 //#include "../utils/utils.h"
@@ -104,7 +105,15 @@ void derive_secret(EVP_PKEY** pri, uint8_t** pub, uint8_t** secret){
 
 }
 //PRF FUNCTION HERE
-int prf(){
+int prf(uint8_t** key, size_t key_len, uint8_t** data, size_t data_len, uint8_t** digest, unsigned int* digest_len){
+    
+    if (!key || !data) {
+        // se uno dei due non c'è non riesco ad ottenere l'output 
+        fprintf(stderr, "Error: NULL input to PRF function\n");
+        return EXIT_FAILURE;
+    }
+
+    HMAC(EVP_sha1(), *key, key_len, *data, data_len, *digest, digest_len );
     return 1;
 }
 //MOVE HERE THE FUNCTION TO GENERATE CHE SKEYSEED

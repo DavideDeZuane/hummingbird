@@ -60,8 +60,13 @@ int socket_setup(int* sockfd, int AF);
 */
 int socket_set_address(struct sockaddr_storage *sk, int AF, char *ip, int port);
 
-
-
+/**
+ * 
+* @brief this function populate the socket information of both peer based on the option on the configuration file
+* @param[out] local   This is the scruct tha will be populate with the network information of the local host
+* @param[out] remote  This is the scruct that contains the network information of the remote host
+* @param[in] opts     These are the option provided for the remote peer in the configuration file
+*/
 int initiate_netwok(net_endpoint_t *local, net_endpoint_t *remote, peer_options* opts);
 
 

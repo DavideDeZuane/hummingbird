@@ -1,3 +1,20 @@
+# TO-DO
+
+- [ ] Implementare il meccanismo di ritrasmissione
+- [ ] La ritrasmissione va fatta fino a quando non si riceve una risposta oppure si supera il numero di tentativi
+- [ ] I messaggi IKE devono essere al più 1280 byte
+- [ ] Nello scambio IKE AUTH l'initiator deve aggiugnere il payload N(INITIAL_CONTAT) in modo da istruire il responder ad eliminare delle possibili IKE SA residue senza inviare delle notifiche  
+
+
+
+RFC 7619
+The NULL Authentication Method in the Internet Key Exchange Protocol Version 2 (IKEv2)
+
+
+
+
+
+
 # Setup 
 
 Nella cartella src è presente il codice dell'implementazione di minimal ike.

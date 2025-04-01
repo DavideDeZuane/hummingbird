@@ -6,6 +6,7 @@
 #define MID_NULL 0x00000000
 #define SPI_NULL 0x0000000000000000 //valore speciale del campo che indica che l'initiator non conosce l'SPI del responder
 #define SPI_LENGTH 64
+#define SPI_LENGTH_BYTE 8
 
 /*#######################################################
 Flag, sono le maschere binarie per settare i flag
@@ -20,18 +21,13 @@ Flag, sono le maschere binarie per settare i flag
 #define IKEV2 0x20
 
 /**
- * @brief Enum per rappresentare i tipi di protocollo.
- *
- * Questo enum definisce i diversi ID dei protocolli da utilizzare
- * in fase in cui occorre specificare la proposal a che protocollo server. 
- *
+ * @brief Enum with the type of the protocol
  */
 typedef enum {
     PROTOCOL_ID_IKE = 1,
     PROTOCOL_ID_AH  = 2,
     PROTOCOL_ID_ESP = 3
 } ProtocolType;
-
 
 typedef enum {
     PAYLOAD_TYPE_NONE,
@@ -43,11 +39,8 @@ typedef enum {
     TRANSFORM,
 } MessageComponent;
 
-
 /**
- * @brief Enum per rappresentare i tipi di trasformazioni.
- * 
- * Specifica il tipo di trasformazione che si sta proponendo.
+ * @brief Enum for the transformation type in the proposal
  *
  */
 typedef enum {
@@ -96,9 +89,13 @@ typedef enum {
 } ExchangeType;
 
 
+/**
+ * @brief This sctruct defines the information necessary to operate the conversion
+ * in the big endian rappresentation 
+ */
 typedef struct {
-    size_t offset;  // Offset del campo nella struttura
-    int type;       // Tipo del campo (ad esempio, uint16_t, uint32_t, uint64_t)
+    size_t offset;  
+    int type;       
 } field_descriptor_t;
 
 

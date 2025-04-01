@@ -7,7 +7,7 @@
 
 #define X25519_KEY_LENGTH 32
 #define DEFAULT_NONCE_LENGTH 32
-
+#define SHA1_DIGEST_LENGTH 20
 
 
 /**
@@ -49,5 +49,7 @@ void print_hex(const unsigned char *data, size_t len);
 
 
 void derive_secret(EVP_PKEY** pri, uint8_t** pub, uint8_t** secret);
+
+int prf(uint8_t** key, size_t key_len, uint8_t** data, size_t data_len, uint8_t** digest, unsigned int* digest_len);
 
 #endif
