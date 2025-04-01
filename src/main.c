@@ -23,9 +23,8 @@
 #include <string.h>
 
 //QUESTO INSIEME ALLA PARTE DI SEND E RECEVE DEVE ANDARE NELLA PARTE DI NETWORK 
-#define MAX_PAYLOAD 1444
-
-
+// la specifica dice che deve gestire messaggi che hanno massimo questa dimensoine
+#define MAX_PAYLOAD 1280
 #define NUM_KEYS 7
 //spostare questo nel modulo packet, questa è quella parte che si occupa di creare il messaggio e il creeate message ritorna il buffer che poi verrò inviato tramite socket sulla rete 
 
@@ -98,13 +97,6 @@ uint8_t* create_message(ike_message_t* list, size_t* len){
     *len = buffer_len;
     return buffer;
 
-
-
-}
-
-void handleErrors() {
-    ERR_print_errors_fp(stderr);
-    abort();
 }
 
 
@@ -153,6 +145,7 @@ int main(int argc, char* argv[]){
     }
     log_info("Configuration file %s loaded successfully", COLOR_TEXT(ANSI_COLOR_YELLOW,DEFAULT_CONFIG));
 
+    
     ike_partecipant_t left = {0};
     ike_partecipant_t rigth = {0};
     
@@ -162,14 +155,16 @@ int main(int argc, char* argv[]){
 
 
     ike_message_t packet_list = {NULL, NULL};
+
     ike_header_t header = init_header();
-    header.next_payload = NEXT_PAYLOAD_SA;
+
+
     ike_payload_header_t pd = {0};
     pd.next_payload = NEXT_PAYLOAD_NONCE;
+
+    // questa parte deve essere scelta in base alla proposal specificata
     ike_payload_kex_t kd = {0};
     kd.dh_group = htobe16(31);
-
-
     // questa parte andrà spostata nella creazione del pacchetto
     memcpy(&kd.ke_data, left.ctx.public_key, 32);
     memcpy(&header.initiator_spi, &left.ctx.spi, 8);
@@ -201,6 +196,7 @@ int main(int argc, char* argv[]){
     }
     //il free non azzera il contenuto dice solamente che la memoria ora è disponibile, quindi la rilascia al sistema operativo
     // questo buffer molto probabilmente servirà per la fase di auth
+    // non facciamo il free ma lo riutilizziamo in fase di auth
     free(buff);
 
     //la gestione della recv e del caso in cui il timeout scade va gestita nella parte network
@@ -237,6 +233,10 @@ int main(int argc, char* argv[]){
 
         if(current_payload == NEXT_PAYLOAD_KE){
             responder.sa.key_len = 32;
+            rigth.ctx.key_len = 32;
+            rigth.ctx.public_key = malloc(rigth.ctx.key_len);
+            memcpy(rigth.ctx.public_key, ptr+8, rigth.ctx.key_len);
+
             responder.sa.key = malloc(responder.sa.key_len);
             memcpy(responder.sa.key, ptr+8, responder.sa.key_len);
         }
@@ -246,6 +246,9 @@ int main(int argc, char* argv[]){
             responder.sa.nonce_len = be16toh(payload->length) -4;
             responder.sa.nonce = malloc(responder.sa.nonce_len);
             memcpy(responder.sa.nonce, ptr+4, 32);
+            rigth.ctx.nonce_len = be16toh(payload->length) - 4;
+            rigth.ctx.nonce = malloc(rigth.ctx.nonce_len);
+            memcpy(rigth.ctx.nonce, ptr+4, 32);
         }
 
         //printf("Next payload di tipo %s, tra %d byte\n", next_payload_to_string(payload->next_payload), be16toh(payload->length));
@@ -253,8 +256,6 @@ int main(int argc, char* argv[]){
         ptr += be16toh(payload->length);
     }
     //END
-
-    //ora ho ottenuto il key material adesso vediamo se riesco a derivare il segreto condiviso corretto
 
     //THIS EXCHANGE IS NECESSARY BECAUSE STRONGSWAN USE COOKIE AS DDOS PREVENTION
     //SO BEFORE GENERATING THE SKEYSEED AND OTHER THINGS HE WAIT THE IKE_AUTH_INIT 
@@ -271,15 +272,17 @@ int main(int argc, char* argv[]){
 
     //fare una funzione che si chiama derive keys che deriva tutte le chiavi necessarie per le fasi successive
     // al cui interno metto tutta la parte di derivazione del segreto e concatenazione dei nonce
+    
+    // questa funzione che deriva il segreto condiviso io la chiamerei nella funzione che si occupa di derivare il seed
     uint8_t *secret = NULL;
     derive_secret(&left.ctx.private_key, &responder.sa.key, &secret);
+
 
     printf("Segreto condiviso: \n");
     for (size_t i = 0; i < X25519_KEY_LENGTH; i++)
         printf("%02X", secret[i]);
     printf("\n");
 
-    
     //concateno i nonce 
     uint8_t* wa = malloc(32+32);
     memcpy(wa, left.ctx.nonce, 32);
@@ -295,7 +298,8 @@ int main(int argc, char* argv[]){
         printf("%02X", skeyseed[i]);
     printf("\n");
     
-
+    printf("Seed\n");
+    derive_seed(&left.ctx, &rigth.ctx, skeyseed);
 
 
     wa = realloc(wa, 32+32+8+8);
@@ -343,6 +347,11 @@ int main(int argc, char* argv[]){
     dump_memory(T_buffer, NUM_KEYS*SHA1_DIGEST_LENGTH);
 
     //a questo punto posso popolare le chiavi 
+    
+
+
+    //una volta generate le chiavi mi basta prendere il pacchetto precedente, mettergli in append il nonce del responder e i dati del ID payload
+
 
     
     return 0;

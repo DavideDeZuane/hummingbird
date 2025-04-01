@@ -47,8 +47,9 @@ void generate_nonce(uint8_t *nonce, size_t length);
 */
 void print_hex(const unsigned char *data, size_t len);
 
-
 void derive_secret(EVP_PKEY** pri, uint8_t** pub, uint8_t** secret);
+
+void derive_seed(crypto_context_t* left, crypto_context_t* rigth, uint8_t* seed);
 
 int prf(uint8_t** key, size_t key_len, uint8_t** data, size_t data_len, uint8_t** digest, unsigned int* digest_len);
 

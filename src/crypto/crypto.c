@@ -3,13 +3,15 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/random.h>
 #include <openssl/dh.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <time.h>
 #include "../log/log.h"
-//#include "../utils/utils.h"
+#include "../utils/utils.h"
+
 
 /**
 * @brief This function return a secure random string to use as security parameter index for the initiator using random material generated from /dev/urandom
@@ -84,6 +86,12 @@ void initiate_crypto(crypto_context_t* ctx){
 
 }
 
+/**
+ * @brief This function drive the shared secret between the two peer
+ * @note The private key is the type of EVP_PKEY because is necessary his context
+ * @param[in] pri The private key of the remote peer
+ * @param[in] pub The public key of the remote peer
+ */
 void derive_secret(EVP_PKEY** pri, uint8_t** pub, uint8_t** secret){
 
     size_t size = X25519_KEY_LENGTH;
@@ -104,6 +112,7 @@ void derive_secret(EVP_PKEY** pri, uint8_t** pub, uint8_t** secret){
 
 
 }
+
 //PRF FUNCTION HERE
 int prf(uint8_t** key, size_t key_len, uint8_t** data, size_t data_len, uint8_t** digest, unsigned int* digest_len){
     
@@ -118,3 +127,21 @@ int prf(uint8_t** key, size_t key_len, uint8_t** data, size_t data_len, uint8_t*
 }
 //MOVE HERE THE FUNCTION TO GENERATE CHE SKEYSEED
 
+// mi servono solo i due contesti perchè mi servono le chiavi per generare il segreto condiviso e i nonce per generare la chiavve da utilizzare per la prf
+void derive_seed(crypto_context_t* left, crypto_context_t* rigth, uint8_t* seed){
+    printf("Entro nella funzione");
+    //populating the shared secret
+    uint8_t* ss = calloc(SHA1_DIGEST_LENGTH,1);
+    derive_secret(&left->private_key, &rigth->public_key, &ss);
+    //ather that we concatenate the nonce to derive the key for the hmac
+    // Ni | Nr
+    size_t key_len = left->nonce_len + rigth->nonce_len;
+    uint8_t* key = calloc(key_len, 1);
+    memcpy(key, left->nonce, left->nonce_len);
+    memcpy(key+left->nonce_len, rigth->nonce, rigth->nonce_len);
+    //so at this point we can call prf funciton
+    unsigned int seed_len = SHA1_DIGEST_LENGTH;
+    prf(&key, key_len, &ss, X25519_KEY_LENGTH, &seed, &seed_len);
+    printf("\n");
+    dump_memory(seed, SHA1_DIGEST_LENGTH);
+}
