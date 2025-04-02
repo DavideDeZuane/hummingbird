@@ -54,3 +54,6 @@ dkms.conf
 hummingbird
 *.pem
 
+# Ingore all logs
+*.log
+log/
