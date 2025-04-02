@@ -10,6 +10,7 @@
 #include "./ike/header.h"
 #include "ike/ike.h"
 #include "ike/payload.h"
+#include "network/network.h"
 #include "utils/utils.h"
 
 #include <openssl/dh.h>
@@ -147,9 +148,9 @@ int main(int argc, char* argv[]){
 
     
     ike_partecipant_t left = {0};
-    ike_partecipant_t rigth = {0};
+    ike_partecipant_t right = {0};
     
-    initiate_ike(&left, &rigth, &cfg);
+    initiate_ike(&left, &right, &cfg);
 
     ike_responder responder = {0};
 
@@ -233,9 +234,9 @@ int main(int argc, char* argv[]){
 
         if(current_payload == NEXT_PAYLOAD_KE){
             responder.sa.key_len = 32;
-            rigth.ctx.key_len = 32;
-            rigth.ctx.public_key = malloc(rigth.ctx.key_len);
-            memcpy(rigth.ctx.public_key, ptr+8, rigth.ctx.key_len);
+            right.ctx.key_len = 32;
+            right.ctx.public_key = malloc(right.ctx.key_len);
+            memcpy(right.ctx.public_key, ptr+8, right.ctx.key_len);
 
             responder.sa.key = malloc(responder.sa.key_len);
             memcpy(responder.sa.key, ptr+8, responder.sa.key_len);
@@ -246,9 +247,9 @@ int main(int argc, char* argv[]){
             responder.sa.nonce_len = be16toh(payload->length) -4;
             responder.sa.nonce = malloc(responder.sa.nonce_len);
             memcpy(responder.sa.nonce, ptr+4, 32);
-            rigth.ctx.nonce_len = be16toh(payload->length) - 4;
-            rigth.ctx.nonce = malloc(rigth.ctx.nonce_len);
-            memcpy(rigth.ctx.nonce, ptr+4, 32);
+            right.ctx.nonce_len = be16toh(payload->length) - 4;
+            right.ctx.nonce = malloc(right.ctx.nonce_len);
+            memcpy(right.ctx.nonce, ptr+4, 32);
         }
 
         //printf("Next payload di tipo %s, tra %d byte\n", next_payload_to_string(payload->next_payload), be16toh(payload->length));
@@ -293,13 +294,11 @@ int main(int argc, char* argv[]){
 
     prf(&wa, 64, &secret, 32, &skeyseed, &skeyseed_len );
     
-    printf("SKEYSEED: ");
-    for (size_t i = 0; i < skeyseed_len; i++)
-        printf("%02X", skeyseed[i]);
-    printf("\n");
-    
     printf("Seed\n");
-    derive_seed(&left.ctx, &rigth.ctx, skeyseed);
+    derive_seed(&left.ctx, &right.ctx, skeyseed);
+
+    // a questo punto al buffer che contiene lo ss devo aggiungere gli spi di initiator e responder 
+    // la domanda è a questo punto, questo buffer è meglio che me lo salvo da qualch parte???
 
 
     wa = realloc(wa, 32+32+8+8);
@@ -352,6 +351,15 @@ int main(int argc, char* argv[]){
 
     //una volta generate le chiavi mi basta prendere il pacchetto precedente, mettergli in append il nonce del responder e i dati del ID payload
 
+
+    // dump di tutto 
+    // prendere il filename dalle variabili d'ambiente
+    FILE *fp;
+    fp = fopen("dump.log", "w"); 
+
+    fprintf(fp, "Ininitiaor {%016llX} --->", (unsigned long long) left.ctx.spi);
+    fprintf(fp, "SKEYSEED: ");
+    
 
     
     return 0;

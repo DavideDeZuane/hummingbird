@@ -75,7 +75,7 @@ void generate_key(EVP_PKEY** pri, uint8_t** pub){
 void initiate_crypto(crypto_context_t* ctx){
 
     /* Spi configuration */
-    ctx->spi = generate_spi();
+    ctx->spi = htobe64(generate_spi());
     /* Nonce configuration */
     ctx->nonce_len = DEFAULT_NONCE_LENGTH;
     ctx->nonce = malloc(ctx->nonce_len);
@@ -128,20 +128,25 @@ int prf(uint8_t** key, size_t key_len, uint8_t** data, size_t data_len, uint8_t*
 //MOVE HERE THE FUNCTION TO GENERATE CHE SKEYSEED
 
 // mi servono solo i due contesti perchè mi servono le chiavi per generare il segreto condiviso e i nonce per generare la chiavve da utilizzare per la prf
-void derive_seed(crypto_context_t* left, crypto_context_t* rigth, uint8_t* seed){
+// modificare in return type intero per vedere se qualcosa è andato male
+void derive_seed(crypto_context_t* left, crypto_context_t* right, uint8_t* seed){
     printf("Entro nella funzione");
     //populating the shared secret
     uint8_t* ss = calloc(SHA1_DIGEST_LENGTH,1);
-    derive_secret(&left->private_key, &rigth->public_key, &ss);
+    derive_secret(&left->private_key, &right->public_key, &ss);
     //ather that we concatenate the nonce to derive the key for the hmac
     // Ni | Nr
-    size_t key_len = left->nonce_len + rigth->nonce_len;
+    size_t key_len = left->nonce_len + right->nonce_len;
     uint8_t* key = calloc(key_len, 1);
     memcpy(key, left->nonce, left->nonce_len);
-    memcpy(key+left->nonce_len, rigth->nonce, rigth->nonce_len);
+    memcpy(key+left->nonce_len, right->nonce, right->nonce_len);
     //so at this point we can call prf funciton
     unsigned int seed_len = SHA1_DIGEST_LENGTH;
     prf(&key, key_len, &ss, X25519_KEY_LENGTH, &seed, &seed_len);
     printf("\n");
     dump_memory(seed, SHA1_DIGEST_LENGTH);
+}
+
+void prf_plus(crypto_context_t* left, crypto_context_t* right){
+
 }
