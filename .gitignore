@@ -56,4 +56,5 @@ hummingbird
 
 # Ingore all logs
 *.log
-log/
+srv/log/*
+**/logs

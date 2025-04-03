@@ -221,6 +221,7 @@ int main(int argc, char* argv[]){
     
     //porcodio
     responder.sa.spi = hd->responder_spi;
+    right.ctx.spi = hd->responder_spi;
     // funzione che fa il parsing, quello che fa è prendere la strucct del responder e il buffer che poi utilizzeremo per pooplarla
     //CONVERT THIS PIECE OF CODE UNTIL THE END TO A FUNCTION
     uint8_t *ptr = buffer+28; 
@@ -312,13 +313,16 @@ int main(int argc, char* argv[]){
     memcpy(msg, wa, msg_len-1);
     msg[msg_len-1] = 0x01;
 
+    printf("Messaggio nel main \n");
+    dump_memory(msg, msg_len);
+
     uint8_t *T_buffer = calloc(NUM_KEYS * SHA1_DIGEST_LENGTH, 1);
     size_t generated = 0;
     
     unsigned int digest_len = SHA1_DIGEST_LENGTH;
     uint8_t *digest = malloc(digest_len);
     
-
+    /*
     while(generated < NUM_KEYS*SHA1_DIGEST_LENGTH){
 
         if(generated == 0){
@@ -342,6 +346,8 @@ int main(int argc, char* argv[]){
         generated += 20;
 
     }
+    */
+    prf_plus(&left.ctx, &right.ctx, T_buffer);
     printf("\n");
     dump_memory(T_buffer, NUM_KEYS*SHA1_DIGEST_LENGTH);
 

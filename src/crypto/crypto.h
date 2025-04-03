@@ -8,7 +8,7 @@
 #define X25519_KEY_LENGTH 32
 #define DEFAULT_NONCE_LENGTH 32
 #define SHA1_DIGEST_LENGTH 20
-
+#define NUM_KEYS 7
 
 /**
 * @brief This struct rappresent the required key material to a ike initiator
@@ -52,5 +52,7 @@ void derive_secret(EVP_PKEY** pri, uint8_t** pub, uint8_t** secret);
 void derive_seed(crypto_context_t* left, crypto_context_t* right, uint8_t* seed);
 
 int prf(uint8_t** key, size_t key_len, uint8_t** data, size_t data_len, uint8_t** digest, unsigned int* digest_len);
+
+void prf_plus(crypto_context_t* left, crypto_context_t* right, uint8_t* T_buffer);
 
 #endif

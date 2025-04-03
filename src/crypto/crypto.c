@@ -87,11 +87,11 @@ void initiate_crypto(crypto_context_t* ctx){
 }
 
 /**
- * @brief This function drive the shared secret between the two peer
- * @note The private key is the type of EVP_PKEY because is necessary his context
- * @param[in] pri The private key of the remote peer
- * @param[in] pub The public key of the remote peer
- */
+* @brief This function drive the shared secret between the two peer
+* @note The private key is the type of EVP_PKEY because is necessary his context
+* @param[in] pri The private key of the remote peer
+* @param[in] pub The public key of the remote peer
+*/
 void derive_secret(EVP_PKEY** pri, uint8_t** pub, uint8_t** secret){
 
     size_t size = X25519_KEY_LENGTH;
@@ -132,7 +132,7 @@ int prf(uint8_t** key, size_t key_len, uint8_t** data, size_t data_len, uint8_t*
 void derive_seed(crypto_context_t* left, crypto_context_t* right, uint8_t* seed){
     printf("Entro nella funzione");
     //populating the shared secret
-    uint8_t* ss = calloc(SHA1_DIGEST_LENGTH,1);
+    uint8_t* ss = calloc(X25519_KEY_LENGTH,1);
     derive_secret(&left->private_key, &right->public_key, &ss);
     //ather that we concatenate the nonce to derive the key for the hmac
     // Ni | Nr
@@ -145,8 +145,71 @@ void derive_seed(crypto_context_t* left, crypto_context_t* right, uint8_t* seed)
     prf(&key, key_len, &ss, X25519_KEY_LENGTH, &seed, &seed_len);
     printf("\n");
     dump_memory(seed, SHA1_DIGEST_LENGTH);
+
+    //fare anche un goto per questo nel caso in cui la derivazione della chiave andasse male
+    secure_free(key, key_len);
+    secure_free(ss, X25519_KEY_LENGTH);
 }
 
-void prf_plus(crypto_context_t* left, crypto_context_t* right){
+/**
+* @brief This function populate the T_buffer
+*/
+void prf_plus(crypto_context_t* left, crypto_context_t* right, uint8_t* T_buffer){
+    //il left e right crypto ci server per ottenere le chiavi e quindi derivare il segreto condiviso 
+    //così come i nonce ci servono per derivare il SKEYSEED
+    uint8_t* seed = malloc(SHA1_DIGEST_LENGTH);
+    derive_seed(left, right, seed);
+
+    dump_memory(seed, SHA1_DIGEST_LENGTH);
+
+    // a questo punto devo generare il materiale da firmare con il skeyseed per generare il T_buffer
+    // l'1 finale è per il counter di cui c'è da fare l'append nel buffer
+    size_t msg_len = left->nonce_len + right->nonce_len + (2* SPI_LENGTH_BYTE) + 1;
+    uint8_t* msg = calloc(msg_len, 1);
+    // il messaggio da firmare è così composto Ni | Nr | SPIi | SPIr | counter
+    memcpy(msg,                                         left->nonce,    left->nonce_len); 
+    memcpy(msg + left->nonce_len,                       right->nonce,   right->nonce_len);
+    memcpy(msg + (2*left->nonce_len),                   &left->spi,     SPI_LENGTH_BYTE);
+    memcpy(msg + (2*left->nonce_len) + SPI_LENGTH_BYTE, &right->spi,    SPI_LENGTH_BYTE);
+    msg[msg_len-1] = 0x01;
+
+    printf("\nMessaggio nella funzione\n");
+    dump_memory(msg, msg_len);
+
+    // a questo punto ho generato il messaggio, aggiungere i vari controlli per verificare che i vari puntatori non siano nulli e mettere in una funzione a parte
+    // qui implementiamo la logica dell'espansione del key material
+    size_t generated = 0;
+    unsigned int digest_len = SHA1_DIGEST_LENGTH;
+    uint8_t* digest = malloc(digest_len);
+
+
+    while(generated < NUM_KEYS * SHA1_DIGEST_LENGTH){
+
+        if(generated == 0){
+            prf(&seed, SHA1_DIGEST_LENGTH, &msg, msg_len, &digest, &digest_len);
+            //ho generato T1 quindi a questo punto
+            // updating the message to sign
+            msg_len += SHA1_DIGEST_LENGTH;
+            msg = realloc(msg, msg_len);
+            memmove(msg + SHA1_DIGEST_LENGTH , msg, msg_len - SHA1_DIGEST_LENGTH);
+            memcpy(T_buffer, digest, digest_len);
+            // update the generated size to bypass this if 
+            generated += SHA1_DIGEST_LENGTH;
+            // questa è un iterazionein più ma sti cazzi
+            continue;
+        }
+        //at each iteration we have to increase the counter and replace the digest of previuos output in from of msg
+        memcpy(msg, digest, SHA1_DIGEST_LENGTH);
+        msg[msg_len-1]++;
+
+        // aggiungere un controllo sul valore di ritorno della funzione
+        prf(&seed, SHA1_DIGEST_LENGTH, &msg, msg_len, &digest, &digest_len);
+        memcpy(T_buffer + generated, digest, digest_len);
+        generated += SHA1_DIGEST_LENGTH;
+    }
+
+    log_info("T_Buffer popoulated");
+
+    
 
 }
