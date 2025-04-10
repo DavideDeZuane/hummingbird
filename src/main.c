@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/random.h>
 
 //QUESTO INSIEME ALLA PARTE DI SEND E RECEVE DEVE ANDARE NELLA PARTE DI NETWORK 
 // la specifica dice che deve gestire messaggi che hanno massimo questa dimensoine
@@ -198,7 +199,6 @@ int main(int argc, char* argv[]){
     //il free non azzera il contenuto dice solamente che la memoria ora è disponibile, quindi la rilascia al sistema operativo
     // questo buffer molto probabilmente servirà per la fase di auth
     // non facciamo il free ma lo riutilizziamo in fase di auth
-    free(buff);
 
     //la gestione della recv e del caso in cui il timeout scade va gestita nella parte network
     uint8_t* buffer = calloc(MAX_PAYLOAD, sizeof(uint8_t));
@@ -259,6 +259,7 @@ int main(int argc, char* argv[]){
     }
     //END
 
+    /*   
     //THIS EXCHANGE IS NECESSARY BECAUSE STRONGSWAN USE COOKIE AS DDOS PREVENTION
     //SO BEFORE GENERATING THE SKEYSEED AND OTHER THINGS HE WAIT THE IKE_AUTH_INIT 
     hd->exchange_type = EXCHANGE_IKE_AUTH;
@@ -270,51 +271,12 @@ int main(int argc, char* argv[]){
     retval =  send(left.node.fd, buff, len, 0);
     //END - THIS PIECE OF CODE GENERATE THE IKE AUTH MOCK
 
-
+    */
 
     //fare una funzione che si chiama derive keys che deriva tutte le chiavi necessarie per le fasi successive
     // al cui interno metto tutta la parte di derivazione del segreto e concatenazione dei nonce
     
     // questa funzione che deriva il segreto condiviso io la chiamerei nella funzione che si occupa di derivare il seed
-    uint8_t *secret = NULL;
-    derive_secret(&left.ctx.private_key, &responder.sa.key, &secret);
-
-
-    printf("Segreto condiviso: \n");
-    for (size_t i = 0; i < X25519_KEY_LENGTH; i++)
-        printf("%02X", secret[i]);
-    printf("\n");
-
-    //concateno i nonce 
-    uint8_t* wa = malloc(32+32);
-    memcpy(wa, left.ctx.nonce, 32);
-    mempcpy(wa+32, responder.sa.nonce, responder.sa.nonce_len);
-
-    uint8_t* skeyseed = malloc(20);  // Buffer di output (max 20 byte per SHA-1)
-    unsigned int skeyseed_len = 0;
-
-    prf(&wa, 64, &secret, 32, &skeyseed, &skeyseed_len );
-    
-    printf("Seed\n");
-    derive_seed(&left.ctx, &right.ctx, skeyseed);
-
-    // a questo punto al buffer che contiene lo ss devo aggiungere gli spi di initiator e responder 
-    // la domanda è a questo punto, questo buffer è meglio che me lo salvo da qualch parte???
-
-
-    wa = realloc(wa, 32+32+8+8);
-    memcpy(wa+64, &left.ctx.spi, 8);
-    memcpy(wa+72, &responder.sa.spi, 8);
-
-    //nel caso di T1 devo fare solo un append del counter, quindi incremdento la lunghezza di 1
-    size_t msg_len = 32 + 32 + SPI_LENGTH_BYTE + SPI_LENGTH_BYTE + 1;
-    uint8_t *msg = malloc(msg_len);
-    
-    memcpy(msg, wa, msg_len-1);
-    msg[msg_len-1] = 0x01;
-
-    printf("Messaggio nel main \n");
-    dump_memory(msg, msg_len);
 
     uint8_t *T_buffer = calloc(NUM_KEYS * SHA1_DIGEST_LENGTH, 1);
     size_t generated = 0;
@@ -322,51 +284,192 @@ int main(int argc, char* argv[]){
     unsigned int digest_len = SHA1_DIGEST_LENGTH;
     uint8_t *digest = malloc(digest_len);
     
-    /*
-    while(generated < NUM_KEYS*SHA1_DIGEST_LENGTH){
-
-        if(generated == 0){
-            prf(&skeyseed, skeyseed_len, &msg, msg_len, &digest, &digest_len);
-            //quindi se questa andrà a buon fine vuol dire che ho generato la prima parte perciò aggiungo l'output al buffer 
-            //ma a questo punto devo anche aggiornare il msg_len
-            memcpy(T_buffer, digest, digest_len);
-            generated += digest_len;
-
-            msg_len += SHA1_DIGEST_LENGTH;
-            msg = realloc(msg, msg_len);
-            
-            memmove(msg +20, msg, msg_len-20);
-            continue;
-        }
-            
-        memcpy(msg, digest, digest_len);
-        msg[msg_len-1]++;
-        prf(&skeyseed, skeyseed_len, &msg, msg_len, &digest, &digest_len);
-        memcpy(T_buffer+generated, digest, digest_len);
-        generated += 20;
-
-    }
-    */
-    prf_plus(&left.ctx, &right.ctx, T_buffer);
+    prf_plus(&left.ctx, &right.ctx, &T_buffer);
     printf("\n");
     dump_memory(T_buffer, NUM_KEYS*SHA1_DIGEST_LENGTH);
 
     //a questo punto posso popolare le chiavi 
+    uint8_t* SK_d = malloc(SHA1_DIGEST_LENGTH);
+    uint8_t* SK_ai = malloc(SHA1_DIGEST_LENGTH);
+    uint8_t* SK_ar = malloc(SHA1_DIGEST_LENGTH);
+    uint8_t* SK_ei = malloc(16); // questo va sostiutito con la lunghezza della chiave di AES, dato che è 128 bit sono 16 byte
+    uint8_t* SK_er = malloc(16); //parametrizzare anche questo 
+    uint8_t* SK_pi = malloc(SHA1_DIGEST_LENGTH);
+    uint8_t* SK_pr = malloc(SHA1_DIGEST_LENGTH);
+
+    memcpy(SK_d, T_buffer, SHA1_DIGEST_LENGTH);
+    memcpy(SK_ai, T_buffer + SHA1_DIGEST_LENGTH, SHA1_DIGEST_LENGTH);
+    memcpy(SK_ar, T_buffer + 2*SHA1_DIGEST_LENGTH, SHA1_DIGEST_LENGTH);
+    memcpy(SK_ei, T_buffer + 3*SHA1_DIGEST_LENGTH, 16);
+    memcpy(SK_er, T_buffer + 3*SHA1_DIGEST_LENGTH + 16, 16);
+    memcpy(SK_pi, T_buffer + 3*SHA1_DIGEST_LENGTH + 2*16, SHA1_DIGEST_LENGTH);
+    memcpy(SK_pr, T_buffer + 4*SHA1_DIGEST_LENGTH + 2*16, SHA1_DIGEST_LENGTH);
+    printf("\n");
+    printf("SK_d: ");
+    dump_memory(SK_d, SHA1_DIGEST_LENGTH);
+    printf("SK_ai: ");
+    dump_memory(SK_ai, SHA1_DIGEST_LENGTH);
+    printf("SK_ar: ");
+    dump_memory(SK_ar, SHA1_DIGEST_LENGTH);
+    printf("SK_ei: ");
+    dump_memory(SK_ei, 16);
+    printf("SK_er: ");
+    dump_memory(SK_er, 16);
+    printf("SK_pi: ");
+    dump_memory(SK_pi, SHA1_DIGEST_LENGTH);
+    printf("SK_pr: ");
+    dump_memory(SK_pr, SHA1_DIGEST_LENGTH);
+    printf("\n");
     
+
+    uint8_t id_i[8] = {0};
+    id_i[0] = 0x01;
+    id_i[1] = 0x00;   // Reserved
+    id_i[2] = 0x00;  
+    id_i[3] = 0x00;
+    inet_pton(AF_INET, "127.0.0.1", &id_i[4]); // Copia IP in binario nei successivi 4 byte
+
+    //il contenuto di id payload insieme a quello di auth e della proposal va messo all'interno di encrypted and authenticated
+
+    uint8_t auth_i[4] = {0};
+    auth_i[0] = 0x02;
+    auth_i[1] = 0x00;   // Reserved
+    auth_i[2] = 0x00;  
+    auth_i[3] = 0x00;
 
 
     //una volta generate le chiavi mi basta prendere il pacchetto precedente, mettergli in append il nonce del responder e i dati del ID payload
 
+    //l 'auth payload è composto dal primo messaggio, a cui si concatena il nonce del responder e l'hash dell'IDpayload
+    uint8_t* auth_payload = malloc(len + right.ctx.nonce_len + SHA1_DIGEST_LENGTH);
+    size_t auth_len =   len + right.ctx.nonce_len + SHA1_DIGEST_LENGTH;  // il seed me lo devo salvare da qualche parte
 
-    // dump di tutto 
-    // prendere il filename dalle variabili d'ambiente
-    FILE *fp;
-    fp = fopen("dump.log", "w"); 
+    //le variabili buff e len le ho prese da sopra, riformulare quella parte
+    memcpy(auth_payload, buff,len);
+    memcpy(auth_payload + len, right.ctx.nonce, right.ctx.nonce_len);
+    //dopo questi che dipendeno uno dalla richiesta e uno dalla risposta ne serve uno che dipende dallo scambio che deve avvenire ovvero quello di autenticazione, quidni
+    // si aggiunge l'hmac dell'id
 
-    fprintf(fp, "Ininitiaor {%016llX} --->", (unsigned long long) left.ctx.spi);
-    fprintf(fp, "SKEYSEED: ");
+    uint8_t* md = malloc(SHA1_DIGEST_LENGTH);
+    unsigned int md_len = 0;
+    HMAC(EVP_sha1(), SK_pi, SHA1_DIGEST_LENGTH, id_i, 8, md, &md_len);
+
+    memcpy(auth_payload + len + right.ctx.nonce_len, md, md_len);
+
+    // questo auth payload a questo punto deve essere dato in pasto ad un prf 
+    // AUTH = prf( prf(Shared Secret, "Key Pad for IKEv2"), <InitiatorSignedOctets>)
+    char *secret = "padrepio";
+    size_t secret_len = 8;
+
+    const char *key_pad_str = "Key Pad for IKEv2";
+    size_t key_pad_len = 17; // Senza \0
+
+    HMAC(EVP_sha1(),secret, secret_len, (const unsigned char *)key_pad_str, key_pad_len, md, &md_len);
+    printf("Key expansion \n");
+    dump_memory(md, md_len);
+
+    uint8_t* output = malloc(SHA1_DIGEST_LENGTH);
+    unsigned int out_len = 0;
+    //ora questo deve essere utilizzato pe firmare l'auth payload
+    HMAC(EVP_sha1(), md, md_len, auth_payload, auth_len, output, &out_len);
+    printf("AUTH PAYLOAD \n");
+    dump_memory(output, out_len);
+
+
+    // generato il paylaod quello che dobbiamo fare è crearne uno di tipo Encrypted and authenticated
+
+    ike_payload_header_t sk = {0};
+    sk.next_payload = NEXT_PAYLOAD_IDi;
+
+    ike_payload_header_t identity = {0};
+    identity.next_payload = NEXT_PAYLOAD_AUTH;
+    identity.length = htobe16(8+4);
+
+    ike_payload_header_t authentication = {0};
+    authentication.next_payload = NEXT_PAYLOAD_NONE;
+    authentication.length = htobe16(SHA1_DIGEST_LENGTH + 4 + 4); // da convertire il parametro della lunghezza
+
+    int plaintext_len = 8+SHA1_DIGEST_LENGTH +8+4;
+    uint8_t* enc_buffer = malloc(plaintext_len);
+    mempcpy(enc_buffer,&identity, 4);
+    memcpy(enc_buffer + 4, id_i, 8);
+    memcpy(enc_buffer + 12, &authentication, 4);
+    memcpy(enc_buffer +16, &auth_i, 4);
+    memcpy(enc_buffer +16+4, output, out_len);
+
+    //questo è il payload che devo cifrare, quindi adesso mi creo un iv che deve essere di 16 byte
+
+    size_t iv_len = 16;
+    uint8_t* iv = malloc(iv_len);
+    getrandom(iv, iv_len, 0);
+
+    printf("IV: \n");
+    dump_memory(iv, iv_len);
     
+    EVP_CIPHER_CTX *ctx;
+    ctx = EVP_CIPHER_CTX_new();
+    EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, SK_ei, iv);
+    EVP_CIPHER_CTX_set_padding(ctx, 0);
+    //per vedere quanto sarà il padding verificare la lunghezza del buffer di cifratura
+    //anche la quantità di padding va cifrata, il padding va calcolateo considerando che un byte deve essere riservato alla pad length
+    //quindi dal padd da aggiungere togliamo un byte
+    int padd =  16 - (plaintext_len % 16); 
+    printf("Padding da aggiungere: %d", padd);
+    printf("\n");
 
+    enc_buffer = realloc(enc_buffer, plaintext_len + padd);
+    memset(enc_buffer + plaintext_len, 0, padd-1);
+    memset(enc_buffer + plaintext_len + padd -1, padd-1, 1);
+    plaintext_len += padd;
+
+    dump_memory(enc_buffer, plaintext_len);
+
+
+    uint8_t ciphertext[256];
+    int len_cip, final_len;;
+    int ciphertext_len;
+
+
+    EVP_EncryptUpdate(ctx, ciphertext, &len_cip, enc_buffer, plaintext_len);
+    ciphertext_len = len_cip;
+
+    printf("Ciphertext len %d vs Actual length %d", ciphertext_len, plaintext_len);
+    //after completing the encryption we have to calculate the checksum
+
+    // al checksum va aggiunto anche l'header    
+    uint8_t* checksum = malloc(SHA1_DIGEST_LENGTH);
+    printf("Ciphertext:\n");
+    dump_memory(ciphertext, ciphertext_len);
+
+
+    size_t response_len = 4+iv_len+SHA1_DIGEST_LENGTH+ciphertext_len;
+    uint8_t* response = malloc(response_len);
+    sk.length = htobe16(response_len);
+    memcpy(response, &sk, 4);
+    memcpy(response + 4 , iv, iv_len);
+    memcpy(response +4 + iv_len , ciphertext, ciphertext_len);
+    //prima cè da incluedere anche l'header
+    
+    hd->exchange_type = EXCHANGE_IKE_AUTH;
+    hd->next_payload = NEXT_PAYLOAD_SK;
+    hd->message_id = htobe32(1);
+    hd->length = htobe32(28+response_len);
+    uint8_t flags[] = {FLAG_I, 0};
+    set_flags(hd, flags);
+
+    response = realloc(response, response_len+28);
+    memmove(response+28, response, response_len);
+    memcpy(response, hd, 28);
+    //HMAC(EVP_sha1(), SK_ai, SHA1_DIGEST_LENGTH, response, response_len, checksum, &md_len);
+    //memcpy(response + response_len +8 , checksum, SHA1_DIGEST_LENGTH);
+    retval =  send(left.node.fd, response, response_len+28, 0);
+    // dump di tutto 
+    printf("################################");
+    printf("Response");
+    printf("################################");
+    printf("\n");
+    dump_memory(response, response_len + 28);
+    // prendere il filename dalle variabili d'ambiente
     
     return 0;
 }

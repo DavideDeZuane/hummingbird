@@ -3,6 +3,26 @@
 
 #include "../common_include.h"
 
+/*
+1                   2                   3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| Next Payload  |C|  RESERVED   |         Payload Length        |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|   ID Type     |                 RESERVED                      |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+~                   Identification Data                         ~
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+*/
+typedef  struct {
+    uint8_t id_type;
+    uint8_t RESERVED1;
+    uint16_t RESERVED2;
+} __attribute__((packed)) ike_identification_payload_t ;
+
+
 
 typedef struct {
     uint16_t type;

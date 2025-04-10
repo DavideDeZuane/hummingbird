@@ -154,9 +154,15 @@ void derive_seed(crypto_context_t* left, crypto_context_t* right, uint8_t* seed)
 /**
 * @brief This function populate the T_buffer
 */
-void prf_plus(crypto_context_t* left, crypto_context_t* right, uint8_t* T_buffer){
+void prf_plus(crypto_context_t* left, crypto_context_t* right, uint8_t** T_buffer){
     //il left e right crypto ci server per ottenere le chiavi e quindi derivare il segreto condiviso 
     //così come i nonce ci servono per derivare il SKEYSEED
+
+    if(*T_buffer == NULL){
+        printf("The buffer is not defined");
+        return;
+    }
+
     uint8_t* seed = malloc(SHA1_DIGEST_LENGTH);
     derive_seed(left, right, seed);
 
@@ -192,7 +198,7 @@ void prf_plus(crypto_context_t* left, crypto_context_t* right, uint8_t* T_buffer
             msg_len += SHA1_DIGEST_LENGTH;
             msg = realloc(msg, msg_len);
             memmove(msg + SHA1_DIGEST_LENGTH , msg, msg_len - SHA1_DIGEST_LENGTH);
-            memcpy(T_buffer, digest, digest_len);
+            memcpy(*T_buffer, digest, digest_len);
             // update the generated size to bypass this if 
             generated += SHA1_DIGEST_LENGTH;
             // questa è un iterazionein più ma sti cazzi
@@ -204,7 +210,7 @@ void prf_plus(crypto_context_t* left, crypto_context_t* right, uint8_t* T_buffer
 
         // aggiungere un controllo sul valore di ritorno della funzione
         prf(&seed, SHA1_DIGEST_LENGTH, &msg, msg_len, &digest, &digest_len);
-        memcpy(T_buffer + generated, digest, digest_len);
+        memcpy(*T_buffer + generated, digest, digest_len);
         generated += SHA1_DIGEST_LENGTH;
     }
 
