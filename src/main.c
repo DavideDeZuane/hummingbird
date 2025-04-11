@@ -448,57 +448,43 @@ int main(int argc, char* argv[]){
     // se non vogliamo specificare questo possiamo utilizzare AUTH_HMAC_SHA1_160 che quindi non ha bisogno di troncamento
     size_t icv_len = 12; 
 
-    size_t response_len = 4+iv_len+ciphertext_len+icv_len;
+    size_t response_len = 4+iv_len+ciphertext_len;
     uint8_t* response = malloc(response_len);
-    sk.length = htobe16(response_len);
+    sk.length = htobe16(response_len+icv_len);
 
     memcpy(response, &sk, 4);
     memcpy(response + 4 , iv, iv_len);
     memcpy(response +4 + iv_len , ciphertext, ciphertext_len);
-
-    printf("Data to sign\n");
-    dump_memory(response, response_len-icv_len);
-    
-    uint8_t* checksum = malloc(SHA1_DIGEST_LENGTH);
-    printf("Key dump SK_ai\n");
-    dump_memory(SK_ai, SHA1_DIGEST_LENGTH);
-
-    HMAC(EVP_sha1(), SK_ai, SHA1_DIGEST_LENGTH, response, response_len-icv_len, checksum, &md_len);
-    mempcpy(response + 4 + iv_len + ciphertext_len, checksum, icv_len);
-
-    printf("Checksum truncated\n");
-    dump_memory(checksum, 12);
-    //prima cè da incluedere anche l'header
-    printf("Checksum complete\n");
-    dump_memory(checksum, SHA1_DIGEST_LENGTH);
     
     hd->exchange_type = EXCHANGE_IKE_AUTH;
     hd->next_payload = NEXT_PAYLOAD_SK;
     hd->message_id = htobe32(1);
-    hd->length = htobe32(28+response_len);
+    hd->length = htobe32(28+response_len+icv_len);
     uint8_t flags[] = {FLAG_I, 0};
     set_flags(hd, flags);
 
-    printf("header");
-    dump_memory(hd, 28);
-
-    response = realloc(response, response_len+28);
-    memmove(response+28, response, response_len);
+    response_len +=28;
+    response = realloc(response, response_len);
+    memmove(response+28, response, response_len-28);
     memcpy(response, hd, 28);    
+
+    uint8_t *checksum = malloc(icv_len);
+
+    printf("Dato to authenticate\n");
+    dump_memory(response, response_len);
     
-    /*
-    HMAC(EVP_sha1(), SK_ar, SHA1_DIGEST_LENGTH, response, response_len-icv_len, checksum, &md_len);
-    mempcpy(response + 28  + response_len -icv_len, checksum, icv_len);
+    HMAC(EVP_sha1(), SK_ar, SHA1_DIGEST_LENGTH, response, response_len, checksum, &md_len);
+    response = realloc(response, response_len+icv_len);
+    mempcpy(response + 28 + 4 +iv_len + ciphertext_len, checksum, icv_len);
     printf("Checksum\n");
     dump_memory(checksum, 12);
-    */
 
-    retval =  send(left.node.fd, response, response_len+28, 0);
+    retval =  send(left.node.fd, response, response_len+icv_len, 0);
     // dump di tutto 
     printf("################################\n");
     printf("Response\n");
     printf("################################\n");
-    dump_memory(response, response_len + 28);
+    dump_memory(response, response_len+icv_len);
     // prendere il filename dalle variabili d'ambiente
     
     return 0;
