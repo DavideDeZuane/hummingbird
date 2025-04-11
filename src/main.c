@@ -327,7 +327,10 @@ int main(int argc, char* argv[]){
     id_i[1] = 0x00;   // Reserved
     id_i[2] = 0x00;  
     id_i[3] = 0x00;
-    inet_pton(AF_INET, "127.0.0.1", &id_i[4]); // Copia IP in binario nei successivi 4 byte
+    id_i[4] = 0x00;
+    id_i[5] = 0x00;
+    id_i[6] = 0x00;
+    id_i[7] = 0x00;
 
     //il contenuto di id payload insieme a quello di auth e della proposal va messo all'interno di encrypted and authenticated
 
@@ -339,10 +342,9 @@ int main(int argc, char* argv[]){
 
 
     //una volta generate le chiavi mi basta prendere il pacchetto precedente, mettergli in append il nonce del responder e i dati del ID payload
-
     //l 'auth payload è composto dal primo messaggio, a cui si concatena il nonce del responder e l'hash dell'IDpayload
     uint8_t* auth_payload = malloc(len + right.ctx.nonce_len + SHA1_DIGEST_LENGTH);
-    size_t auth_len =   len + right.ctx.nonce_len + SHA1_DIGEST_LENGTH;  // il seed me lo devo salvare da qualche parte
+    size_t auth_len =  len + right.ctx.nonce_len + SHA1_DIGEST_LENGTH;  // il seed me lo devo salvare da qualche parte
 
     //le variabili buff e len le ho prese da sopra, riformulare quella parte
     memcpy(auth_payload, buff,len);
@@ -375,7 +377,7 @@ int main(int argc, char* argv[]){
     printf("AUTH PAYLOAD \n");
     dump_memory(output, out_len);
 
-
+    //la parte di authentication non è ancora il problema dato che non otteniamo l'errore authentication failed
     // generato il paylaod quello che dobbiamo fare è crearne uno di tipo Encrypted and authenticated
 
     ike_payload_header_t sk = {0};
@@ -388,13 +390,14 @@ int main(int argc, char* argv[]){
     ike_payload_header_t authentication = {0};
     authentication.next_payload = NEXT_PAYLOAD_NONE;
     authentication.length = htobe16(SHA1_DIGEST_LENGTH + 4 + 4); // da convertire il parametro della lunghezza
+    // la lunghezza è 20 per il digest + 4 per l'header + 4 per informazioni per specificare l'auth method
 
-    int plaintext_len = 8+SHA1_DIGEST_LENGTH +8+4;
+    int plaintext_len = 8 + SHA1_DIGEST_LENGTH + 8+ 4 ;
     uint8_t* enc_buffer = malloc(plaintext_len);
-    mempcpy(enc_buffer,&identity, 4);
-    memcpy(enc_buffer + 4, id_i, 8);
+    mempcpy(enc_buffer ,&identity, 4);
+    memcpy(enc_buffer + 4 , id_i, 8);
     memcpy(enc_buffer + 12, &authentication, 4);
-    memcpy(enc_buffer +16, &auth_i, 4);
+    memcpy(enc_buffer +16 , &auth_i, 4);
     memcpy(enc_buffer +16+4, output, out_len);
 
     //questo è il payload che devo cifrare, quindi adesso mi creo un iv che deve essere di 16 byte
@@ -426,7 +429,7 @@ int main(int argc, char* argv[]){
 
 
     uint8_t ciphertext[256];
-    int len_cip, final_len;;
+    int len_cip;
     int ciphertext_len;
 
 
@@ -437,18 +440,37 @@ int main(int argc, char* argv[]){
     //after completing the encryption we have to calculate the checksum
 
     // al checksum va aggiunto anche l'header    
-    uint8_t* checksum = malloc(SHA1_DIGEST_LENGTH);
     printf("Ciphertext:\n");
     dump_memory(ciphertext, ciphertext_len);
 
+    // la dimensione del checksum deve essere di 12 byte, dato che l'algoritmo che si utilizza per calcolarlo è
+    // AUTH_HMAC_SHA1_96 bytes because the HMAC gets truncated from 160 to 96 bits 
+    // se non vogliamo specificare questo possiamo utilizzare AUTH_HMAC_SHA1_160 che quindi non ha bisogno di troncamento
+    size_t icv_len = 12; 
 
-    size_t response_len = 4+iv_len+SHA1_DIGEST_LENGTH+ciphertext_len;
+    size_t response_len = 4+iv_len+ciphertext_len+icv_len;
     uint8_t* response = malloc(response_len);
     sk.length = htobe16(response_len);
+
     memcpy(response, &sk, 4);
     memcpy(response + 4 , iv, iv_len);
     memcpy(response +4 + iv_len , ciphertext, ciphertext_len);
+
+    printf("Data to sign\n");
+    dump_memory(response, response_len-icv_len);
+    
+    uint8_t* checksum = malloc(SHA1_DIGEST_LENGTH);
+    printf("Key dump SK_ai\n");
+    dump_memory(SK_ai, SHA1_DIGEST_LENGTH);
+
+    HMAC(EVP_sha1(), SK_ai, SHA1_DIGEST_LENGTH, response, response_len-icv_len, checksum, &md_len);
+    mempcpy(response + 4 + iv_len + ciphertext_len, checksum, icv_len);
+
+    printf("Checksum truncated\n");
+    dump_memory(checksum, 12);
     //prima cè da incluedere anche l'header
+    printf("Checksum complete\n");
+    dump_memory(checksum, SHA1_DIGEST_LENGTH);
     
     hd->exchange_type = EXCHANGE_IKE_AUTH;
     hd->next_payload = NEXT_PAYLOAD_SK;
@@ -457,17 +479,25 @@ int main(int argc, char* argv[]){
     uint8_t flags[] = {FLAG_I, 0};
     set_flags(hd, flags);
 
+    printf("header");
+    dump_memory(hd, 28);
+
     response = realloc(response, response_len+28);
     memmove(response+28, response, response_len);
-    memcpy(response, hd, 28);
-    //HMAC(EVP_sha1(), SK_ai, SHA1_DIGEST_LENGTH, response, response_len, checksum, &md_len);
-    //memcpy(response + response_len +8 , checksum, SHA1_DIGEST_LENGTH);
+    memcpy(response, hd, 28);    
+    
+    /*
+    HMAC(EVP_sha1(), SK_ar, SHA1_DIGEST_LENGTH, response, response_len-icv_len, checksum, &md_len);
+    mempcpy(response + 28  + response_len -icv_len, checksum, icv_len);
+    printf("Checksum\n");
+    dump_memory(checksum, 12);
+    */
+
     retval =  send(left.node.fd, response, response_len+28, 0);
     // dump di tutto 
-    printf("################################");
-    printf("Response");
-    printf("################################");
-    printf("\n");
+    printf("################################\n");
+    printf("Response\n");
+    printf("################################\n");
     dump_memory(response, response_len + 28);
     // prendere il filename dalle variabili d'ambiente
     
