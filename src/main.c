@@ -197,7 +197,7 @@ int main(int argc, char* argv[]){
         return -1;
     }
 
-    
+
     //la gestione della recv e del caso in cui il timeout scade va gestita nella parte network
     uint8_t* buffer = calloc(MAX_PAYLOAD, sizeof(uint8_t));
     printf("Waiting...\n");
@@ -298,22 +298,6 @@ int main(int argc, char* argv[]){
     memcpy(SK_er, T_buffer + 3*SHA1_DIGEST_LENGTH + 16, 16);
     memcpy(SK_pi, T_buffer + 3*SHA1_DIGEST_LENGTH + 2*16, SHA1_DIGEST_LENGTH);
     memcpy(SK_pr, T_buffer + 4*SHA1_DIGEST_LENGTH + 2*16, SHA1_DIGEST_LENGTH);
-    printf("\n");
-    printf("SK_d: ");
-    dump_memory(SK_d, SHA1_DIGEST_LENGTH);
-    printf("SK_ai: ");
-    dump_memory(SK_ai, SHA1_DIGEST_LENGTH);
-    printf("SK_ar: ");
-    dump_memory(SK_ar, SHA1_DIGEST_LENGTH);
-    printf("SK_ei: ");
-    dump_memory(SK_ei, 16);
-    printf("SK_er: ");
-    dump_memory(SK_er, 16);
-    printf("SK_pi: ");
-    dump_memory(SK_pi, SHA1_DIGEST_LENGTH);
-    printf("SK_pr: ");
-    dump_memory(SK_pr, SHA1_DIGEST_LENGTH);
-    printf("\n");
     
 
 
@@ -482,8 +466,6 @@ int main(int argc, char* argv[]){
     printf("################################\n");
     dump_memory(response, response_len+icv_len);
     // prendere il filename dalle variabili d'ambiente
-
-
 
     
     return 0;
