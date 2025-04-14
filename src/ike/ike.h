@@ -7,20 +7,18 @@
 #include "../socket/peer.h"
 #include "../crypto/crypto.h"
 
-/**
-* @brief Questo enum serve per distinguere il caso in cui stiamo trattando un initiator o un responder
-* questo perchè se si tratta di un initiator la chiave sarà di un tipo se si tratta di un responder 
-* sarà di un altro tipo 
-*/
 typedef enum {
     IKE_INITIATOR,
     IKE_RESPONDER
 } ike_role_t;
 
 /**
-* @brief questo struct rapprenta la ike security association
-* quindi lo stato condiviso tra i due partecipanti uno dei parametri significativi
-* è la lunghezza delle chiavi dato che dipende dalla funzione prf utilizzata
+* @brief This struct represent the security association for the Internet Key Exchange protocol, 
+* in particular the keys that are used in the exchange between the peer to authenticate each other, 
+* encrypt the traffic and derive the keys for IPsec.
+* @note There are two lengths for keys, in fact we have that 
+* - the size of encryption keys depend on the algorithm you use. 
+* - While the size of the other keys depends on the output of the chosen prf function
 */
 typedef struct {
     uint8_t *sk_d;  
@@ -30,18 +28,20 @@ typedef struct {
     uint8_t *sk_er;
     uint8_t *sk_pi;
     uint8_t *sk_pr;
-    size_t key_len;
+    size_t oth_key_len;
+    size_t enc_key_len;
 } ike_sa_t;
 
 /**
-* @brief questo struct rapprenta la struttura che ha un partecipante al protocollo IKE, ovvero:
-* è un endpoint, quindi ha delle informazioni di rete 
-* ha un crypto_context ovvero ha del materiale crittografico che verrà utilizzato per derivare lo stato condiivisi tra i due
-* il security parameter index
+* @brief This struct represents the structure that an IKE protocol participant has, viz:
+* - it is a node, so it has network information to be reachable 
+* - it has cryptographic material that will be used to derive the shared state between the two
+* - has a role on the exchange, which can be initiator or responder 
+* @note This is what someone needs to participate in the ike exchange
 */
 typedef struct {
-    net_endpoint_t node;
     ike_role_t role;
+    net_endpoint_t node;
     crypto_context_t ctx;
 } ike_partecipant_t;
 
@@ -54,6 +54,6 @@ typedef struct {
     ike_sa_t association;
 } ike_session_t;
 
-void initiate_ike(ike_partecipant_t* left, ike_partecipant_t* rigth, config* cfg);
+void initiate_ike(ike_partecipant_t* left, ike_partecipant_t* right, config* cfg);
 
 #endif

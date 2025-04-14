@@ -15,6 +15,9 @@ The NULL Authentication Method in the Internet Key Exchange Protocol Version 2 (
 
 
 
+    //THIS EXCHANGE IS NECESSARY BECAUSE STRONGSWAN USE COOKIE AS DDOS PREVENTION
+    //SO BEFORE GENERATING THE SKEYSEED AND OTHER THINGS HE WAIT THE IKE_AUTH_INIT 
+
 # Setup 
 
 Nella cartella src è presente il codice dell'implementazione di minimal ike.
@@ -65,7 +68,7 @@ I parametri di IKEv2 sono disponibili qui https://www.iana.org/assignments/ikev2
 
 ### Blocking
 
-Dat oche send e recv (così come le altre varianti) sono chiamate bloccanti è bene specificare il tempo massimo oltre il quale la chiamata termina con un errore se non è stato ricevuto o inviato nulla. Il codice di errore che viene ritornato nel caso in cui scada il timer è `EAGAIN`, che sta per "Error Again" indica che l'operazione richiesta (come una lettura o scrittura su un socket) non può essere completata in quel momento, ma potrebbe avere successo se riprovata più tardi.
+Dato che send e recv (così come le altre varianti) sono chiamate bloccanti è bene specificare il tempo massimo oltre il quale la chiamata termina con un errore se non è stato ricevuto o inviato nulla. Il codice di errore che viene ritornato nel caso in cui scada il timer è `EAGAIN`, che sta per "Error Again" indica che l'operazione richiesta (come una lettura o scrittura su un socket) non può essere completata in quel momento, ma potrebbe avere successo se riprovata più tardi.
 
 ### UDP 
 

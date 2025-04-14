@@ -196,10 +196,8 @@ int main(int argc, char* argv[]){
         printf("Errore per la send");
         return -1;
     }
-    //il free non azzera il contenuto dice solamente che la memoria ora è disponibile, quindi la rilascia al sistema operativo
-    // questo buffer molto probabilmente servirà per la fase di auth
-    // non facciamo il free ma lo riutilizziamo in fase di auth
 
+    
     //la gestione della recv e del caso in cui il timeout scade va gestita nella parte network
     uint8_t* buffer = calloc(MAX_PAYLOAD, sizeof(uint8_t));
     printf("Waiting...\n");
@@ -222,8 +220,12 @@ int main(int argc, char* argv[]){
     //porcodio
     responder.sa.spi = hd->responder_spi;
     right.ctx.spi = hd->responder_spi;
-    // funzione che fa il parsing, quello che fa è prendere la strucct del responder e il buffer che poi utilizzeremo per pooplarla
-    //CONVERT THIS PIECE OF CODE UNTIL THE END TO A FUNCTION
+
+    /* 
+    #########################################################################################
+    # RESPONSE PARSING, to move in ike directory and use in the recv method
+    #########################################################################################
+    */
     uint8_t *ptr = buffer+28; 
     uint8_t next_payload = ptr[0];         
     uint8_t current_payload = hd->next_payload;
@@ -257,27 +259,19 @@ int main(int argc, char* argv[]){
         next_payload = payload->next_payload;
         ptr += be16toh(payload->length);
     }
-    //END
-
-    /*   
-    //THIS EXCHANGE IS NECESSARY BECAUSE STRONGSWAN USE COOKIE AS DDOS PREVENTION
-    //SO BEFORE GENERATING THE SKEYSEED AND OTHER THINGS HE WAIT THE IKE_AUTH_INIT 
-    hd->exchange_type = EXCHANGE_IKE_AUTH;
-    hd->message_id = htobe32(1);
-    uint8_t flags[] = {FLAG_I, 0};
-    set_flags(hd, flags);
-    memset(buff, 0, len);
-    memcpy(buff, hd, 28);
-    retval =  send(left.node.fd, buff, len, 0);
-    //END - THIS PIECE OF CODE GENERATE THE IKE AUTH MOCK
-
+    /*
+    #########################################################################################
+    # END
+    #########################################################################################
     */
 
-    //fare una funzione che si chiama derive keys che deriva tutte le chiavi necessarie per le fasi successive
-    // al cui interno metto tutta la parte di derivazione del segreto e concatenazione dei nonce
     
-    // questa funzione che deriva il segreto condiviso io la chiamerei nella funzione che si occupa di derivare il seed
-
+    /* 
+    #########################################################################################
+    # GENERATING KEY MATERIALS, the prf plus method is in the crypto, but the key materials
+    # to be generated depends on parameters of ike like number of keys
+    #########################################################################################
+    */
     uint8_t *T_buffer = calloc(NUM_KEYS * SHA1_DIGEST_LENGTH, 1);
     size_t generated = 0;
     
@@ -321,6 +315,13 @@ int main(int argc, char* argv[]){
     dump_memory(SK_pr, SHA1_DIGEST_LENGTH);
     printf("\n");
     
+
+
+    /*
+    ####################################################################################
+    # GENERATING THE IKE AUTH EXCHANGE
+    ####################################################################################
+    */
 
     uint8_t id_i[8] = {0};
     id_i[0] = 0x01;
@@ -377,9 +378,6 @@ int main(int argc, char* argv[]){
     printf("AUTH PAYLOAD \n");
     dump_memory(output, out_len);
 
-    //la parte di authentication non è ancora il problema dato che non otteniamo l'errore authentication failed
-    // generato il paylaod quello che dobbiamo fare è crearne uno di tipo Encrypted and authenticated
-
     ike_payload_header_t sk = {0};
     sk.next_payload = NEXT_PAYLOAD_IDi;
 
@@ -394,14 +392,15 @@ int main(int argc, char* argv[]){
 
     int plaintext_len = 8 + SHA1_DIGEST_LENGTH + 8+ 4 ;
     uint8_t* enc_buffer = malloc(plaintext_len);
-    mempcpy(enc_buffer ,&identity, 4);
-    memcpy(enc_buffer + 4 , id_i, 8);
-    memcpy(enc_buffer + 12, &authentication, 4);
+
+    mempcpy(enc_buffer ,&identity, GEN_HDR_DIM);
+    memcpy(enc_buffer + GEN_HDR_DIM , id_i, 8);
+    memcpy(enc_buffer + 12, &authentication, GEN_HDR_DIM);
     memcpy(enc_buffer +16 , &auth_i, 4);
     memcpy(enc_buffer +16+4, output, out_len);
 
     //questo è il payload che devo cifrare, quindi adesso mi creo un iv che deve essere di 16 byte
-
+    //la dimensione dell'iv dipendende dalla lunghezza della chiave in cbc
     size_t iv_len = 16;
     uint8_t* iv = malloc(iv_len);
     getrandom(iv, iv_len, 0);
@@ -436,10 +435,7 @@ int main(int argc, char* argv[]){
     EVP_EncryptUpdate(ctx, ciphertext, &len_cip, enc_buffer, plaintext_len);
     ciphertext_len = len_cip;
 
-    printf("Ciphertext len %d vs Actual length %d", ciphertext_len, plaintext_len);
-    //after completing the encryption we have to calculate the checksum
-
-    // al checksum va aggiunto anche l'header    
+    printf("Ciphertext len %d vs Actual length %d\n", ciphertext_len, plaintext_len);
     printf("Ciphertext:\n");
     dump_memory(ciphertext, ciphertext_len);
 
@@ -448,13 +444,13 @@ int main(int argc, char* argv[]){
     // se non vogliamo specificare questo possiamo utilizzare AUTH_HMAC_SHA1_160 che quindi non ha bisogno di troncamento
     size_t icv_len = 12; 
 
-    size_t response_len = 4+iv_len+ciphertext_len;
+    size_t response_len = GEN_HDR_DIM+iv_len+ciphertext_len;
     uint8_t* response = malloc(response_len);
-    sk.length = htobe16(response_len+icv_len);
+    sk.length = htobe16(response_len+icv_len); //nel generare la lunghezza del payload cifrato e autenticato aggiunto la dimensione del checksum
 
-    memcpy(response, &sk, 4);
-    memcpy(response + 4 , iv, iv_len);
-    memcpy(response +4 + iv_len , ciphertext, ciphertext_len);
+    memcpy(response, &sk, GEN_HDR_DIM);
+    memcpy(response + GEN_HDR_DIM , iv, iv_len);
+    memcpy(response + GEN_HDR_DIM + iv_len , ciphertext, ciphertext_len);
     
     hd->exchange_type = EXCHANGE_IKE_AUTH;
     hd->next_payload = NEXT_PAYLOAD_SK;
@@ -473,7 +469,7 @@ int main(int argc, char* argv[]){
     printf("Dato to authenticate\n");
     dump_memory(response, response_len);
     
-    HMAC(EVP_sha1(), SK_ar, SHA1_DIGEST_LENGTH, response, response_len, checksum, &md_len);
+    HMAC(EVP_sha1(), SK_ai, SHA1_DIGEST_LENGTH, response, response_len, checksum, &md_len);
     response = realloc(response, response_len+icv_len);
     mempcpy(response + 28 + 4 +iv_len + ciphertext_len, checksum, icv_len);
     printf("Checksum\n");
@@ -486,6 +482,9 @@ int main(int argc, char* argv[]){
     printf("################################\n");
     dump_memory(response, response_len+icv_len);
     // prendere il filename dalle variabili d'ambiente
+
+
+
     
     return 0;
 }

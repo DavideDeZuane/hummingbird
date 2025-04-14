@@ -39,6 +39,11 @@ void generate_nonce(uint8_t *nonce, size_t length) {
     }
 }
 
+/**
+* @brief This function generates a pair of keys to use for the diffie-hellman exchange
+* @param[in] pri The private key, is of the type EVP_PKEY because the context inside this struct are necessary to derive correctly the secret
+* @param[in] pub The public key, this is a buffer becuase we have to send this content in the init exchange
+*/
 void generate_key(EVP_PKEY** pri, uint8_t** pub){
     
     *pri = NULL;
@@ -72,6 +77,11 @@ void generate_key(EVP_PKEY** pri, uint8_t** pub){
 
 }
 
+/**
+* @brief This function given a pointer to the cyrpto context of the initiator generates all the material this needs in order to complete the IKE protocol.
+* In particular we have: the security parameter index, the nonce, and the key pair for diffie hellman.
+* @param[in] ctx This is a pointer to the struct to populate
+*/
 void initiate_crypto(crypto_context_t* ctx){
 
     /* Spi configuration */
