@@ -18,7 +18,7 @@ int random_bytes(uint8_t** buff, size_t size){
     size_t result = getrandom(*buff, size, 0);
     if (result == -1) {
         perror("getrandom");
-        exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
 }
@@ -99,6 +99,15 @@ void generate_key(EVP_PKEY** pri, uint8_t** pub){
 */
 void initiate_crypto(crypto_context_t* ctx){
 
+    /* ######################################################################
+    COME PARAMETRO DELLA FUNZIONA AGGIUGNERE IL CONFIG E FARE LA CONVALIDA DEI CAMPI IN MANIERA ANALOGA A QUANTO FATTO PER 
+    LA PARTE NETWORK, QUINDI IN PARTICOLARE:
+    - LA NONCE LEN LA METTEREI DI DEFAULT A 32 (MAGARI LA TOLGO PURE, SI RISPARMIANO POCHISSIMI BYTE)
+    - LE PRIMITIVE SIMMETRICHE CONFIGURATE, IN MODO DA DETERMINARE QUALE SARÀ LA LUNGHEZZA DELLE CHIAVI
+    - PER QUELLE ASIMMETRICHE QUESTO VA AD INCIDERE SULLA DIMENSIONE DEL BUFFER DA UTILIZZARE
+    - LOOKUP DEL CODICE IANA PER OGNI ALGORITMO, IN MODO DA UTILIZZARLO NELLA PROPOSAL
+    - AGGIUNGERE GLI ALGORITMI ALLA IKE SA, IN QUESTO MODO QUESTO CONTIENE TUTTA LA PARTE CRITTOGRAFICA. 
+    */
     uint8_t* tmp = NULL;
     generate_raw_spi(&tmp, 8);
     memcpy(ctx->spi, tmp, 8);

@@ -145,19 +145,19 @@ int main(int argc, char* argv[]){
     int n;
     if ((n = ini_parse(DEFAULT_CONFIG, handler, &cfg)) != 0) {
         if (n == -1) {
-            log_error("Error on opening the configuration file %s\n", DEFAULT_CONFIG);
-            printf("Can't load %s\n", DEFAULT_CONFIG);
+            log_error("Error on opening the configuration file %s", COLOR_TEXT(ANSI_COLOR_YELLOW, DEFAULT_CONFIG));
+            log_error("The file %s not exists", COLOR_TEXT(ANSI_COLOR_RED, DEFAULT_CONFIG));
             return EXIT_FAILURE;
         }
         if (n > 0) {
-            log_error("Error on reading the configuration file %s, at line %d", DEFAULT_CONFIG, n);
-            printf("Can't load %s\n", DEFAULT_CONFIG);
+            log_error(ANSI_COLOR_RED "Error on reading the configuration file " ANSI_COLOR_BOLD "%s" ANSI_COLOR_RESET ANSI_COLOR_RED", at line" ANSI_COLOR_BOLD " %d" ANSI_COLOR_RESET , DEFAULT_CONFIG, n);
+            log_error(ANSI_COLOR_RED "Can't load " ANSI_COLOR_BOLD "%s" ANSI_COLOR_RESET ANSI_COLOR_RED " due to syntax error", DEFAULT_CONFIG);
             return EXIT_FAILURE;
         }
         return EXIT_FAILURE;
     }
 
-    log_info("Configuration file %s loaded successfully", COLOR_TEXT(ANSI_COLOR_YELLOW,DEFAULT_CONFIG));
+    log_info(ANSI_COLOR_GREEN "Configuration file %s loaded successfully" ANSI_COLOR_RESET, DEFAULT_CONFIG);
 
     
     ike_partecipant_t left = {0};
@@ -388,7 +388,8 @@ int main(int argc, char* argv[]){
     authentication.length = htobe16(SHA1_DIGEST_LENGTH + 4 + 4); // da convertire il parametro della lunghezza
     // la lunghezza è 20 per il digest + 4 per l'header + 4 per informazioni per specificare l'auth method
 
-    int plaintext_len = 8 + SHA1_DIGEST_LENGTH + 8+ 4 ;
+
+    int plaintext_len = 8 + SHA1_DIGEST_LENGTH + 8+ 4; //+ 8;
     uint8_t* enc_buffer = malloc(plaintext_len);
 
     mempcpy(enc_buffer ,&identity, GEN_HDR_DIM);

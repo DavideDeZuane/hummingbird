@@ -97,7 +97,7 @@ int socket_setup(int *sockfd, int AF){
     }
 
     *sockfd = retval;
-    log_info("Socketfd of type %s created...", address_family_to_string(AF));
+    log_debug(ANSI_COLOR_YELLOW "Local socket of type %s created..." ANSI_COLOR_RESET, address_family_to_string(AF));
     return 0;
 }
 
@@ -168,23 +168,22 @@ int socket_up(int *sockfd, struct sockaddr_storage *sk_i, int AF, struct sockadd
         perror("Errore");
         strerror(errno);
     }
-    /*
     struct sockaddr_storage addr;
     socklen_t addr_len = sizeof(addr);
     if (getsockname(*sockfd, (struct sockaddr *)&addr, &addr_len) == -1) {
         perror("getsockname");
         exit(EXIT_FAILURE);
     }
+
     if (addr.ss_family == AF_INET) {
         // IPv4
         struct sockaddr_in *addr_in = (struct sockaddr_in *)&addr;
-        log_info("Initiator running on ephemeral port (IPv4): %d", ntohs(addr_in->sin_port));
+        log_debug(ANSI_COLOR_YELLOW "Initiator running on ephemeral port (IPv4): %d" ANSI_COLOR_RESET, ntohs(addr_in->sin_port));
     } else if (addr.ss_family == AF_INET6) {
         // IPv6
         struct sockaddr_in6 *addr_in6 = (struct sockaddr_in6 *)&addr;
-        log_info("Initiator running on ephemeral port (IPv6): %d", ntohs(addr_in6->sin6_port));
+        log_debug(ANSI_COLOR_YELLOW "Initiator running on ephemeral port (IPv6): %d" ANSI_COLOR_RESET, ntohs(addr_in6->sin6_port));
     }
-    */
     return EXIT_SUCCESS;
 }
 
@@ -200,10 +199,9 @@ int initiate_netwok(net_endpoint_t *local, net_endpoint_t *remote, peer_options*
     }
     socket_set_address(&remote->addr, af, opts->address, port);
     remote->fd = -1;
-    log_info("Peer socket at %s:%d", opts->address, port);
+    log_debug(ANSI_COLOR_YELLOW"Peer socket at %s:%d" ANSI_COLOR_RESET, opts->address, port);
 
     //local endpoint configuration
-    log_info("Configuring local socket...");
     int retv = socket_up(&local->fd, &local->addr, remote->addr.ss_family, &remote->addr);
     if(retv == -1){
         printf("Error configuring the socket");
