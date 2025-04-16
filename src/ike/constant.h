@@ -3,11 +3,15 @@
 
 #include "../common_include.h"
 
+#define BYTE 1
 
 #define MID_NULL 0x00000000
 #define SPI_NULL 0x0000000000000000 //valore speciale del campo che indica che l'initiator non conosce l'SPI del responder
+
+#define MID_LENGTH_BYTE 4
 #define SPI_LENGTH 64
 #define SPI_LENGTH_BYTE 8
+#define HDR_LENGTH_BYTE 4
 
 /*#######################################################
 Flag, sono le maschere binarie per settare i flag

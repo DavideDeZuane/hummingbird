@@ -56,4 +56,9 @@ typedef struct {
 
 void initiate_ike(ike_partecipant_t* left, ike_partecipant_t* right, config* cfg);
 
+int exchange_start();
+
+// questa funzione deve eseguire il parsing della risposta che viene dal responder
+void parse_ike_packet();
+
 #endif

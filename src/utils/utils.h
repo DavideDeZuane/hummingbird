@@ -6,6 +6,14 @@
 #include <stdio.h>
 
 
+uint32_t bytes_to_uint32_be(const uint8_t *bytes);
+
+void uint32_to_bytes_be(uint32_t val, uint8_t *out_bytes);
+
+
+
+void alloc_buffer(uint8_t **buff, size_t size);
+
 /**
 * @brief This function return which fields of a given struct of the IKE packet must be converted for a big endian rappresentation
 * @param[in] type The type of the struct to convert

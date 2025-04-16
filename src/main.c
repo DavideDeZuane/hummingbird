@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/random.h>
+#include <sys/socket.h>
 
 //QUESTO INSIEME ALLA PARTE DI SEND E RECEVE DEVE ANDARE NELLA PARTE DI NETWORK 
 // la specifica dice che deve gestire messaggi che hanno massimo questa dimensoine
@@ -139,12 +140,23 @@ int main(int argc, char* argv[]){
     --------------------------------------------*/
     config cfg = init_config();
     log_set_level(LOG_INFO);
+
+
     int n;
-    if ((n = ini_parse(DEFAULT_CONFIG, handler, &cfg)) < 0) {
-        printf("Can't load %s\n", DEFAULT_CONFIG);
-        log_error("Error on opening the configuration file %s\n", DEFAULT_CONFIG);
-        return 1;
+    if ((n = ini_parse(DEFAULT_CONFIG, handler, &cfg)) != 0) {
+        if (n == -1) {
+            log_error("Error on opening the configuration file %s\n", DEFAULT_CONFIG);
+            printf("Can't load %s\n", DEFAULT_CONFIG);
+            return EXIT_FAILURE;
+        }
+        if (n > 0) {
+            log_error("Error on reading the configuration file %s, at line %d", DEFAULT_CONFIG, n);
+            printf("Can't load %s\n", DEFAULT_CONFIG);
+            return EXIT_FAILURE;
+        }
+        return EXIT_FAILURE;
     }
+
     log_info("Configuration file %s loaded successfully", COLOR_TEXT(ANSI_COLOR_YELLOW,DEFAULT_CONFIG));
 
     
@@ -219,7 +231,8 @@ int main(int argc, char* argv[]){
     
     //porcodio
     responder.sa.spi = hd->responder_spi;
-    right.ctx.spi = hd->responder_spi;
+    memcpy(right.ctx.spi, &hd->responder_spi , 8);
+   // right.ctx.spi = hd->responder_spi;
 
     /* 
     #########################################################################################
@@ -254,6 +267,8 @@ int main(int argc, char* argv[]){
             right.ctx.nonce = malloc(right.ctx.nonce_len);
             memcpy(right.ctx.nonce, ptr+4, 32);
         }
+        // qui skippo il payload security association
+        // c'è da controllarlo per la proposal
 
         //printf("Next payload di tipo %s, tra %d byte\n", next_payload_to_string(payload->next_payload), be16toh(payload->length));
         next_payload = payload->next_payload;
@@ -298,7 +313,6 @@ int main(int argc, char* argv[]){
     memcpy(SK_er, T_buffer + 3*SHA1_DIGEST_LENGTH + 16, 16);
     memcpy(SK_pi, T_buffer + 3*SHA1_DIGEST_LENGTH + 2*16, SHA1_DIGEST_LENGTH);
     memcpy(SK_pr, T_buffer + 4*SHA1_DIGEST_LENGTH + 2*16, SHA1_DIGEST_LENGTH);
-    
 
 
     /*
@@ -466,6 +480,39 @@ int main(int argc, char* argv[]){
     printf("################################\n");
     dump_memory(response, response_len+icv_len);
     // prendere il filename dalle variabili d'ambiente
+
+
+    printf("Waiting...\n");
+
+    buffer = realloc(buffer, MAX_PAYLOAD);
+    n = recv(left.node.fd, buffer, MAX_PAYLOAD, 0);
+    if (n < 0) {
+        if (errno == EAGAIN ) {
+            printf("Timeout scaduto: nessun dato ricevuto entro 1 secondo.\n");
+        } else {
+            perror("Errore durante la ricezione");
+            return EXIT_FAILURE;
+        }
+    } 
+
+    dump_memory(buffer, n);
+
+    ike_header_raw_t raw = {0};
+    parse_header_raw(buffer, &raw);
+    dump_memory(&raw, 28);
+    
+    uint32_t lun = bytes_to_uint32_be(raw.length);
+    printf("Length: %u\n", lun); 
+
+    // quando tratto i dati siamo già nel mondo della CPU, ovvero non stiamo più trattando byte 
+    // ma stiamo operando su una variabile che è nativa per la macchina, quindi il compilatore conosce l'endianess della CPU e come rappresentare il dato
+    // l'endianess conta solo quando interpretiamo l'array di byte come interi o altri dati nativi 
+    lun += 100;
+
+    uint32_to_bytes_be(lun, raw.length);
+    printf("Length: %u\n", bytes_to_uint32_be(raw.length)); 
+
+    secure_free(response, response_len);
 
     
     return 0;

@@ -5,6 +5,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+
+void alloc_buffer(uint8_t **buff, size_t size) {
+    if (buff == NULL || size == 0) return;
+
+    *buff = malloc(size);
+    if (*buff == NULL) {
+        fprintf(stderr, "Errore allocazione memoria\n");
+    }
+}
+
 /**
 * @brief This function securely remove all the content of a pointer, to achive this we use the function explicit_bzero because the memset function migth be ignored by the compiler
 * @param[in] ptr Pointer to the memory area to free
@@ -141,4 +151,18 @@ const char* next_payload_to_string(NextPayload type){
         case NEXT_PAYLOAD_SK:      return "";
     }
     return "";
+}
+
+uint32_t bytes_to_uint32_be(const uint8_t *bytes) {
+    return ((uint32_t)bytes[0] << 24) |
+           ((uint32_t)bytes[1] << 16) |
+           ((uint32_t)bytes[2] << 8)  |
+           ((uint32_t)bytes[3]);
+}
+
+void uint32_to_bytes_be(uint32_t val, uint8_t *out_bytes) {
+    out_bytes[0] = (val >> 24) & 0xFF;
+    out_bytes[1] = (val >> 16) & 0xFF;
+    out_bytes[2] = (val >> 8) & 0xFF;
+    out_bytes[3] = val & 0xFF;
 }

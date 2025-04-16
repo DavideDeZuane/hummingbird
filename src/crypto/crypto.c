@@ -13,6 +13,16 @@
 #include "../utils/utils.h"
 
 
+int random_bytes(uint8_t** buff, size_t size){
+    
+    size_t result = getrandom(*buff, size, 0);
+    if (result == -1) {
+        perror("getrandom");
+        exit(EXIT_FAILURE);
+    }
+    return EXIT_SUCCESS;
+}
+
 /**
 * @brief This function return a secure random string to use as security parameter index for the initiator using random material generated from /dev/urandom
 * @return Return 64 bit to use as index for initiator
@@ -26,18 +36,23 @@ uint64_t generate_spi() {
     return spi;
 }
 
+void generate_raw_spi(uint8_t** spi, size_t len) {
+    
+    alloc_buffer(spi, len);
+    random_bytes(spi, len);
+}
+
 /**
 * @brief This function return a nonce of the specified length
 * @param[out] nonce The buffer to populate
 * @param[in] length Length of the nonce to generate
 */
-void generate_nonce(uint8_t *nonce, size_t length) {
-    ssize_t result = getrandom(nonce, length, 0);
-    if (result == -1) {
-        perror("getrandom");
-        exit(EXIT_FAILURE);
-    }
+void generate_nonce(uint8_t** nonce, size_t len) {
+    
+    alloc_buffer(nonce, len);
+    random_bytes(nonce, len);
 }
+
 
 /**
 * @brief This function generates a pair of keys to use for the diffie-hellman exchange
@@ -84,12 +99,18 @@ void generate_key(EVP_PKEY** pri, uint8_t** pub){
 */
 void initiate_crypto(crypto_context_t* ctx){
 
+    uint8_t* tmp = NULL;
+    generate_raw_spi(&tmp, 8);
+    memcpy(ctx->spi, tmp, 8);
+
+
     /* Spi configuration */
-    ctx->spi = htobe64(generate_spi());
+    //ctx->spi = htobe64(generate_spi());
     /* Nonce configuration */
     ctx->nonce_len = DEFAULT_NONCE_LENGTH;
+
     ctx->nonce = malloc(ctx->nonce_len);
-    generate_nonce(ctx->nonce, ctx->nonce_len);
+    generate_nonce(&ctx->nonce, ctx->nonce_len);
     /* Key configuration */
     ctx->key_len = X25519_KEY_LENGTH;
     generate_key(&ctx->private_key, &ctx->public_key);

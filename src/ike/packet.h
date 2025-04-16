@@ -5,7 +5,6 @@
 #include "../socket/peer.h"
 
 
-void parse_response(ike_responder responder, uint8_t* buff);
-
+void parse_response(uint8_t* req, uint8_t* res, ike_partecipant_t* right);
 
 #endif

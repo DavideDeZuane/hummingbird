@@ -16,7 +16,7 @@
 * generated for the initiator
 */
 typedef struct {
-    uint64_t spi;
+    uint8_t spi[8];
     EVP_PKEY *private_key;
     uint8_t *public_key;  
     uint8_t* nonce;
@@ -38,7 +38,7 @@ uint64_t generate_spi();
 * @param[out] nonce The buffer to populate
 * @param[in] length Length of the nonce to generate
 */
-void generate_nonce(uint8_t *nonce, size_t length);
+//void generate_nonce(uint8_t *nonce, size_t length);
 
 /**
 * @brief This function print a baffer passed as input in hex format
