@@ -2,6 +2,7 @@
 #define CRYPTO_H
 
 #include "../common_include.h"
+#include "../config/config.h"
 #include <openssl/evp.h>
 #include <stdint.h>
 
@@ -25,7 +26,7 @@ typedef struct {
 } crypto_context_t;
 
 
-void initiate_crypto(crypto_context_t* ctx);
+void initiate_crypto(crypto_context_t* ctx, const cipher_options* suite);
 
 /**
 * @brief This function return a secure random string to use as security parameter index for the initiator using random material generated from /dev/urandom

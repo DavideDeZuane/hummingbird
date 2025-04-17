@@ -9,6 +9,7 @@
 #define DEFAULT_CONFIG "conf.ini"
 #define INET_FQNLEN 255
 #define MAX_PORT_LENGTH 6
+#define MAX_ALGR_LENGTH 10
 
 typedef struct {
     int level;
@@ -23,10 +24,10 @@ typedef struct {
 
 
 typedef struct {
-    int enc;
-    int aut;
-    int prf;
-    int kex;
+    char enc[MAX_ALGR_LENGTH];
+    char aut[MAX_ALGR_LENGTH];
+    char prf[MAX_ALGR_LENGTH];
+    char kex[MAX_ALGR_LENGTH];
 } cipher_options;
 
 typedef struct {

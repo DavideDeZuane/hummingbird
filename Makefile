@@ -14,7 +14,7 @@ SRCS = src/main.c 				\
 	   src/ike/ike.c
 
 LIBS = -linih -lssl -lcrypto
-CFLAGS = -Wall -I./src/config 	\
+CFLAGS = -DLOG_USE_COLOR -Wall -I./src/config 	\
 			   -I./src/log 		\
 			   -I./src/network 	\
 			   -I./src/socket 	\

@@ -20,7 +20,7 @@ void initiate_ike(ike_partecipant_t* left, ike_partecipant_t* right, config* cfg
 
     //the initiate crypto function has to return a int 
     //aggiungere le opzioni da verificare nella parte crypto quindi la lunghezza del nonce e le varie informazioni che riguardano le cipher suite da utilizzare
-    initiate_crypto(&left->ctx);
+    initiate_crypto(&left->ctx, &cfg->suite);
     (retv == 0) ? log_info(ANSI_COLOR_GREEN "[CRY] module successfully setup" ANSI_COLOR_RESET) : log_error("Could not initiate the [CRY] module") ;
 
 }

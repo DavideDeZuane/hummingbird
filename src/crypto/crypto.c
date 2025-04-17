@@ -1,4 +1,5 @@
 #include "crypto.h" // IWYU pragma: keep
+#include <endian.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -8,6 +9,7 @@
 #include <openssl/dh.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
+#include <sys/types.h>
 #include <time.h>
 #include "../log/log.h"
 #include "../utils/utils.h"
@@ -36,10 +38,12 @@ uint64_t generate_spi() {
     return spi;
 }
 
-void generate_raw_spi(uint8_t** spi, size_t len) {
+void generate_raw_spi(uint8_t spi[], size_t len) {
     
-    alloc_buffer(spi, len);
-    random_bytes(spi, len);
+    uint8_t* tmp = NULL; 
+    alloc_buffer(&tmp, len);
+    random_bytes(&tmp, len);
+    memcpy(spi, tmp, SPI_LENGTH_BYTE);
 }
 
 /**
@@ -97,33 +101,32 @@ void generate_key(EVP_PKEY** pri, uint8_t** pub){
 * In particular we have: the security parameter index, the nonce, and the key pair for diffie hellman.
 * @param[in] ctx This is a pointer to the struct to populate
 */
-void initiate_crypto(crypto_context_t* ctx){
+void initiate_crypto(crypto_context_t* ctx, const cipher_options* suite){
 
-    /* ######################################################################
-    COME PARAMETRO DELLA FUNZIONA AGGIUGNERE IL CONFIG E FARE LA CONVALIDA DEI CAMPI IN MANIERA ANALOGA A QUANTO FATTO PER 
-    LA PARTE NETWORK, QUINDI IN PARTICOLARE:
-    - LA NONCE LEN LA METTEREI DI DEFAULT A 32 (MAGARI LA TOLGO PURE, SI RISPARMIANO POCHISSIMI BYTE)
-    - LE PRIMITIVE SIMMETRICHE CONFIGURATE, IN MODO DA DETERMINARE QUALE SARÀ LA LUNGHEZZA DELLE CHIAVI
-    - PER QUELLE ASIMMETRICHE QUESTO VA AD INCIDERE SULLA DIMENSIONE DEL BUFFER DA UTILIZZARE
-    - LOOKUP DEL CODICE IANA PER OGNI ALGORITMO, IN MODO DA UTILIZZARLO NELLA PROPOSAL
-    - AGGIUNGERE GLI ALGORITMI ALLA IKE SA, IN QUESTO MODO QUESTO CONTIENE TUTTA LA PARTE CRITTOGRAFICA. 
-    */
-    uint8_t* tmp = NULL;
-    generate_raw_spi(&tmp, 8);
-    memcpy(ctx->spi, tmp, 8);
+    log_debug("Proposal configured: " ANSI_COLOR_BOLD "%s-%s-%s-%s", suite->enc, suite->aut, suite->kex, suite->prf);
 
-
-    /* Spi configuration */
-    //ctx->spi = htobe64(generate_spi());
+    /* SPI configuration */
+    generate_raw_spi(ctx->spi, SPI_LENGTH_BYTE);
+    size_t str_len = 2* SPI_LENGTH_BYTE +1;
+    char* str = calloc(str_len, BYTE); 
+    format_hex_string(str, str_len, ctx->spi, SPI_LENGTH_BYTE);
+    log_trace("%-5s: " ANSI_COLOR_BOLD "0x%s","SPIi", str);
+    
     /* Nonce configuration */
     ctx->nonce_len = DEFAULT_NONCE_LENGTH;
-
-    ctx->nonce = malloc(ctx->nonce_len);
     generate_nonce(&ctx->nonce, ctx->nonce_len);
+    str_len = 2 * DEFAULT_NONCE_LENGTH + 1;
+    str = realloc(str, str_len);
+    memset(str, 0, str_len);
+    format_hex_string(str, str_len, ctx->nonce, ctx->nonce_len);
+    log_trace("%-5s: " ANSI_COLOR_BOLD "0x%s", "Ni", str);
+    
     /* Key configuration */
     ctx->key_len = X25519_KEY_LENGTH;
     generate_key(&ctx->private_key, &ctx->public_key);
-
+    memset(str, 0, str_len);
+    format_hex_string(str, str_len, ctx->public_key, ctx->key_len);
+    log_trace("%-5s: " ANSI_COLOR_BOLD "0x%s", "KEi", str);
 }
 
 /**

@@ -1,10 +1,25 @@
 #include "../common_include.h" // IWYU pragma: keep
 #include "../log/log.h"
+#include <netinet/in.h>
+#include <stdio.h>
+#include <string.h>
 #include "config.h"
 
 #define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
 
 enum { CURVE_X25519, AES_128_CBC, HMAC_SHA1 };
+
+typedef struct {
+    const char *name;
+    char *field;
+} FieldMap;
+
+void secure_strncpy(char *dest, const char *src, size_t dest_size) {
+    // importanza di limitare la copia per evitare overflow
+    strncpy(dest, src, dest_size - 1);
+    dest[dest_size - 1] = '\0';
+
+}
 
 config init_config(){
     config def = {
@@ -33,11 +48,11 @@ config init_config(){
 int peer_handler(peer_options* responder, const char* section, const char* name, const char* value){
 
     if (MATCH("Peer", "hostname")) {
-        memcpy(responder->hostname, value, INET_FQNLEN);    
+        secure_strncpy(responder->hostname, value, INET_FQNLEN);
     } else if (MATCH("Peer", "address")) {
-        memcpy(responder->address, value, INET_ADDRSTRLEN);
+        secure_strncpy(responder->address, value, INET_ADDRSTRLEN);
     } else if (MATCH("Peer", "port")) {
-        memcpy(responder->port, value, MAX_PORT_LENGTH);
+        secure_strncpy(responder->port, value, MAX_PORT_LENGTH);
     } else {
         return 0;  
     }
@@ -45,10 +60,30 @@ int peer_handler(peer_options* responder, const char* section, const char* name,
 
 }
 
+int crypto_handler(cipher_options* suite, const char* section, const char* name, const char* value){
+    
+    const char* sec_name = "Cipher-suite"; 
+
+    if (MATCH(sec_name, "encryption")) {
+        secure_strncpy(suite->enc, value, MAX_ALGR_LENGTH);    
+    } else if (MATCH(sec_name, "authentication")) {
+        secure_strncpy(suite->aut, value, MAX_ALGR_LENGTH);    
+    } else if (MATCH(sec_name, "pseudorandom")) {
+        secure_strncpy(suite->prf, value, MAX_ALGR_LENGTH);    
+    } else if (MATCH(sec_name, "key-exchange")) {
+        secure_strncpy(suite->kex, value, MAX_ALGR_LENGTH);    
+    } else {
+        return 0;
+    }
+    return 1;
+}
+
 int handler(void* cfg, const char* section, const char* name, const char* value){
 
-    config *conf = (config *) cfg;
+    config* conf = (config *) cfg;
+
     peer_handler(&conf->peer, section, name, value);
+    crypto_handler(&conf->suite, section, name, value);
 
     if (MATCH("Logging", "level")) {
         log_set_level(atoi(value));    

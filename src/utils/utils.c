@@ -166,3 +166,11 @@ void uint32_to_bytes_be(uint32_t val, uint8_t *out_bytes) {
     out_bytes[2] = (val >> 8) & 0xFF;
     out_bytes[3] = val & 0xFF;
 }
+
+
+void format_hex_string(char *dest, size_t dest_size, const uint8_t *data, size_t data_len) {
+    size_t i, written = 0;
+    for (i = 0; i < data_len && written + 2 < dest_size; i++) {
+        written += snprintf(dest + written, dest_size - written, "%02x", data[i]);
+    }
+}

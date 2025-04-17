@@ -157,7 +157,9 @@ int main(int argc, char* argv[]){
         return EXIT_FAILURE;
     }
 
-    log_info(ANSI_COLOR_GREEN "Configuration file %s loaded successfully" ANSI_COLOR_RESET, DEFAULT_CONFIG);
+
+    log_info("Configuration file %s loaded successfully", DEFAULT_CONFIG);
+    log_info("[CFG] module successfully setup", DEFAULT_CONFIG);
 
     
     ike_partecipant_t left = {0};
