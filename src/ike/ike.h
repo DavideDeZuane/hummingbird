@@ -22,14 +22,12 @@ typedef enum {
 */
 typedef struct {
     uint8_t *sk_d;  
-    uint8_t *sk_ai;
-    uint8_t *sk_ar;
-    uint8_t *sk_ei;
-    uint8_t *sk_er;
-    uint8_t *sk_pi;
-    uint8_t *sk_pr;
+    uint8_t *sk_ai, *sk_ar;
+    uint8_t *sk_ei, *sk_er;
+    uint8_t *sk_pi, *sk_pr;
     size_t oth_key_len;
     size_t enc_key_len;
+    cipher_suite_t suite;
 } ike_sa_t;
 
 /**
@@ -55,6 +53,8 @@ typedef struct {
 } ike_session_t;
 
 void initiate_ike(ike_partecipant_t* left, ike_partecipant_t* right, config* cfg);
+
+int derive_ike_sa(ike_session_t* sa);
 
 int exchange_start();
 

@@ -161,7 +161,7 @@ int main(int argc, char* argv[]){
     log_info("Configuration file %s loaded successfully", DEFAULT_CONFIG);
     log_info("[CFG] module successfully setup", DEFAULT_CONFIG);
 
-    
+    ike_sa_t sa = {0};
     ike_partecipant_t left = {0};
     ike_partecipant_t right = {0};
     
@@ -204,6 +204,8 @@ int main(int argc, char* argv[]){
     size_t len = 0;
     
     buff = create_message(&packet_list, &len);
+
+    
 
     int retval =  send(left.node.fd, buff, len, 0);
     if(retval == -1){
@@ -291,7 +293,6 @@ int main(int argc, char* argv[]){
     */
     uint8_t *T_buffer = calloc(NUM_KEYS * SHA1_DIGEST_LENGTH, 1);
     size_t generated = 0;
-    
     unsigned int digest_len = SHA1_DIGEST_LENGTH;
     uint8_t *digest = malloc(digest_len);
     
@@ -315,6 +316,12 @@ int main(int argc, char* argv[]){
     memcpy(SK_er, T_buffer + 3*SHA1_DIGEST_LENGTH + 16, 16);
     memcpy(SK_pi, T_buffer + 3*SHA1_DIGEST_LENGTH + 2*16, SHA1_DIGEST_LENGTH);
     memcpy(SK_pr, T_buffer + 4*SHA1_DIGEST_LENGTH + 2*16, SHA1_DIGEST_LENGTH);
+
+    ike_session_t ike_sa = {0};
+    ike_sa.initiator = left;
+    ike_sa.responder = right;
+
+    derive_ike_sa(&ike_sa);
 
 
     /*

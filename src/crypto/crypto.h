@@ -7,9 +7,33 @@
 #include <stdint.h>
 
 #define X25519_KEY_LENGTH 32
+#define AES128_KEY_LENGTH 16
+
 #define DEFAULT_NONCE_LENGTH 32
 #define SHA1_DIGEST_LENGTH 20
 #define NUM_KEYS 7
+
+typedef enum {
+    ALGO_TYPE_ENCRYPTION,
+    ALGO_TYPE_PRF,
+    ALGO_TYPE_AUTH,
+    ALGO_TYPE_KEX,
+    ALGO_TYPE_UNKNOWN
+} algo_type_t;
+
+typedef struct {
+    const char *name;      
+    uint8_t     iana_code; 
+    uint16_t    key_len;  // the key len is in bit so we when use this value it have ho be converted 
+    algo_type_t type;      
+} algo_t;
+
+typedef struct {
+    algo_t enc;
+    algo_t auth;
+    algo_t kex;
+    algo_t prf;
+} cipher_suite_t;
 
 /**
 * @brief This struct rappresent the required key material to a ike initiator
@@ -26,13 +50,7 @@ typedef struct {
 } crypto_context_t;
 
 
-void initiate_crypto(crypto_context_t* ctx, const cipher_options* suite);
-
-/**
-* @brief This function return a secure random string to use as security parameter index for the initiator using random material generated from /dev/urandom
-* @return Return 64 bit to use as index for initiator
-*/
-uint64_t generate_spi();
+int initiate_crypto(cipher_suite_t* suite, crypto_context_t* ctx, const cipher_options* opts);
 
 /**
 * @brief This function return a nonce of the specified length

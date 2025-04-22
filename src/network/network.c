@@ -194,7 +194,6 @@ int initiate_netwok(net_endpoint_t *local, net_endpoint_t *remote, peer_options*
     port = validate_port(opts->port);
     if(af == AF_INVALID || port == PORT_INVALID){ 
         log_error("Invalid AF or Port for the address of the peer");
-        log_fatal("Sthutting down...");
         return EXIT_FAILURE;
     }
     socket_set_address(&remote->addr, af, opts->address, port);
