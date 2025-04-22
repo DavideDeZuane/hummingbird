@@ -1,5 +1,4 @@
 #include "common_include.h" // IWYU pragma: keep
-#include <endian.h>
 #include <ini.h>
 #include "./config/config.h"
 #include "./log/log.h"
@@ -12,21 +11,15 @@
 #include "network/network.h"
 #include "utils/utils.h"
 
-#include <openssl/dh.h>
-#include <openssl/evp.h>
-#include <openssl/err.h>
 #include <openssl/hmac.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <sys/random.h>
-#include <sys/socket.h>
 
 //QUESTO INSIEME ALLA PARTE DI SEND E RECEVE DEVE ANDARE NELLA PARTE DI NETWORK 
 // la specifica dice che deve gestire messaggi che hanno massimo questa dimensoine
 #define MAX_PAYLOAD 1280
+
+
 #define NUM_KEYS 7
 //spostare questo nel modulo packet, questa è quella parte che si occupa di creare il messaggio e il creeate message ritorna il buffer che poi verrò inviato tramite socket sulla rete 
 
@@ -160,7 +153,6 @@ int main(int argc, char* argv[]){
     log_info("Configuration file %s loaded successfully", DEFAULT_CONFIG);
     log_info("[CFG] module successfully setup", DEFAULT_CONFIG);
 
-    ike_sa_t sa = {0};
     ike_partecipant_t left = {0};
     ike_partecipant_t right = {0};
     
@@ -204,6 +196,8 @@ int main(int argc, char* argv[]){
     buff = create_message(&packet_list, &len);
 
 
+    // TUTTA LA PARTE DI GENERAZIONE DEL MESSAGGIO VA SPOSTATA NEL MODULO IKE
+
 
     int retval =  send(left.node.fd, buff, len, 0);
     if(retval == -1){
@@ -214,7 +208,8 @@ int main(int argc, char* argv[]){
 
     //la gestione della recv e del caso in cui il timeout scade va gestita nella parte network
     uint8_t* buffer = calloc(MAX_PAYLOAD, sizeof(uint8_t));
-    printf("Waiting...\n");
+    log_debug("Sended INIT request, waiting for the response");
+
     n = recv(left.node.fd, buffer, MAX_PAYLOAD, 0);
     if (n < 0) {
         if (errno == EAGAIN ) {
@@ -224,7 +219,7 @@ int main(int argc, char* argv[]){
             return EXIT_FAILURE;
         }
     } 
-    printf("Byte Ricevuti dal responder %d\n", n);
+    log_debug("Bytes received from the responder %d", n);
     buffer = realloc(buffer, n);
     buffer[n] = '\0'; 
 
@@ -233,7 +228,6 @@ int main(int argc, char* argv[]){
     
     //porcodio
     memcpy(right.ctx.spi, &hd->responder_spi , 8);
-   // right.ctx.spi = hd->responder_spi;
 
     /* 
     #########################################################################################
@@ -282,31 +276,7 @@ int main(int argc, char* argv[]){
     # to be generated depends on parameters of ike like number of keys
     #########################################################################################
     */
-    uint8_t *T_buffer = calloc(NUM_KEYS * SHA1_DIGEST_LENGTH, 1);
-    size_t generated = 0;
-    unsigned int digest_len = SHA1_DIGEST_LENGTH;
-    uint8_t *digest = malloc(digest_len);
     
-    prf_plus(&left.ctx, &right.ctx, &T_buffer);
-    printf("\n");
-    dump_memory(T_buffer, NUM_KEYS*SHA1_DIGEST_LENGTH);
-
-    //a questo punto posso popolare le chiavi 
-    uint8_t* SK_d = malloc(SHA1_DIGEST_LENGTH);
-    uint8_t* SK_ai = malloc(SHA1_DIGEST_LENGTH);
-    uint8_t* SK_ar = malloc(SHA1_DIGEST_LENGTH);
-    uint8_t* SK_ei = malloc(16); // questo va sostiutito con la lunghezza della chiave di AES, dato che è 128 bit sono 16 byte
-    uint8_t* SK_er = malloc(16); //parametrizzare anche questo 
-    uint8_t* SK_pi = malloc(SHA1_DIGEST_LENGTH);
-    uint8_t* SK_pr = malloc(SHA1_DIGEST_LENGTH);
-
-    memcpy(SK_d, T_buffer, SHA1_DIGEST_LENGTH);
-    memcpy(SK_ai, T_buffer + SHA1_DIGEST_LENGTH, SHA1_DIGEST_LENGTH);
-    memcpy(SK_ar, T_buffer + 2*SHA1_DIGEST_LENGTH, SHA1_DIGEST_LENGTH);
-    memcpy(SK_ei, T_buffer + 3*SHA1_DIGEST_LENGTH, 16);
-    memcpy(SK_er, T_buffer + 3*SHA1_DIGEST_LENGTH + 16, 16);
-    memcpy(SK_pi, T_buffer + 3*SHA1_DIGEST_LENGTH + 2*16, SHA1_DIGEST_LENGTH);
-    memcpy(SK_pr, T_buffer + 4*SHA1_DIGEST_LENGTH + 2*16, SHA1_DIGEST_LENGTH);
 
     ike_session_t ike_sa = {0};
     ike_sa.initiator = left;
@@ -353,7 +323,7 @@ int main(int argc, char* argv[]){
 
     uint8_t* md = malloc(SHA1_DIGEST_LENGTH);
     unsigned int md_len = 0;
-    HMAC(EVP_sha1(), SK_pi, SHA1_DIGEST_LENGTH, id_i, 8, md, &md_len);
+    HMAC(EVP_sha1(), ike_sa.association.sk_pi, SHA1_DIGEST_LENGTH, id_i, 8, md, &md_len);
 
     memcpy(auth_payload + len + right.ctx.nonce_len, md, md_len);
 
@@ -409,7 +379,7 @@ int main(int argc, char* argv[]){
     
     EVP_CIPHER_CTX *ctx;
     ctx = EVP_CIPHER_CTX_new();
-    EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, SK_ei, iv);
+    EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, ike_sa.association.sk_ei, iv);
     EVP_CIPHER_CTX_set_padding(ctx, 0);
     //per vedere quanto sarà il padding verificare la lunghezza del buffer di cifratura
     //anche la quantità di padding va cifrata, il padding va calcolateo considerando che un byte deve essere riservato alla pad length
@@ -468,7 +438,7 @@ int main(int argc, char* argv[]){
     printf("Dato to authenticate\n");
     dump_memory(response, response_len);
     
-    HMAC(EVP_sha1(), SK_ai, SHA1_DIGEST_LENGTH, response, response_len, checksum, &md_len);
+    HMAC(EVP_sha1(), ike_sa.association.sk_ai, SHA1_DIGEST_LENGTH, response, response_len, checksum, &md_len);
     response = realloc(response, response_len+icv_len);
     mempcpy(response + 28 + 4 +iv_len + ciphertext_len, checksum, icv_len);
     printf("Checksum\n");

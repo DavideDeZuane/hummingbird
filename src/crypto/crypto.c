@@ -145,6 +145,7 @@ void generate_key(EVP_PKEY** pri, uint8_t** pub){
 */
 int initiate_crypto(cipher_suite_t* suite, crypto_context_t* ctx, const cipher_options* opts){
     // invece che prendere solo il contesto deve prendere in input anche la parte della suite dato che il valore delle chiavi presenti nel crypto context dipende dagli algortimi
+    log_debug("[CRY] Validating configurations options");
 
     cipher_suite_t tmp = {0};
     //prima di fare la configurazione per la chiave farlo per la suite
@@ -227,7 +228,7 @@ int prf(uint8_t** key, size_t key_len, uint8_t** data, size_t data_len, uint8_t*
 // mi servono solo i due contesti perchè mi servono le chiavi per generare il segreto condiviso e i nonce per generare la chiavve da utilizzare per la prf
 // modificare in return type intero per vedere se qualcosa è andato male
 void derive_seed(crypto_context_t* left, crypto_context_t* right, uint8_t* seed){
-    
+
     //populating the shared secret
     uint8_t* ss = calloc(X25519_KEY_LENGTH,1);
     derive_secret(&left->private_key, &right->public_key, &ss);
@@ -240,8 +241,10 @@ void derive_seed(crypto_context_t* left, crypto_context_t* right, uint8_t* seed)
     //so at this point we can call prf funciton
     unsigned int seed_len = SHA1_DIGEST_LENGTH;
     prf(&key, key_len, &ss, X25519_KEY_LENGTH, &seed, &seed_len);
-    printf("\n");
-    dump_memory(seed, SHA1_DIGEST_LENGTH);
+
+    char* str = calloc(SHA1_DIGEST_LENGTH, BYTE);
+    format_hex_string(str, SHA1_DIGEST_LENGTH, seed, seed_len);
+    log_debug("SKEYSSED: 0x%s", str);
 
     //fare anche un goto per questo nel caso in cui la derivazione della chiave andasse male
     secure_free(key, key_len);
@@ -263,7 +266,6 @@ void prf_plus(crypto_context_t* left, crypto_context_t* right, uint8_t** T_buffe
     uint8_t* seed = malloc(SHA1_DIGEST_LENGTH);
     derive_seed(left, right, seed);
 
-    dump_memory(seed, SHA1_DIGEST_LENGTH);
 
     // a questo punto devo generare il materiale da firmare con il skeyseed per generare il T_buffer
     // l'1 finale è per il counter di cui c'è da fare l'append nel buffer
@@ -276,8 +278,6 @@ void prf_plus(crypto_context_t* left, crypto_context_t* right, uint8_t** T_buffe
     memcpy(msg + (2*left->nonce_len) + SPI_LENGTH_BYTE, &right->spi,    SPI_LENGTH_BYTE);
     msg[msg_len-1] = 0x01;
 
-    printf("\nMessaggio nella funzione\n");
-    dump_memory(msg, msg_len);
 
     // a questo punto ho generato il messaggio, aggiungere i vari controlli per verificare che i vari puntatori non siano nulli e mettere in una funzione a parte
     // qui implementiamo la logica dell'espansione del key material

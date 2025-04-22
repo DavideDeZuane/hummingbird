@@ -5,6 +5,8 @@
 #include "header.h"
 #include "../network/network.h"
 #include "../crypto/crypto.h"
+#include "../auth/auth.h"
+#include <openssl/evp.h>
 
 typedef enum {
     IKE_INITIATOR,
@@ -40,6 +42,7 @@ typedef struct {
     ike_role_t role;
     net_endpoint_t node;
     crypto_context_t ctx;
+    auth_context_t aut;
 } ike_partecipant_t;
 
 /**

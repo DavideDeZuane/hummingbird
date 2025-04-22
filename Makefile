@@ -10,6 +10,7 @@ SRCS = src/main.c 				\
 	   src/ike/header.c 		\
 	   src/ike/payload.c 		\
 	   src/ike/packet.c			\
+	   src/auth/auth.c			\
 	   src/ike/ike.c
 
 LIBS = -linih -lssl -lcrypto

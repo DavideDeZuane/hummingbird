@@ -97,7 +97,7 @@ int socket_setup(int *sockfd, int AF){
     }
 
     *sockfd = retval;
-    log_debug("Local socket of type %s created...", address_family_to_string(AF));
+    log_trace("Local socket of type %s created...", address_family_to_string(AF));
     return 0;
 }
 
@@ -178,17 +178,18 @@ int socket_up(int *sockfd, struct sockaddr_storage *sk_i, int AF, struct sockadd
     if (addr.ss_family == AF_INET) {
         // IPv4
         struct sockaddr_in *addr_in = (struct sockaddr_in *)&addr;
-        log_debug("Initiator running on ephemeral port (IPv4): " ANSI_COLOR_BOLD "%d" ANSI_COLOR_RESET, ntohs(addr_in->sin_port));
+        log_trace("Initiator running on ephemeral port (IPv4): " ANSI_COLOR_BOLD "%d" ANSI_COLOR_RESET, ntohs(addr_in->sin_port));
     } else if (addr.ss_family == AF_INET6) {
         // IPv6
         struct sockaddr_in6 *addr_in6 = (struct sockaddr_in6 *)&addr;
-        log_debug(ANSI_COLOR_YELLOW "Initiator running on ephemeral port (IPv6): %d" ANSI_COLOR_RESET, ntohs(addr_in6->sin6_port));
+        log_trace(ANSI_COLOR_YELLOW "Initiator running on ephemeral port (IPv6): %d" ANSI_COLOR_RESET, ntohs(addr_in6->sin6_port));
     }
     return EXIT_SUCCESS;
 }
 
 int initiate_netwok(net_endpoint_t *local, net_endpoint_t *remote, peer_options* opts){
     //Remote Endpoint configuration
+    log_debug("[NET] Validating configurations options");
     int af, port = 0;
     af = validate_address(opts->address);
     port = validate_port(opts->port);
@@ -198,7 +199,7 @@ int initiate_netwok(net_endpoint_t *local, net_endpoint_t *remote, peer_options*
     }
     socket_set_address(&remote->addr, af, opts->address, port);
     remote->fd = -1;
-    log_debug("Peer socket at " ANSI_COLOR_BOLD "%s:%d", opts->address, port);
+    log_trace("Peer socket at " ANSI_COLOR_BOLD "%s:%d", opts->address, port);
 
     //local endpoint configuration
     int retv = socket_up(&local->fd, &local->addr, remote->addr.ss_family, &remote->addr);

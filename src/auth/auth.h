@@ -6,8 +6,6 @@
 typedef enum {
     AUTH_METHOD_PSK,
     AUTH_METHOD_RSA,
-    AUTH_METHOD_ECDSA,
-    AUTH_METHOD_NULL
 } auth_method_t;
 
 typedef struct {

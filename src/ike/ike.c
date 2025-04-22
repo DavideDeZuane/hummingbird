@@ -66,7 +66,7 @@ int derive_ike_sa(ike_session_t* sa){
 
     prf_plus(&sa->initiator.ctx, &sa->responder.ctx, &T_buffer);
 
-    sa->association.sk_d = calloc(SHA1_DIGEST_LENGTH, BYTE);
+    sa->association.sk_d  = calloc(SHA1_DIGEST_LENGTH, BYTE);
     sa->association.sk_ai = calloc(SHA1_DIGEST_LENGTH, BYTE);
     sa->association.sk_ar = calloc(SHA1_DIGEST_LENGTH, BYTE);
     sa->association.sk_pi = calloc(SHA1_DIGEST_LENGTH, BYTE);
@@ -110,20 +110,9 @@ int derive_ike_sa(ike_session_t* sa){
     format_hex_string(str, str_len, sa->association.sk_pr, SHA1_DIGEST_LENGTH);
     log_trace("%-5s: 0x%s", "SK_pr", str);
 
+    log_info("IKE SA properly configured");
 
-
-    
-
-
-
-        
-    // a questo punto il buffer popolato lo utilizziamo per derivare le chiavi
-
-
-    //la dimensione delle chiavi dipende dall'algoritmo di cifrature e autenticazione utilizzato
-    // in particolare abbiamo che:
-    // - la dimensione delle chiavi di cifratura dipende dalla dimensione della chiave dell'algoritmo scelto, questo incide anche sull'IV
-    // - la dimensione delle altre chiavi dipende da quella della dimensione del digest
+    //una volta popolato il tbuffer abbiamo tutto quello che ci serve per creare il messaggio di richiesta IKE_AUTH
 
     return 0;
 }
