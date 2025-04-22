@@ -4,7 +4,6 @@
 #include "constant.h"
 #include "header.h"
 #include "../network/network.h"
-#include "../socket/peer.h"
 #include "../crypto/crypto.h"
 
 typedef enum {
