@@ -5,7 +5,6 @@ SRCS = src/main.c 				\
        src/config/config.c 		\
 	   src/log/log.c 			\
 	   src/network/network.c	\
-	   src/socket/peer.c		\
 	   src/utils/utils.c 		\
 	   src/crypto/crypto.c 		\
 	   src/ike/header.c 		\
@@ -17,7 +16,7 @@ LIBS = -linih -lssl -lcrypto
 CFLAGS = -DLOG_USE_COLOR -Wall -I./src/config 	\
 			   -I./src/log 		\
 			   -I./src/network 	\
-			   -I./src/socket 	\
+			   -I./src/auth		\
 			   -I./src/utils 	\
 			   -I./src/crypto 	\
 			   -I./src/ike

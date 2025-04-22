@@ -29,10 +29,16 @@ void initiate_ike(ike_partecipant_t* left, ike_partecipant_t* right, config* cfg
     //aggiungere le opzioni da verificare nella parte crypto quindi la lunghezza del nonce e le varie informazioni che riguardano le cipher suite da utilizzare
     retv = initiate_crypto(NULL, &left->ctx, &cfg->suite);
     if (retv == EXIT_FAILURE) {
-        log_error("Could not initiate the [CRY] module");
+        log_fatal("Could not initiate the [CRY] module");
         exit(EXIT_FAILURE);
     } 
-    log_info(ANSI_COLOR_GREEN "[CRY] module successfully setup" ANSI_COLOR_RESET);
+    log_info("[CRY] module successfully setup");
+
+
+    // a questo punto l'ultima parte da setuppare è quella che riguarda l'autenticazione, in modo tale che abbiamo a disposizione
+    // una struttura al cui interno mettere gli authentication data, il pacchetto una volta mandato ciao
+    
+    log_info("[AUT] module successfully setup");
     
     //una volta che ho setuppato il crypto module allora sono pronto per fare la send per iniviare l'IKE_SA_INIT al peer
     // qui va tutta la parte di generazione del messaggio di cui si occupa il modulo IKE

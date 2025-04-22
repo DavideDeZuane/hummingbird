@@ -2,7 +2,6 @@
 #include <endian.h>
 #include <ini.h>
 #include "./config/config.h"
-#include "./socket/peer.h"
 #include "./log/log.h"
 #include "./ike/header.h"
 #include "crypto/crypto.h"
@@ -167,7 +166,6 @@ int main(int argc, char* argv[]){
     
     initiate_ike(&left, &right, &cfg);
 
-    ike_responder responder = {0};
 
 
     ike_message_t packet_list = {NULL, NULL};
@@ -205,7 +203,7 @@ int main(int argc, char* argv[]){
     
     buff = create_message(&packet_list, &len);
 
-    
+
 
     int retval =  send(left.node.fd, buff, len, 0);
     if(retval == -1){
@@ -234,7 +232,6 @@ int main(int argc, char* argv[]){
     ike_header_t* hd = parse_header(buffer, n);
     
     //porcodio
-    responder.sa.spi = hd->responder_spi;
     memcpy(right.ctx.spi, &hd->responder_spi , 8);
    // right.ctx.spi = hd->responder_spi;
 
@@ -253,20 +250,14 @@ int main(int argc, char* argv[]){
         ike_payload_header_t *payload = (ike_payload_header_t *)ptr;
 
         if(current_payload == NEXT_PAYLOAD_KE){
-            responder.sa.key_len = 32;
             right.ctx.key_len = 32;
             right.ctx.public_key = malloc(right.ctx.key_len);
             memcpy(right.ctx.public_key, ptr+8, right.ctx.key_len);
 
-            responder.sa.key = malloc(responder.sa.key_len);
-            memcpy(responder.sa.key, ptr+8, responder.sa.key_len);
         }
         
         if(current_payload == NEXT_PAYLOAD_NONCE){
             //printf("sono al payload nonce\n");
-            responder.sa.nonce_len = be16toh(payload->length) -4;
-            responder.sa.nonce = malloc(responder.sa.nonce_len);
-            memcpy(responder.sa.nonce, ptr+4, 32);
             right.ctx.nonce_len = be16toh(payload->length) - 4;
             right.ctx.nonce = malloc(right.ctx.nonce_len);
             memcpy(right.ctx.nonce, ptr+4, 32);
