@@ -11,10 +11,23 @@
 #define MAX_PORT_LENGTH 6
 #define MAX_ALGR_LENGTH 10
 
+#define MAX_ID_LENGTH 10
+#define MAX_AUTH_METHOD_LEN 256  
+#define MAX_AUTH_DATA_LEN 256  
+
 typedef struct {
     int level;
     char file_name[30];
 } logging_options;
+
+/**
+* @brief
+*/
+typedef struct {
+    char id[MAX_ID_LENGTH];
+    char method[MAX_AUTH_METHOD_LEN];
+    char data[MAX_AUTH_DATA_LEN];
+} auth_options_t;
 
 typedef struct {
     char hostname[INET_FQNLEN];
@@ -33,9 +46,9 @@ typedef struct {
 typedef struct {
     peer_options peer;
     cipher_options suite;
+    auth_options_t auth;
     logging_options log;
     int nonce_len;
-    
 } config;
 
 /**

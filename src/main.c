@@ -20,7 +20,6 @@
 #define MAX_PAYLOAD 1280
 
 
-#define NUM_KEYS 7
 //spostare questo nel modulo packet, questa è quella parte che si occupa di creare il messaggio e il creeate message ritorna il buffer che poi verrò inviato tramite socket sulla rete 
 
 typedef struct {
@@ -149,7 +148,6 @@ int main(int argc, char* argv[]){
         return EXIT_FAILURE;
     }
 
-
     log_info("Configuration file %s loaded successfully", DEFAULT_CONFIG);
     log_info("[CFG] module successfully setup", DEFAULT_CONFIG);
 
@@ -268,23 +266,17 @@ int main(int argc, char* argv[]){
     # END
     #########################################################################################
     */
-
-    
     /* 
     #########################################################################################
     # GENERATING KEY MATERIALS, the prf plus method is in the crypto, but the key materials
     # to be generated depends on parameters of ike like number of keys
     #########################################################################################
     */
-    
-
     ike_session_t ike_sa = {0};
     ike_sa.initiator = left;
     ike_sa.responder = right;
 
     derive_ike_sa(&ike_sa);
-
-
     /*
     ####################################################################################
     # GENERATING THE IKE AUTH EXCHANGE
@@ -329,6 +321,8 @@ int main(int argc, char* argv[]){
 
     // questo auth payload a questo punto deve essere dato in pasto ad un prf 
     // AUTH = prf( prf(Shared Secret, "Key Pad for IKEv2"), <InitiatorSignedOctets>)
+    // LA PARTE SUL SEGRETO CONDIVISO E DI POPOLAMENTO DELL'AUTH PAYLAOD VA SPOSTATA NELLA PARTE DI AUTH
+
     char *secret = "padrepio";
     size_t secret_len = 8;
 
@@ -336,15 +330,15 @@ int main(int argc, char* argv[]){
     size_t key_pad_len = 17; // Senza \0
 
     HMAC(EVP_sha1(),secret, secret_len, (const unsigned char *)key_pad_str, key_pad_len, md, &md_len);
-    printf("Key expansion \n");
-    dump_memory(md, md_len);
+    //printf("Key expansion \n");
+    //dump_memory(md, md_len);
 
     uint8_t* output = malloc(SHA1_DIGEST_LENGTH);
     unsigned int out_len = 0;
     //ora questo deve essere utilizzato pe firmare l'auth payload
     HMAC(EVP_sha1(), md, md_len, auth_payload, auth_len, output, &out_len);
-    printf("AUTH PAYLOAD \n");
-    dump_memory(output, out_len);
+    //printf("AUTH PAYLOAD \n");
+    //dump_memory(output, out_len);
 
     ike_payload_header_t sk = {0};
     sk.next_payload = NEXT_PAYLOAD_IDi;
@@ -370,13 +364,13 @@ int main(int argc, char* argv[]){
 
     //questo è il payload che devo cifrare, quindi adesso mi creo un iv che deve essere di 16 byte
     //la dimensione dell'iv dipendende dalla lunghezza della chiave in cbc
+    // ########################################################################################
+    // DA SPOSTARE NELLA PARTE DI CREAZIONE DELL'ENCRYPTED PAYLOAD
+    // ########################################################################################
     size_t iv_len = 16;
     uint8_t* iv = malloc(iv_len);
     getrandom(iv, iv_len, 0);
 
-    printf("IV: \n");
-    dump_memory(iv, iv_len);
-    
     EVP_CIPHER_CTX *ctx;
     ctx = EVP_CIPHER_CTX_new();
     EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, ike_sa.association.sk_ei, iv);
@@ -384,16 +378,13 @@ int main(int argc, char* argv[]){
     //per vedere quanto sarà il padding verificare la lunghezza del buffer di cifratura
     //anche la quantità di padding va cifrata, il padding va calcolateo considerando che un byte deve essere riservato alla pad length
     //quindi dal padd da aggiungere togliamo un byte
+
     int padd =  16 - (plaintext_len % 16); 
-    printf("Padding da aggiungere: %d", padd);
-    printf("\n");
 
     enc_buffer = realloc(enc_buffer, plaintext_len + padd);
     memset(enc_buffer + plaintext_len, 0, padd-1);
     memset(enc_buffer + plaintext_len + padd -1, padd-1, 1);
     plaintext_len += padd;
-
-    dump_memory(enc_buffer, plaintext_len);
 
 
     uint8_t ciphertext[256];
@@ -404,9 +395,10 @@ int main(int argc, char* argv[]){
     EVP_EncryptUpdate(ctx, ciphertext, &len_cip, enc_buffer, plaintext_len);
     ciphertext_len = len_cip;
 
-    printf("Ciphertext len %d vs Actual length %d\n", ciphertext_len, plaintext_len);
-    printf("Ciphertext:\n");
-    dump_memory(ciphertext, ciphertext_len);
+    
+    // ##########################################################################################
+    // FINO A QUA
+    // ##########################################################################################
 
     // la dimensione del checksum deve essere di 12 byte, dato che l'algoritmo che si utilizza per calcolarlo è
     // AUTH_HMAC_SHA1_96 bytes because the HMAC gets truncated from 160 to 96 bits 
@@ -435,25 +427,13 @@ int main(int argc, char* argv[]){
 
     uint8_t *checksum = malloc(icv_len);
 
-    printf("Dato to authenticate\n");
-    dump_memory(response, response_len);
-    
     HMAC(EVP_sha1(), ike_sa.association.sk_ai, SHA1_DIGEST_LENGTH, response, response_len, checksum, &md_len);
     response = realloc(response, response_len+icv_len);
     mempcpy(response + 28 + 4 +iv_len + ciphertext_len, checksum, icv_len);
-    printf("Checksum\n");
-    dump_memory(checksum, 12);
 
     retval =  send(left.node.fd, response, response_len+icv_len, 0);
-    // dump di tutto 
-    printf("################################\n");
-    printf("Response\n");
-    printf("################################\n");
-    dump_memory(response, response_len+icv_len);
-    // prendere il filename dalle variabili d'ambiente
 
-
-    printf("Waiting...\n");
+    log_info("Waiting for the IKE AUTH response");
 
     buffer = realloc(buffer, MAX_PAYLOAD);
     n = recv(left.node.fd, buffer, MAX_PAYLOAD, 0);
@@ -466,14 +446,12 @@ int main(int argc, char* argv[]){
         }
     } 
 
-    dump_memory(buffer, n);
+    log_debug("Bytes received from the responder %d", n);
 
     ike_header_raw_t raw = {0};
     parse_header_raw(buffer, &raw);
-    dump_memory(&raw, 28);
     
     uint32_t lun = bytes_to_uint32_be(raw.length);
-    printf("Length: %u\n", lun); 
 
     // quando tratto i dati siamo già nel mondo della CPU, ovvero non stiamo più trattando byte 
     // ma stiamo operando su una variabile che è nativa per la macchina, quindi il compilatore conosce l'endianess della CPU e come rappresentare il dato
@@ -481,7 +459,6 @@ int main(int argc, char* argv[]){
     lun += 100;
 
     uint32_to_bytes_be(lun, raw.length);
-    printf("Length: %u\n", bytes_to_uint32_be(raw.length)); 
 
     secure_free(response, response_len);
 
