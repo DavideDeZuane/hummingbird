@@ -12,7 +12,7 @@
 #define MAX_ALGR_LENGTH 10
 
 #define MAX_ID_LENGTH 10
-#define MAX_AUTH_METHOD_LEN 256  
+#define MAX_AUTH_METHOD_LEN 6
 #define MAX_AUTH_DATA_LEN 256  
 
 typedef struct {
@@ -48,19 +48,19 @@ typedef struct {
     cipher_options suite;
     auth_options_t auth;
     logging_options log;
-    int nonce_len;
 } config;
 
 /**
- * @brief Function to parse the config file
- * @param[in] cfg Data Structure to populate
- * @param[in] section Section of the config file, name inside the square brakets
- * @param[in] name Name of the configuration inside the section
- * @param[in] value Value of the specified name
- */
+* @brief Function to parse the config file
+* @param[in] cfg Data Structure to populate
+* @param[in] section Section of the config file, name inside the square brakets
+* @param[in] name Name of the configuration inside the section
+* @param[in] value Value of the specified name
+*/
 int handler(void* cfg, const char* section, const char* name, const char* value);
 
 
-config init_config();
+void default_config(config* cfg);
+
 
 #endif

@@ -12,15 +12,14 @@
 #include "utils/utils.h"
 
 #include <openssl/hmac.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/random.h>
 
-//QUESTO INSIEME ALLA PARTE DI SEND E RECEVE DEVE ANDARE NELLA PARTE DI NETWORK 
-// la specifica dice che deve gestire messaggi che hanno massimo questa dimensoine
-#define MAX_PAYLOAD 1280
-
-
+// ###############################################################################################
 //spostare questo nel modulo packet, questa è quella parte che si occupa di creare il messaggio e il creeate message ritorna il buffer che poi verrò inviato tramite socket sulla rete 
+// ###############################################################################################
 
 typedef struct {
     void *next; // Puntatore generico al prossimo payload
@@ -93,6 +92,10 @@ uint8_t* create_message(ike_message_t* list, size_t* len){
 
 }
 
+// ################################################################################################
+// FINO A QUA NEL PACKET MODULE DI IKE
+// ################################################################################################
+
 
 int main(int argc, char* argv[]){
     /*---------------------------------------------
@@ -129,12 +132,18 @@ int main(int argc, char* argv[]){
     /*--------------------------------------------
     Loading configuration file
     --------------------------------------------*/
-    config cfg = init_config();
-    log_set_level(LOG_INFO);
 
+    //questa deve diventare dinamica in modo tale che una volta che ho inizilizzato tutto la posso rimuovere
+    // quella di default metterla nell'handler, in questo modo non serve che la chiamo da qui a noi l'unica cosa che interessa nel main è che venga caricata correttamente
+    config* cfg = malloc(sizeof(config));
+    default_config(cfg);
+
+    // quello che realizzaimo in questo modo pè lo shadowing delle impostazioni di default
+    // questo non possiamo metterlo dentro l'handler perchè altrimenti verrebbe chiamato ad ogni riga
 
     int n;
-    if ((n = ini_parse(DEFAULT_CONFIG, handler, &cfg)) != 0) {
+    // il metodo chiama l'handler ad ogni riga del file
+    if ((n = ini_parse(DEFAULT_CONFIG, handler, cfg)) != 0) {
         if (n == -1) {
             log_error("Error on opening the configuration file %s", COLOR_TEXT(ANSI_COLOR_YELLOW, DEFAULT_CONFIG));
             log_error("The file %s not exists", COLOR_TEXT(ANSI_COLOR_RED, DEFAULT_CONFIG));
@@ -151,17 +160,20 @@ int main(int argc, char* argv[]){
     log_info("Configuration file %s loaded successfully", DEFAULT_CONFIG);
     log_info("[CFG] module successfully setup", DEFAULT_CONFIG);
 
+
     ike_partecipant_t left = {0};
     ike_partecipant_t right = {0};
     
-    initiate_ike(&left, &right, &cfg);
+    initiate_ike(&left, &right, cfg);
 
+    free(cfg);
+
+    //una volta che esco da questo metodo tutta la parte di configurazione non mi serve più a niente
 
 
     ike_message_t packet_list = {NULL, NULL};
 
     ike_header_t header = init_header();
-
 
     ike_payload_header_t pd = {0};
     pd.next_payload = NEXT_PAYLOAD_NONCE;

@@ -11,6 +11,8 @@
 #define PORT_INVALID 0
 #define EPHEMERAL_PORT 0 
 
+#define MAX_PAYLOAD 1280
+
 #define FIELD_UINT16 16
 #define FIELD_UINT32 32
 #define FIELD_UINT64 6

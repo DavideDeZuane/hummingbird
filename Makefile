@@ -1,4 +1,7 @@
-# Nome del target eseguibile
+######################################################################
+# Makefile
+######################################################################
+
 TARGET = hummingbird
 
 SRCS = src/main.c 				\
@@ -13,14 +16,20 @@ SRCS = src/main.c 				\
 	   src/auth/auth.c			\
 	   src/ike/ike.c
 
-LIBS = -linih -lssl -lcrypto
-CFLAGS = -DLOG_USE_COLOR -Wall -I./src/config 	\
-			   -I./src/log 		\
-			   -I./src/network 	\
-			   -I./src/auth		\
-			   -I./src/utils 	\
-			   -I./src/crypto 	\
-			   -I./src/ike
+LIBS =  -linih					\
+		-lssl 					\
+		-lcrypto 				\
+		-g			 
+
+CFLAGS = -DLOG_USE_COLOR -Wall 	\
+		 -I./src/config 		\
+		 -I./src/log 			\
+		 -I./src/network 		\
+		 -I./src/auth			\
+		 -I./src/utils 			\
+		 -I./src/crypto 		\
+		 -I./src/ike
+
 LDFLAGS = $(LIBS)
 
 # Regola principale per costruire il target, diciamo quali sono tutti i file sorgenti di cui ha bisogno
