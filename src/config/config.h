@@ -59,7 +59,10 @@ typedef struct {
 */
 int handler(void* cfg, const char* section, const char* name, const char* value);
 
-
+/**
+* @brief This function set the default configuration options for each module
+* @param[in] cfg Pointer to the configuration struct to be populated
+*/
 void default_config(config* cfg);
 
 

@@ -5,21 +5,22 @@
 #include <string.h>
 #include "config.h"
 
-#define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
-
+/*
+###########################################################################################
+MACRO SECTION to make the code more readable
+###########################################################################################
+*/
+//#define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
+#define MATCH(s, n)  strcmp(name, n) == 0
 #define SET_DEFAUTL_FIELD(cfg, sub, field, val) strncpy((cfg)->sub.field, (val), sizeof((cfg)->sub.field))
+#define HANDLE_FIELD(sec, field, src, dst, max_len)  if (MATCH(sec, field)) { secure_strncpy(dst, src, max_len); return 1; }
 
-#define HANDLE_FIELD(sec, field, src, dst, max_len) \
-    if (MATCH(sec, field)) { \
-        secure_strncpy(dst, src, max_len); \
-        return 1; \
-    }
-
-typedef struct {
-    const char *name;
-    char *field;
-} FieldMap;
-
+/**
+* @brief This function is used to make a secure copy, it limits the maximum number of characters to be copied to avoid overflow
+* @param[out]   dest Pointer to the destination
+* @param[in]    src Pointer to the data to be copied
+* @param[in]    dest_size Maximum number of characters to copy 
+*/
 void secure_strncpy(char *dest, const char *src, size_t dest_size) {
     // importanza di limitare la copia per evitare overflow
     strncpy(dest, src, dest_size - 1);
@@ -27,18 +28,23 @@ void secure_strncpy(char *dest, const char *src, size_t dest_size) {
 
 }
 
-
+/**
+* @brief This function set the default configuration options for each module
+* @param[in] cfg Pointer to the configuration struct to be populated
+*/
 void default_config(config* cfg){
 
-    
+    // default configuration for the [NET] module
     SET_DEFAUTL_FIELD(cfg, peer, hostname, "localhost");
     SET_DEFAUTL_FIELD(cfg, peer, address,  "127.0.0.1");
     SET_DEFAUTL_FIELD(cfg, peer, port,     "500");
     
+    // default configuration for the [AUT] module
     SET_DEFAUTL_FIELD(cfg, auth, id,       "padrepio");
     SET_DEFAUTL_FIELD(cfg, auth, method,   "psk");
     SET_DEFAUTL_FIELD(cfg, auth, data,     "padrepio");
     
+    // default configuration for the [CRY] module
     SET_DEFAUTL_FIELD(cfg, suite, enc, "aes128");
     SET_DEFAUTL_FIELD(cfg, suite, aut, "sha1_96");
     SET_DEFAUTL_FIELD(cfg, suite, prf, "prfsha1");
@@ -46,16 +52,29 @@ void default_config(config* cfg){
 
 }
 
+/**
+* @brief Handler that deals with popular section dealing with authentication configurations, this will be used to initialize the [AUT] modue
+* @param[in] opts Pointer to a substructure of the configuration structs, particularly one that has to do with authentication
+* @param[in] section This is fixed and is "Authentication"
+* @param[in] name Same as handler
+* @param[in] value Same as handler 
+*/
 int auth_handler(auth_options_t* opts, const char* section, const char* name, const char* value){
-
 
     HANDLE_FIELD(section, "id",        value,  opts->id,       MAX_ID_LENGTH);
     HANDLE_FIELD(section, "method",    value,  opts->method,   MAX_AUTH_METHOD_LEN);
     HANDLE_FIELD(section, "data",      value,  opts->data,     MAX_AUTH_DATA_LEN);
-
     return 0;
+
 }
 
+/**
+* @brief Handler that deals with popular section dealing with network configurations, this will be used to initialize the [NET] modue
+* @param[in] opts Pointer to a substructure of the configuration structs, particularly one that has to do with the remote peer
+* @param[in] section This is fixed and is "Network"
+* @param[in] name Same as handler
+* @param[in] value Same as handler 
+*/
 int peer_handler(peer_options* opts, const char* section, const char* name, const char* value){
 
     HANDLE_FIELD(section, "hostname",  value,  opts->hostname,  MAX_ID_LENGTH);
@@ -66,6 +85,13 @@ int peer_handler(peer_options* opts, const char* section, const char* name, cons
 
 }
 
+/**
+* @brief Handler that deals with popular section dealing with cyrptography configurations, this will be used to initialize the [CRY] modue
+* @param[in] opts Pointer to a substructure of the configuration structs, particularly one that has to do with cryptographyc functions
+* @param[in] section This is fixed and is "Crypto"
+* @param[in] name Same as handler
+* @param[in] value Same as handler 
+*/
 int crypto_handler(cipher_options* opts, const char* section, const char* name, const char* value){
     
     HANDLE_FIELD(section, "encryption",        value,  opts->enc,  MAX_ID_LENGTH);
@@ -76,12 +102,17 @@ int crypto_handler(cipher_options* opts, const char* section, const char* name, 
     return 0;
 }
 
+/*
+[Section]
+name = value
+*/
 /**
-* @brief Function to parse the config file
-* @param[in] cfg Data Structure to populate
-* @param[in] section Section of the config file, name inside the square brakets
-* @param[in] name Name of the configuration inside the section
-* @param[in] value Value of the specified name
+* @brief This function is called every time a line within the configuration file is parsed. 
+* Each time a line is read, this callback is invoked
+* @param[in] cfg Pointer to the configuration struct to be populated
+* @param[in] section The name of the current section, the field name inside the square brakets
+* @param[in] name The parameter name read 
+* @param[in] value the value associated with parameter
 */
 int handler(void* cfg, const char* section, const char* name, const char* value){
 
@@ -96,8 +127,6 @@ int handler(void* cfg, const char* section, const char* name, const char* value)
     if (strcmp(section, "Crypto") == 0){
         crypto_handler(&conf->suite, section, name, value);
     } 
-    
-
 
     return 1;
 
