@@ -2,7 +2,6 @@
 #define CONFIG_H
 
 #include <arpa/inet.h>
-#include <netinet/in.h>
 #include <ini.h>
 #include <stdint.h>
 
@@ -20,9 +19,6 @@ typedef struct {
     char file_name[30];
 } logging_options;
 
-/**
-* @brief
-*/
 typedef struct {
     char id[MAX_ID_LENGTH];
     char method[MAX_AUTH_METHOD_LEN];
@@ -64,6 +60,5 @@ int handler(void* cfg, const char* section, const char* name, const char* value)
 * @param[in] cfg Pointer to the configuration struct to be populated
 */
 void default_config(config* cfg);
-
 
 #endif

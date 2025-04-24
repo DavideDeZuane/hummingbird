@@ -69,7 +69,8 @@ int auth_handler(auth_options_t* opts, const char* section, const char* name, co
 }
 
 /**
-* @brief Handler that deals with popular section dealing with network configurations, this will be used to initialize the [NET] modue
+* @brief Handler that deals with popular section dealing with network configurations, this will be used to initialize the [NET] modue.
+* The socket address where the responder is running
 * @param[in] opts Pointer to a substructure of the configuration structs, particularly one that has to do with the remote peer
 * @param[in] section This is fixed and is "Network"
 * @param[in] name Same as handler
@@ -102,10 +103,6 @@ int crypto_handler(cipher_options* opts, const char* section, const char* name, 
     return 0;
 }
 
-/*
-[Section]
-name = value
-*/
 /**
 * @brief This function is called every time a line within the configuration file is parsed. 
 * Each time a line is read, this callback is invoked

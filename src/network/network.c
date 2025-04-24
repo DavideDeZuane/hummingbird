@@ -78,9 +78,11 @@ void convert_to_big_endian(void *data, MessageComponent type) {
 }
 
 /**
- * @brief 
- * @return 
- */
+* @brief This function creates the socket that the initiator will then use to communicate to the remote peer
+* And configure some options of the socket.
+* @param[out] sockfd This is the filedescriptor of the socket that will be used to communicate
+* @param[in] AF What type of socket is created, since it depends on the one configured for the responder 
+*/
 int socket_setup(int *sockfd, int AF){
     int retval = socket(AF, SOCK_DGRAM, IPPROTO_UDP);
     if (retval == -1){
@@ -143,12 +145,10 @@ int socket_set_address(struct sockaddr_storage *sk, int af, char *ip, int port){
 }
 
 /**
- * @brief Given the struct of the responder open a socket for the local endpoint
+ * @brief This function performs all the necessary operations to create the local socket and retrieve the ephemeral port that uses
  * @param[out] sockfd Return the file descriptor of the local socket opened to comunicate con the remote 
  * @param[in]  sk_i Address to use for the socket that will be populated and then binded with the file descriptor
  * @param[in]  AF Specify which family use
- * @param[in]  Specify which port use for address
- * @param[in]  sk_r questo parametro non serve possiamo anche rimuoverlo  
  * @return 
  */
 int socket_up(int *sockfd, struct sockaddr_storage *sk_i, int AF, struct sockaddr_storage *sk_r){ //IMPORTANTE rimuovere il parametro sk_r
@@ -187,6 +187,12 @@ int socket_up(int *sockfd, struct sockaddr_storage *sk_i, int AF, struct sockadd
     return EXIT_SUCCESS;
 }
 
+/**
+* @brief This function populate the socket information of both peer based on the option on the configuration file
+* @param[out] local   This is the scruct tha will be populate with the network information of the local host
+* @param[out] remote  This is the scruct that contains the network information of the remote host
+* @param[in]  opts    These are the options provided for the remote peer in the configuration file
+*/
 int initiate_netwok(net_endpoint_t *local, net_endpoint_t *remote, peer_options* opts){
     //Remote Endpoint configuration
     log_debug("[NET] Validating configurations options");

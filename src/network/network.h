@@ -21,7 +21,6 @@
 /**
  * @brief Rappresenta un endpoint di rete (Initiator o Responder).
  * @note Assumpution for the remote endpoint the file descritor is set to -1 ()
- *
 */
 typedef struct {
     int fd;    
@@ -36,38 +35,10 @@ typedef struct {
 void convert_to_big_endian(void *data, MessageComponent type);
 
 /**
-* @brief This function check if the ip address is valid
-* @param[in] ip  The string wich contains the ip address to check
-* @return  Return the AF_INET or AF_INET6 or -1 if the address is not valid 
-*/
-int validate_address(char *ip);
-
-/**
-* @brief This function check the value of the port passed on the configuration file
-* @param[in] port  The string wich contains the port to check
-* @return Return the port if is valid or 0 if not valid
-*/
-int validate_port(char *port);
-
-
-int socket_up(int *sockfd, struct sockaddr_storage *sk_i, int AF, struct sockaddr_storage *sk_r);
-
-/**
-* @brief this function populate the address information of the peer socket
-*/
-int socket_setup(int* sockfd, int AF);
-
-/**
-* @brief this function populate the address information of the peer socket
-*/
-int socket_set_address(struct sockaddr_storage *sk, int AF, char *ip, int port);
-
-/**
- * 
-* @brief this function populate the socket information of both peer based on the option on the configuration file
+* @brief This function populate the socket information of both peer based on the option on the configuration file
 * @param[out] local   This is the scruct tha will be populate with the network information of the local host
 * @param[out] remote  This is the scruct that contains the network information of the remote host
-* @param[in] opts     These are the option provided for the remote peer in the configuration file
+* @param[in]  opts    These are the options provided for the remote peer in the configuration file
 */
 int initiate_netwok(net_endpoint_t *local, net_endpoint_t *remote, peer_options* opts);
 
