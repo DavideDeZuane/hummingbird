@@ -40,7 +40,7 @@ void convert_to_big_endian(void *data, MessageComponent type);
 * @param[out] remote  This is the scruct that contains the network information of the remote host
 * @param[in]  opts    These are the options provided for the remote peer in the configuration file
 */
-int initiate_netwok(net_endpoint_t *local, net_endpoint_t *remote, peer_options* opts);
+int initiate_network(net_endpoint_t *local, net_endpoint_t *remote, peer_options* opts);
 
 
 #endif

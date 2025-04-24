@@ -4,6 +4,7 @@
 #include <arpa/inet.h>
 #include <ini.h>
 #include <stdint.h>
+#include <netinet/in.h>
 
 #define DEFAULT_CONFIG "conf.ini"
 #define INET_FQNLEN 255

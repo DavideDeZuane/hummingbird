@@ -5,50 +5,37 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include "../utils/utils.h"
+#include "../auth/auth.h"
 
 #define COPY_AND_ADVANCE(dest, src, offset, len)  \
     memcpy((dest), (src) + (offset), (len));      \
     (offset) += (len);
 
+// macro to handle the loading processos of a module
+#define LOAD_MODULE(name, init_fn, ...)                                \
+    do {                                                               \
+        int ret = init_fn(__VA_ARGS__);                                \
+        if (ret != 0) {                                                \
+            log_fatal("Could not initiate the [%s] module", name);     \
+            exit(EXIT_FAILURE);                                        \
+        }                                                              \
+    } while (0)
 
-
+/**
+* @brief 
+*/
 void initiate_ike(ike_partecipant_t* left, ike_partecipant_t* right, config* cfg){
 
-
     log_info(ANSI_COLOR_GREEN "Starting the init process of hummingbird..." ANSI_COLOR_RESET);
-    int retv = initiate_netwok(&left->node, &right->node, &cfg->peer);
-    // function that handle the module if not started successfully
-    if(retv != 0){
-        log_fatal("Could not initiate the [NET] module" );
-        exit(EXIT_FAILURE);
-    }
-    log_info("[NET] module successfully setup");
 
+    LOAD_MODULE("NET", initiate_network, &left->node, &right->node, &cfg->peer);
+    LOAD_MODULE("CRY", initiate_crypto, NULL, &left->ctx, &cfg->suite);
+    LOAD_MODULE("AUT", initiate_auth, &left->aut, &cfg->auth);
 
-    //the initiate crypto function has to return a int 
-    //aggiungere le opzioni da verificare nella parte crypto quindi la lunghezza del nonce e le varie informazioni che riguardano le cipher suite da utilizzare
-    retv = initiate_crypto(NULL, &left->ctx, &cfg->suite);
-    if (retv == EXIT_FAILURE) {
-        log_fatal("Could not initiate the [CRY] module");
-        exit(EXIT_FAILURE);
-    } 
-    log_info("[CRY] module successfully setup");
-
-
-    // a questo punto l'ultima parte da setuppare è quella che riguarda l'autenticazione, in modo tale che abbiamo a disposizione
-    // una struttura al cui interno mettere gli authentication data, il pacchetto una volta mandato ciao
-    
-    log_info("[AUT] module successfully setup");
-    
-    //una volta che ho setuppato il crypto module allora sono pronto per fare la send per iniviare l'IKE_SA_INIT al peer
+    // once correctly imported all the modules we can say that ike can do all his operations
     // qui va tutta la parte di generazione del messaggio di cui si occupa il modulo IKE
-    // aggiungere una struct di authentication data all'initiator e al responder.
-    // questi devono essere utilizzati nella fase di IKE AUTH per generare l'authentication payload
 
     log_info("[IKE] module successfully setup");
-
-
-
 
 }
 
@@ -60,9 +47,6 @@ int derive_ike_sa(ike_session_t* sa){
 
     size_t buff_len = NUM_KEYS*SHA1_DIGEST_LENGTH;
     uint8_t* T_buffer = calloc(buff_len, BYTE);
-
-    //qui decido la dimensione del t_buffer e mando la lunghezza alla funzione di prf+, in cui quello che devo andare a fare è controllare 
-    // che il buffer ci sia e la dimensione
 
     prf_plus(&sa->initiator.ctx, &sa->responder.ctx, &T_buffer);
 
@@ -76,7 +60,7 @@ int derive_ike_sa(ike_session_t* sa){
 
     size_t offset = 0;
 
-    // al posto delle costanti mettere le variabili che riportano le lunghezze 
+    //change the constant value for the length with the variable that contains the lengths of the keys
     COPY_AND_ADVANCE(sa->association.sk_d,  T_buffer, offset, SHA1_DIGEST_LENGTH);
     COPY_AND_ADVANCE(sa->association.sk_ai, T_buffer, offset, SHA1_DIGEST_LENGTH);
     COPY_AND_ADVANCE(sa->association.sk_ar, T_buffer, offset, SHA1_DIGEST_LENGTH);
@@ -111,8 +95,6 @@ int derive_ike_sa(ike_session_t* sa){
     log_trace("%-5s: 0x%s", "SK_pr", str);
 
     log_info("IKE SA properly configured");
-
-    //una volta popolato il tbuffer abbiamo tutto quello che ci serve per creare il messaggio di richiesta IKE_AUTH
 
     return 0;
 }

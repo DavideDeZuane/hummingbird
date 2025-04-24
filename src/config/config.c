@@ -17,9 +17,9 @@ MACRO SECTION to make the code more readable
 
 /**
 * @brief This function is used to make a secure copy, it limits the maximum number of characters to be copied to avoid overflow
-* @param[out]   dest Pointer to the destination
-* @param[in]    src Pointer to the data to be copied
-* @param[in]    dest_size Maximum number of characters to copy 
+* @param[out] dest Pointer to the destination
+* @param[in] src Pointer to the data to be copied
+* @param[in] dest_size Maximum number of characters to copy 
 */
 void secure_strncpy(char *dest, const char *src, size_t dest_size) {
     // importanza di limitare la copia per evitare overflow
@@ -78,9 +78,9 @@ int auth_handler(auth_options_t* opts, const char* section, const char* name, co
 */
 int peer_handler(peer_options* opts, const char* section, const char* name, const char* value){
 
-    HANDLE_FIELD(section, "hostname",  value,  opts->hostname,  MAX_ID_LENGTH);
-    HANDLE_FIELD(section, "address",   value,  opts->address,   MAX_AUTH_METHOD_LEN);
-    HANDLE_FIELD(section, "port",      value,  opts->port,      MAX_AUTH_DATA_LEN);
+    HANDLE_FIELD(section, "hostname",  value,  opts->hostname,  INET_FQNLEN);
+    HANDLE_FIELD(section, "address",   value,  opts->address,   INET_ADDRSTRLEN);
+    HANDLE_FIELD(section, "port",      value,  opts->port,      MAX_PORT_LENGTH);
 
     return 0;
 

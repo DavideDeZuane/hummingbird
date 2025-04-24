@@ -193,7 +193,7 @@ int socket_up(int *sockfd, struct sockaddr_storage *sk_i, int AF, struct sockadd
 * @param[out] remote  This is the scruct that contains the network information of the remote host
 * @param[in]  opts    These are the options provided for the remote peer in the configuration file
 */
-int initiate_netwok(net_endpoint_t *local, net_endpoint_t *remote, peer_options* opts){
+int initiate_network(net_endpoint_t *local, net_endpoint_t *remote, peer_options* opts){
     //Remote Endpoint configuration
     log_debug("[NET] Validating configurations options");
     int af, port = 0;
