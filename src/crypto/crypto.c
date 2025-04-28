@@ -20,15 +20,12 @@ static const algo_t algo_table[] = {
     { "aes192", 12, 192, ALGO_TYPE_ENCRYPTION },
     { "aes256", 12, 256, ALGO_TYPE_ENCRYPTION },
     { "aes128ctr", 13, 128, ALGO_TYPE_ENCRYPTION },
-
-// PRF
+    // PRF
     { "prfsha1", 2, 0, ALGO_TYPE_PRF },
     { "prf-hmac-sha256", 5, 0, ALGO_TYPE_PRF },
-
     // AUTH
     { "sha1_96",  2, 96, ALGO_TYPE_AUTH },
     { "sha1_160", 7, 128, ALGO_TYPE_AUTH },
-
     // KEY EXCHANGE
     { "modp2048",   14, 0, ALGO_TYPE_KEX },
     { "x25519",     31, 256, ALGO_TYPE_KEX },
@@ -147,12 +144,11 @@ int initiate_crypto(cipher_suite_t* suite, crypto_context_t* ctx, const cipher_o
     // invece che prendere solo il contesto deve prendere in input anche la parte della suite dato che il valore delle chiavi presenti nel crypto context dipende dagli algortimi
     log_debug("[CRY] Validating configurations options");
 
-    cipher_suite_t tmp = {0};
     //prima di fare la configurazione per la chiave farlo per la suite
     // dato che l'algoritmo da utilizzare per generare la chiave dipende dalla suite (anche se per il momento la mettiamo hardcoded)
     // dunque la parte di generazione della chiave dipende pubblica e privata dipende dalla proposal
 
-    int ret = validate_suite(opts, &tmp);
+    int ret = validate_suite(opts, suite);
     log_trace("%-5s: " ANSI_COLOR_BOLD "%s-%s-%s-%s", "SAi", opts->enc, opts->aut, opts->kex, opts->prf);
     if(ret == EXIT_FAILURE) return EXIT_FAILURE;
 

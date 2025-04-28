@@ -8,6 +8,10 @@
 
 uint32_t bytes_to_uint32_be(const uint8_t *bytes);
 
+uint16_t bytes_to_uint16_be(const uint8_t *bytes);
+
+void uint16_to_bytes_be(uint16_t val, uint8_t *out_bytes);
+
 void uint32_to_bytes_be(uint32_t val, uint8_t *out_bytes);
 
 void format_hex_string(char *dest, size_t dest_size, const uint8_t *data, size_t data_len);

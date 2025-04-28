@@ -5,6 +5,10 @@
 
 #define BYTE 1
 
+#define NONCE_LEN 32 
+
+#define INIT_MSG_COMPONENT 4
+
 #define MID_NULL 0x00000000
 #define SPI_NULL 0x0000000000000000 //valore speciale del campo che indica che l'initiator non conosce l'SPI del responder
 
@@ -12,6 +16,7 @@
 #define SPI_LENGTH 64
 #define SPI_LENGTH_BYTE 8
 #define HDR_LENGTH_BYTE 4
+#define GEN_HDR_LENGTH_BYTE 2
 
 /*#######################################################
 Flag, sono le maschere binarie per settare i flag
@@ -26,7 +31,7 @@ Flag, sono le maschere binarie per settare i flag
 #define IKEV2 0x20
 
 /**
- * @brief Enum with the type of the protocol
+ * @brief Enum with the type of the protocol for the Transform Payload
  */
 typedef enum {
     PROTOCOL_ID_IKE = 1,

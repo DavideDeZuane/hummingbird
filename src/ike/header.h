@@ -61,7 +61,7 @@ typedef struct {
 
 /* 
 ####################################################################
-IKE HEADER
+GENERIC PAYLOAD HEADER
 ####################################################################
                       1                   2                   3
     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -82,12 +82,22 @@ typedef struct {
 } __attribute__((packed)) ike_payload_header_t;
 
 
+typedef struct {
+    uint8_t next_payload;  
+    uint8_t critical :1;  
+    uint8_t reserved :7;
+    uint8_t length[GEN_HDR_LENGTH_BYTE];        
+} __attribute__((packed)) ike_payload_header_raw_t;
 
 
 
 
 ike_header_t init_header();
 void print_header(ike_header_t* hd);
+
+int build_header(ike_header_raw_t* hdr);
+
+int build_payload_header(ike_payload_header_t* hdr, NextPayload np, uint16_t len);
 
 ike_header_t* parse_header(uint8_t* buffer, size_t size);
 

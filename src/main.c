@@ -1,4 +1,5 @@
 #include "common_include.h" // IWYU pragma: keep
+#include <endian.h>
 #include <ini.h>
 #include "./config/config.h"
 #include "./log/log.h"
@@ -12,6 +13,7 @@
 #include "utils/utils.h"
 
 #include <openssl/hmac.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,6 +22,11 @@
 // ###############################################################################################
 //spostare questo nel modulo packet, questa è quella parte che si occupa di creare il messaggio e il creeate message ritorna il buffer che poi verrò inviato tramite socket sulla rete 
 // ###############################################################################################
+typedef struct {
+    void *data;
+    size_t length;
+    MessageComponent type; 
+} ike_msg_component_t;
 
 typedef struct {
     void *next; // Puntatore generico al prossimo payload
@@ -132,17 +139,10 @@ int main(int argc, char* argv[]){
     /*--------------------------------------------
     Loading configuration file
     --------------------------------------------*/
-
-    //questa deve diventare dinamica in modo tale che una volta che ho inizilizzato tutto la posso rimuovere
-    // quella di default metterla nell'handler, in questo modo non serve che la chiamo da qui a noi l'unica cosa che interessa nel main è che venga caricata correttamente
     config* cfg = malloc(sizeof(config));
     default_config(cfg);
 
-    // quello che realizzaimo in questo modo pè lo shadowing delle impostazioni di default
-    // questo non possiamo metterlo dentro l'handler perchè altrimenti verrebbe chiamato ad ogni riga
-
     int n;
-    // il metodo chiama l'handler ad ogni riga del file
     if ((n = ini_parse(DEFAULT_CONFIG, handler, cfg)) != 0) {
         if (n == -1) {
             log_error("Error on opening the configuration file %s", COLOR_TEXT(ANSI_COLOR_YELLOW, DEFAULT_CONFIG));
@@ -160,15 +160,21 @@ int main(int argc, char* argv[]){
     log_info("Configuration file %s loaded successfully", DEFAULT_CONFIG);
     log_info("[CFG] module successfully setup", DEFAULT_CONFIG);
 
-
     ike_partecipant_t left = {0};
     ike_partecipant_t right = {0};
+    ike_sa_t sa = {0};
     
-    initiate_ike(&left, &right, cfg);
-
+    initiate_ike(&left, &right, &sa, cfg);
     free(cfg);
 
-    //una volta che esco da questo metodo tutta la parte di configurazione non mi serve più a niente
+    // a questo punto abbiamo che il local ha tutto configurato correttamente 
+    // la cipher suite è configurata correttamente quindi andiamo a crare il payload di tipo SA
+
+    // ok ora a partire dalla configurazione dell'initiator devo generare i payload che mi servono, perciò SA, KE, N 
+    ike_payload_t ni_data = {0};
+    build_payload(&ni_data, PAYLOAD_TYPE_NONCE, left.ctx.nonce, left.ctx.nonce_len);
+
+
 
 
     ike_message_t packet_list = {NULL, NULL};
@@ -185,12 +191,15 @@ int main(int argc, char* argv[]){
     memcpy(&kd.ke_data, left.ctx.public_key, 32);
     memcpy(&header.initiator_spi, &left.ctx.spi, 8);
 
+
+
     ike_payload_header_t np = {0};
     np.next_payload = NEXT_PAYLOAD_NONE;
 
     ike_payload_proposal_t proposal = create_proposal();
     ike_payload_header_t header_1 = {0} ;
     header_1.next_payload = NEXT_PAYLOAD_KE;
+
 
     push_component(&packet_list, PAYLOAD_TYPE_NONCE,        left.ctx.nonce,         left.ctx.nonce_len);
     push_component(&packet_list, GENERIC_PAYLOAD_HEADER,    &np,                    sizeof(ike_payload_header_t));

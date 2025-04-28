@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include "../utils/utils.h"
 #include "../auth/auth.h"
+#include "payload.h"
 
 #define COPY_AND_ADVANCE(dest, src, offset, len)  \
     memcpy((dest), (src) + (offset), (len));      \
@@ -24,18 +25,26 @@
 /**
 * @brief 
 */
-void initiate_ike(ike_partecipant_t* left, ike_partecipant_t* right, config* cfg){
+void initiate_ike(ike_partecipant_t* left, ike_partecipant_t* right, ike_sa_t* sa, config* cfg){
 
     log_info(ANSI_COLOR_GREEN "Starting the init process of hummingbird..." ANSI_COLOR_RESET);
 
     LOAD_MODULE("NET", initiate_network, &left->node, &right->node, &cfg->peer);
-    LOAD_MODULE("CRY", initiate_crypto, NULL, &left->ctx, &cfg->suite);
+    LOAD_MODULE("CRY", initiate_crypto, &sa->suite, &left->ctx, &cfg->suite);
     LOAD_MODULE("AUT", initiate_auth, &left->aut, &cfg->auth);
 
     // once correctly imported all the modules we can say that ike can do all his operations
     // qui va tutta la parte di generazione del messaggio di cui si occupa il modulo IKE
 
     log_info("[IKE] module successfully setup");
+
+}
+
+
+int ike_sa_init(ike_partecipant_t* left){
+
+
+
 
 }
 

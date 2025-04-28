@@ -167,6 +167,14 @@ void uint32_to_bytes_be(uint32_t val, uint8_t *out_bytes) {
     out_bytes[3] = val & 0xFF;
 }
 
+uint16_t bytes_to_uint16_be(const uint8_t *bytes) {
+    return ((uint16_t)bytes[0] << 8) | (uint16_t)bytes[1];
+}
+
+void uint16_to_bytes_be(uint16_t val, uint8_t *out_bytes) {
+    out_bytes[0] = (val >> 8) & 0xFF;
+    out_bytes[1] = val & 0xFF;
+}
 
 void format_hex_string(char *dest, size_t dest_size, const uint8_t *data, size_t data_len) {
     size_t i, written = 0;

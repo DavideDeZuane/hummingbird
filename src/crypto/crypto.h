@@ -14,10 +14,10 @@
 #define NUM_KEYS 7
 
 typedef enum {
-    ALGO_TYPE_ENCRYPTION,
-    ALGO_TYPE_PRF,
-    ALGO_TYPE_AUTH,
-    ALGO_TYPE_KEX,
+    ALGO_TYPE_ENCRYPTION    = 1,
+    ALGO_TYPE_PRF           = 2,
+    ALGO_TYPE_AUTH          = 3,
+    ALGO_TYPE_KEX           = 4,
     ALGO_TYPE_UNKNOWN
 } algo_type_t;
 

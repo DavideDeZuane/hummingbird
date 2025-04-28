@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
+#include <time.h>
 #include "../utils/utils.h"
 
 
@@ -119,4 +120,18 @@ ike_header_t* parse_header(uint8_t* buffer, size_t size){
 
     return hd;
 
+}
+
+
+
+int build_payload_header(ike_payload_header_t* hdr, NextPayload np, uint16_t len){
+    if(hdr == NULL){
+        return EXIT_FAILURE;
+    }
+
+    hdr->next_payload = np;
+    hdr->length = htobe16(len + GEN_HDR_DIM);
+
+    return EXIT_SUCCESS;
+    
 }

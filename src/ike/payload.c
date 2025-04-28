@@ -1,11 +1,67 @@
+#include "../log/log.h"
 #include "payload.h"
 #include "constant.h"
+#include "header.h"
 #include <endian.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+#include <time.h>
+#include "../crypto/crypto.h"
+#include "../utils/utils.h"
+
+int build_transform(ike_transofrm_raw_t* tran, algo_t* alg){
+    
+    tran->last = LAST;
+    uint16_to_bytes_be(alg->iana_code, tran->id);
+    uint16_to_bytes_be(sizeof(ike_transofrm_raw_t), tran->length);
+
+    return EXIT_SUCCESS;
+
+}
+
+int build_proposal(ike_payload_proposal_t* proposal, cipher_suite_t* suite){
+    build_transform(&proposal->aut, &suite->auth);
+}
+
+/**
+* This function serialized the content of the payload in a buffer
+*/
+int build_payload(ike_payload_t* payload, MessageComponent type, void* body, size_t len){
+
+    switch (type) {
+        case PAYLOAD_TYPE_NONCE: {
+            // popolo il campo body 
+            // in questo caso non devo fare niente dato che 
+            payload->type = type;
+            payload->len = len;
+            payload->body = body;
+            //popolo il campo hdr
+            build_payload_header(&payload->hdr, NEXT_PAYLOAD_NONE, len);
+            break;
+        };
+        case PAYLOAD_TYPE_KE: {
+            payload->type = type;
+        };
+        case PAYLOAD_TYPE_SA: {
+            cipher_suite_t* tmp = (cipher_suite_t *) body;
+            ike_transofrm_raw_t tmp2 = {0};
 
 
+
+        };
+        default: {
+
+        }
+    }
+
+    return EXIT_SUCCESS;
+
+}
 
 //trasformare questa in modo tale che accetti i parametri dalla configurazione
 ike_payload_proposal_t create_proposal(){
+
 
     ike_payload_proposal_t proposal = {0};
     proposal.protocol = PROTOCOL_ID_IKE;

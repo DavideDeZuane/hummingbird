@@ -54,7 +54,9 @@ typedef struct {
     ike_sa_t association;
 } ike_session_t;
 
-void initiate_ike(ike_partecipant_t* left, ike_partecipant_t* right, config* cfg);
+void initiate_ike(ike_partecipant_t* left, ike_partecipant_t* right, ike_sa_t* sa, config* cfg);
+
+int ike_sa_init(ike_partecipant_t* left);
 
 int derive_ike_sa(ike_session_t* sa);
 
