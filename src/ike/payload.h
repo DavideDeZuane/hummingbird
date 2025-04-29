@@ -24,10 +24,8 @@ typedef  struct {
     uint16_t RESERVED2;
 } __attribute__((packed)) ike_id_payload_t ;
 /*
-1                   2                   3
+                    1                   2                   3
 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| Next Payload  |C|  RESERVED   |         Payload Length        |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |   ID Type     |                 RESERVED                      |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -47,10 +45,34 @@ typedef struct {
                     1                   2                   3
 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| Next Payload  |C|  RESERVED   |         Payload Length        |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                                                               |
 ~                            Nonce Data                         ~
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+*/
+
+/** 
+* @brief ADD DESCRIPTION
+*/
+typedef struct {
+    uint16_t dh_group;
+    uint16_t reserved;
+    uint8_t ke_data[32]; 
+} __attribute__((packed)) ike_payload_kex_t;
+
+typedef struct {
+    uint8_t dh_group;
+    uint8_t reserved[2];
+    uint8_t data[]; //variable field
+} __attribute__((packed)) ike_payload_kex_raw_t;
+/*
+                    1                   2                   3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|   Diffie-Hellman Group Num    |           RESERVED            |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+~                       Key Exchange Data                       ~
 |                                                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 */
@@ -100,9 +122,9 @@ typedef struct {
     uint8_t last; 
     uint8_t reserved;
     uint8_t length[2]; 
-    uint8_t number; //identificativo per determinare quale proposal è stata scelta dal peer
-    uint8_t protocol; //id del protocollo per cui vale la proposal
-    uint8_t spi_size; //per l'init SA deve essere valorizzato a 0 poi in quelli successivi deve essere pari alla lunghezza dello spi del protocol id 
+    uint8_t number; 
+    uint8_t protocol; 
+    uint8_t spi_size; 
     uint8_t num_transforms; 
     ike_transofrm_with_attr_t enc;
     ike_transofrm_t kex;
@@ -126,37 +148,15 @@ typedef struct {
 */
 
 
-/** 
-* @brief ADD DESCRIPTION
-*/
-typedef struct {
-    uint16_t dh_group;
-    uint16_t reserved;
-    uint8_t ke_data[32]; 
-} __attribute__((packed)) ike_payload_kex_t;
-/*
-                    1                   2                   3
-0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| Next Payload  |C|  RESERVED   |         Payload Length        |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|   Diffie-Hellman Group Num    |           RESERVED            |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                                                               |
-~                       Key Exchange Data                       ~
-|                                                               |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-*/
 
 typedef struct {
     MessageComponent type; 
     ike_payload_header_t hdr;
-    void* body; // qui usiamo const poichè passiamo il riferimento alla struct che compone il body senza doverla copiare, il const ci garantisce che non viene modificata.
+    void* body;
     size_t len;
 } ike_payload_t;
 
 
-int build_proposal(ike_proposal_payload_t* proposal, cipher_suite_t* suite);
 
 int build_payload(ike_payload_t* payload, MessageComponent type, void *body, size_t len);
 

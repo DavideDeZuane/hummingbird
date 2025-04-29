@@ -172,10 +172,10 @@ int main(int argc, char* argv[]){
 
     // ok ora a partire dalla configurazione dell'initiator devo generare i payload che mi servono, perciò SA, KE, N 
     ike_payload_t ni_data = {0};
+
     build_payload(&ni_data, PAYLOAD_TYPE_NONCE, left.ctx.nonce, left.ctx.nonce_len);
 
-
-
+    
     build_payload(&ni_data, PAYLOAD_TYPE_SA, &sa.suite, sizeof(cipher_suite_t));
 
 

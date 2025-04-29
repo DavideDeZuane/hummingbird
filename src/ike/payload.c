@@ -67,6 +67,7 @@ int build_proposal(ike_proposal_payload_t* proposal, cipher_suite_t* suite){
 
 /**
 * This function serialized the content of the payload in a buffer
+* add the  generation of the header
 */
 int build_payload(ike_payload_t* payload, MessageComponent type, void* body, size_t len){
 
@@ -82,16 +83,18 @@ int build_payload(ike_payload_t* payload, MessageComponent type, void* body, siz
             break;
         };
         case PAYLOAD_TYPE_KE: {
-            payload->type = type;
+            // qui abbiamo un metodo per il key exchange che dipende dalla cipher suite 
+            
+
+
+
         };
         case PAYLOAD_TYPE_SA: {
             cipher_suite_t* tmp = (cipher_suite_t *) body;
             payload->body = calloc(sizeof(ike_proposal_payload_t), BYTE);
             build_proposal((ike_proposal_payload_t *) payload->body, tmp);
-            dump_memory(payload->body, sizeof(ike_proposal_payload_t));
-
-
-
+            build_payload_header(&payload->hdr, NEXT_PAYLOAD_KE, len);
+            break;
         };
         default: {
 
