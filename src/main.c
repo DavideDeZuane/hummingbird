@@ -176,6 +176,8 @@ int main(int argc, char* argv[]){
 
 
 
+    build_payload(&ni_data, PAYLOAD_TYPE_SA, &sa.suite, sizeof(cipher_suite_t));
+
 
     ike_message_t packet_list = {NULL, NULL};
 
@@ -191,16 +193,9 @@ int main(int argc, char* argv[]){
     memcpy(&kd.ke_data, left.ctx.public_key, 32);
     memcpy(&header.initiator_spi, &left.ctx.spi, 8);
 
-    ike_payload_proposal_raw_t proposta = {0};
-    build_proposal(&proposta, &sa.suite);
-
-    dump_memory(&proposta, sizeof(ike_payload_proposal_raw_t));
-
-
     ike_payload_header_t np = {0};
     np.next_payload = NEXT_PAYLOAD_NONE;
 
-    ike_payload_proposal_t proposal = create_proposal();
     ike_payload_header_t header_1 = {0} ;
     header_1.next_payload = NEXT_PAYLOAD_KE;
 
@@ -209,7 +204,7 @@ int main(int argc, char* argv[]){
     push_component(&packet_list, GENERIC_PAYLOAD_HEADER,    &np,                    sizeof(ike_payload_header_t));
     push_component(&packet_list, PAYLOAD_TYPE_KE,           &kd,                    sizeof(ike_payload_kex_t));
     push_component(&packet_list, GENERIC_PAYLOAD_HEADER,    &pd,                    sizeof(ike_payload_header_t));
-    push_component(&packet_list, PAYLOAD_TYPE_SA,           &proposta,              sizeof(ike_payload_proposal_t));
+    push_component(&packet_list, PAYLOAD_TYPE_SA,           ni_data.body,              sizeof(ike_proposal_payload_t));
     push_component(&packet_list, GENERIC_PAYLOAD_HEADER,    &header_1,              sizeof(ike_payload_header_t));
     push_component(&packet_list, IKE_HEADER,                &header,                sizeof(ike_header_t));
     
