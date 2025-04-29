@@ -14,6 +14,7 @@
 
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
+#include <openssl/ml_kem.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -175,9 +176,20 @@ int main(int argc, char* argv[]){
     ike_payload_t ni_data = {0};
     ike_payload_t kex_data = {0};
 
+    
+    EVP_PKEY *pri = NULL;
+    EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_from_name(NULL, "ML-KEM-512", NULL);
+
+    EVP_PKEY_keygen_init(pctx);
+    EVP_PKEY_keygen(pctx, &pri);
+
+    crypto_context_t pq = {0};
+    pq.dh_group = 35;
+    pq.private_key = pri;
+
     build_payload(&ni_data, PAYLOAD_TYPE_NONCE, left.ctx.nonce, left.ctx.nonce_len);
 
-    build_payload(&kex_data, PAYLOAD_TYPE_KE, &left.ctx, sizeof(crypto_context_t));
+    build_payload(&kex_data, PAYLOAD_TYPE_KE, &pq, sizeof(crypto_context_t));
     
     build_payload(&ni_data, PAYLOAD_TYPE_SA, &sa.suite, sizeof(cipher_suite_t));
 

@@ -28,6 +28,7 @@ static const algo_t algo_table[] = {
     // KEY EXCHANGE
     { "modp2048",   14, 0, ALGO_TYPE_KEX },
     { "x25519",     31, 256, ALGO_TYPE_KEX },
+    { "mlkem512",     35, 800, ALGO_TYPE_KEX },
 };
 
 const algo_t* find_algo_by_name(const char *name, algo_type_t type) {

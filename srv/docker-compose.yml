@@ -1,6 +1,6 @@
 services:
   vpn-server:
-    build: .
+    image: strongx509/strongswan:latest
     container_name: strongswan
     network_mode: host
     cap_add:

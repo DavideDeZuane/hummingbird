@@ -60,6 +60,7 @@ RUN ./configure --prefix=/usr --sysconfdir=/etc 	\
    	--enable-pubkey                             	\  	 
 	--enable-socket-default                     	\
 	--enable-kernel-netlink                     	\
+	--enable-ml					\
 	--enable-resolve        
 RUN make && make install
 
