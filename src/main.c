@@ -12,6 +12,7 @@
 #include "network/network.h"
 #include "utils/utils.h"
 
+#include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -172,9 +173,11 @@ int main(int argc, char* argv[]){
 
     // ok ora a partire dalla configurazione dell'initiator devo generare i payload che mi servono, perciò SA, KE, N 
     ike_payload_t ni_data = {0};
+    ike_payload_t kex_data = {0};
 
     build_payload(&ni_data, PAYLOAD_TYPE_NONCE, left.ctx.nonce, left.ctx.nonce_len);
 
+    build_payload(&kex_data, PAYLOAD_TYPE_KE, &left.ctx, sizeof(crypto_context_t));
     
     build_payload(&ni_data, PAYLOAD_TYPE_SA, &sa.suite, sizeof(cipher_suite_t));
 
@@ -202,7 +205,7 @@ int main(int argc, char* argv[]){
 
     push_component(&packet_list, PAYLOAD_TYPE_NONCE,        left.ctx.nonce,         left.ctx.nonce_len);
     push_component(&packet_list, GENERIC_PAYLOAD_HEADER,    &np,                    sizeof(ike_payload_header_t));
-    push_component(&packet_list, PAYLOAD_TYPE_KE,           &kd,                    sizeof(ike_payload_kex_t));
+    push_component(&packet_list, PAYLOAD_TYPE_KE,           kex_data.body,                    kex_data.len);
     push_component(&packet_list, GENERIC_PAYLOAD_HEADER,    &pd,                    sizeof(ike_payload_header_t));
     push_component(&packet_list, PAYLOAD_TYPE_SA,           ni_data.body,              sizeof(ike_proposal_payload_t));
     push_component(&packet_list, GENERIC_PAYLOAD_HEADER,    &header_1,              sizeof(ike_payload_header_t));

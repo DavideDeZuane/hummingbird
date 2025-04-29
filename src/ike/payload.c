@@ -3,6 +3,8 @@
 #include "constant.h"
 #include "header.h"
 #include <endian.h>
+#include <openssl/crypto.h>
+#include <openssl/evp.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -65,6 +67,20 @@ int build_proposal(ike_proposal_payload_t* proposal, cipher_suite_t* suite){
 
 }
 
+int build_kex(ike_payload_kex_raw_t* ke, crypto_context_t* data){
+
+    uint16_to_bytes_be(data->dh_group, ke->dh_group);
+    // retrieve che public key len 
+    EVP_PKEY_get_raw_public_key(data->private_key, NULL, &data->key_len);
+    printf("Lunghezza chiave estratta %zu \n", data->key_len);
+    ke = realloc(ke, data->key_len + sizeof(ike_payload_kex_raw_t));
+
+    printf("Size of ke %zu \n", sizeof(ike_payload_kex_raw_t));
+
+    EVP_PKEY_get_raw_public_key(data->private_key, ke->data, &data->key_len);
+    return EXIT_SUCCESS;
+}
+
 /**
 * This function serialized the content of the payload in a buffer
 * add the  generation of the header
@@ -76,7 +92,7 @@ int build_payload(ike_payload_t* payload, MessageComponent type, void* body, siz
             // popolo il campo body 
             // in questo caso non devo fare niente dato che 
             payload->type = type;
-            payload->len = len;
+            payload->len = len + GEN_HDR_DIM;
             payload->body = body;
             //popolo il campo hdr
             build_payload_header(&payload->hdr, NEXT_PAYLOAD_NONE, len);
@@ -84,14 +100,22 @@ int build_payload(ike_payload_t* payload, MessageComponent type, void* body, siz
         };
         case PAYLOAD_TYPE_KE: {
             // qui abbiamo un metodo per il key exchange che dipende dalla cipher suite 
-            
+            crypto_context_t* tmp = (crypto_context_t *) body;
+            EVP_PKEY_get_raw_public_key(tmp->private_key, NULL, &tmp->key_len);
 
+            //printf("Lunghezza chiave estratta %zu \n", tmp->key_len);
+            payload->len = tmp->key_len + 4;
+            payload->body = calloc(tmp->key_len + 4, BYTE);
+            ike_payload_kex_raw_t* tmp2 = (ike_payload_kex_raw_t *) payload->body;
 
-
+            uint16_to_bytes_be(tmp->dh_group, tmp2->dh_group);
+            EVP_PKEY_get_raw_public_key(tmp->private_key, tmp2->data, &tmp->key_len);
+            break;
         };
         case PAYLOAD_TYPE_SA: {
             cipher_suite_t* tmp = (cipher_suite_t *) body;
             payload->body = calloc(sizeof(ike_proposal_payload_t), BYTE);
+            payload->len = len + GEN_HDR_DIM;
             build_proposal((ike_proposal_payload_t *) payload->body, tmp);
             build_payload_header(&payload->hdr, NEXT_PAYLOAD_KE, len);
             break;

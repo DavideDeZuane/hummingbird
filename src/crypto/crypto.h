@@ -44,6 +44,7 @@ typedef struct {
     uint8_t spi[8];
     EVP_PKEY *private_key;
     uint8_t *public_key;  
+    uint16_t dh_group;
     uint8_t* nonce;
     size_t key_len;
     size_t nonce_len;

@@ -167,6 +167,9 @@ int initiate_crypto(cipher_suite_t* suite, crypto_context_t* ctx, const cipher_o
     format_hex_string(str, str_len, ctx->nonce, ctx->nonce_len);
     log_trace("%-5s: " ANSI_COLOR_BOLD "0x%s", "Ni", str);
 
+    ctx->dh_group = suite->kex.iana_code;
+    // a questo punto genero la chiave in base a questo
+
     /* Key configuration */
     ctx->key_len = X25519_KEY_LENGTH;
     generate_key(&ctx->private_key, &ctx->public_key);
