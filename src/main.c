@@ -191,6 +191,10 @@ int main(int argc, char* argv[]){
     memcpy(&kd.ke_data, left.ctx.public_key, 32);
     memcpy(&header.initiator_spi, &left.ctx.spi, 8);
 
+    ike_payload_proposal_raw_t proposta = {0};
+    build_proposal(&proposta, &sa.suite);
+
+    dump_memory(&proposta, sizeof(ike_payload_proposal_raw_t));
 
 
     ike_payload_header_t np = {0};
@@ -205,7 +209,7 @@ int main(int argc, char* argv[]){
     push_component(&packet_list, GENERIC_PAYLOAD_HEADER,    &np,                    sizeof(ike_payload_header_t));
     push_component(&packet_list, PAYLOAD_TYPE_KE,           &kd,                    sizeof(ike_payload_kex_t));
     push_component(&packet_list, GENERIC_PAYLOAD_HEADER,    &pd,                    sizeof(ike_payload_header_t));
-    push_component(&packet_list, PAYLOAD_TYPE_SA,           &proposal,              sizeof(ike_payload_proposal_t));
+    push_component(&packet_list, PAYLOAD_TYPE_SA,           &proposta,              sizeof(ike_payload_proposal_t));
     push_component(&packet_list, GENERIC_PAYLOAD_HEADER,    &header_1,              sizeof(ike_payload_header_t));
     push_component(&packet_list, IKE_HEADER,                &header,                sizeof(ike_header_t));
     

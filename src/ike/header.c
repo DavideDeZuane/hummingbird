@@ -6,10 +6,9 @@
 #include <string.h>
 #include <sys/types.h>
 #include <time.h>
-#include "../utils/utils.h"
 
 
-// Definizioni delle dimensioni dei campi
+// DIMENION IN BYTE OF THE FIELDS OF THE IKE HEADER
 #define SPI_LENGTH_BYTE     8
 #define NEXT_PAYLOAD_BYTE   1
 #define VERSION_BYTE        1
@@ -20,11 +19,10 @@
 
 #define BUFFER_SIZE (SPI_LENGTH_BYTE * 2 + NEXT_PAYLOAD_BYTE + VERSION_BYTE + EXCHANGE_TYPE_BYTE + FLAGS_BYTE + MESSAGE_ID_BYTE + LENGTH_BYTE)
 
-#define UPDATE_BINARY_FIELD(hdr, buffer, offset, field_size)            \
-    memcpy((uint8_t*)(hdr) + (offset), (uint8_t*)(buffer) + (offset), (field_size));         \
-    (offset) += (field_size);   \
-
-
+#define UPDATE_BINARY_FIELD(hdr, buffer, offset, field_size)                            \
+    memcpy((uint8_t*)(hdr) + (offset), (uint8_t*)(buffer) + (offset), (field_size));    \
+    (offset) += (field_size);                                                           \
+\
 
 void set_flags(ike_header_t* hd, uint8_t flags[]){
     hd->flags = 0; 

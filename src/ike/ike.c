@@ -6,11 +6,11 @@
 #include <stdlib.h>
 #include "../utils/utils.h"
 #include "../auth/auth.h"
-#include "payload.h"
 
-#define COPY_AND_ADVANCE(dest, src, offset, len)  \
-    memcpy((dest), (src) + (offset), (len));      \
-    (offset) += (len);
+#define COPY_AND_ADVANCE(dest, src, offset, len)    \
+    memcpy((dest), (src) + (offset), (len));        \
+    (offset) += (len);                              \
+\
 
 // macro to handle the loading processos of a module
 #define LOAD_MODULE(name, init_fn, ...)                                \
@@ -20,7 +20,8 @@
             log_fatal("Could not initiate the [%s] module", name);     \
             exit(EXIT_FAILURE);                                        \
         }                                                              \
-    } while (0)
+    } while (0)                                                        \
+\
 
 /**
 * @brief 

@@ -27,6 +27,8 @@ Flag, sono le maschere binarie per settare i flag
 
 #define LAST 0
 #define MORE 3
+#define NUM_TRANSFORM 4
+#define KEY_LEN_ATTRIBUTE 0x800E
 
 #define IKEV2 0x20
 

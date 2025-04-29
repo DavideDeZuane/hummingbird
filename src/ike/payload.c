@@ -10,18 +10,58 @@
 #include "../crypto/crypto.h"
 #include "../utils/utils.h"
 
-int build_transform(ike_transofrm_raw_t* tran, algo_t* alg){
+int build_transform(void* tran, algo_t* alg){
     
-    tran->last = LAST;
-    uint16_to_bytes_be(alg->iana_code, tran->id);
-    uint16_to_bytes_be(sizeof(ike_transofrm_raw_t), tran->length);
+    switch(alg->type){
+        case ALGO_TYPE_ENCRYPTION: {
+            ike_transofrm_with_attribute_raw_t* tmp = (ike_transofrm_with_attribute_raw_t *) tran;
+
+            tmp->transform.last = LAST;
+            tmp->transform.type = alg->type;
+            uint16_to_bytes_be(alg->iana_code, tmp->transform.id);
+            uint16_to_bytes_be(sizeof(ike_transofrm_with_attribute_raw_t), tmp->transform.length);
+
+
+            uint16_to_bytes_be(KEY_LEN_ATTRIBUTE, tmp->attribute.type);
+            uint16_to_bytes_be(alg->key_len, tmp->attribute.value);
+            break;
+        };
+        case ALGO_TYPE_PRF: 
+        case ALGO_TYPE_KEX: 
+        case ALGO_TYPE_AUTH:{ 
+            ike_transofrm_raw_t *tmp = (ike_transofrm_raw_t *) tran;
+            tmp->last = LAST;
+            tmp->type = alg->type;
+            uint16_to_bytes_be(alg->iana_code, tmp->id);
+            uint16_to_bytes_be(sizeof(ike_transofrm_raw_t), tmp->length);
+            break;
+        };
+        case ALGO_TYPE_UNKNOWN: {
+            return EXIT_FAILURE;
+        }
+    }
 
     return EXIT_SUCCESS;
 
 }
 
-int build_proposal(ike_payload_proposal_t* proposal, cipher_suite_t* suite){
+int build_proposal(ike_payload_proposal_raw_t* proposal, cipher_suite_t* suite){
+
+    proposal->protocol = PROTOCOL_ID_IKE;
+    proposal->num_transforms = NUM_TRANSFORM;
+    proposal->last = LAST;
+    proposal->number = 1;
+    proposal->spi_size = 0;
+
     build_transform(&proposal->aut, &suite->auth);
+    build_transform(&proposal->prf, &suite->prf);
+    build_transform(&proposal->enc, &suite->enc);
+    build_transform(&proposal->kex, &suite->kex);
+
+    uint16_to_bytes_be(sizeof(ike_payload_proposal_raw_t), proposal->length);
+
+    return EXIT_SUCCESS;
+
 }
 
 /**

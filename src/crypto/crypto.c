@@ -19,7 +19,6 @@ static const algo_t algo_table[] = {
     { "aes128", 12, 128, ALGO_TYPE_ENCRYPTION },
     { "aes192", 12, 192, ALGO_TYPE_ENCRYPTION },
     { "aes256", 12, 256, ALGO_TYPE_ENCRYPTION },
-    { "aes128ctr", 13, 128, ALGO_TYPE_ENCRYPTION },
     // PRF
     { "prfsha1", 2, 0, ALGO_TYPE_PRF },
     { "prf-hmac-sha256", 5, 0, ALGO_TYPE_PRF },
