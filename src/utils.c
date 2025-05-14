@@ -154,10 +154,15 @@ const char* next_payload_to_string(NextPayload type){
 }
 
 uint32_t bytes_to_uint32_be(const uint8_t *bytes) {
+    #if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    // Architettura big endian: salta la conversione
+    #else
+    // Architettura little endian: fai la conversione
     return ((uint32_t)bytes[0] << 24) |
            ((uint32_t)bytes[1] << 16) |
            ((uint32_t)bytes[2] << 8)  |
            ((uint32_t)bytes[3]);
+    #endif
 }
 
 void uint32_to_bytes_be(uint32_t val, uint8_t *out_bytes) {

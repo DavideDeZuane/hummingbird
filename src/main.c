@@ -166,10 +166,11 @@ int main(int argc, char* argv[]){
 
     ike_payload_t ni_data = {0};
     ike_payload_t kex_data = {0};
+    ike_payload_t sa_data = {0};
 
     build_payload(&ni_data,     PAYLOAD_TYPE_NONCE, left.ctx.nonce, left.ctx.nonce_len);
     build_payload(&kex_data,    PAYLOAD_TYPE_KE,    &left.ctx,      sizeof(crypto_context_t));
-    build_payload(&ni_data,     PAYLOAD_TYPE_SA,    &sa.suite,      sizeof(cipher_suite_t));
+    build_payload(&sa_data,     PAYLOAD_TYPE_SA,    &sa.suite,      sizeof(cipher_suite_t));
 
     ike_message_t packet_list = {NULL, NULL};
     ike_header_t header = init_header();
@@ -177,18 +178,16 @@ int main(int argc, char* argv[]){
     memcpy(&header.initiator_spi, left.ctx.spi, SPI_LENGTH_BYTE);
 
     ike_payload_header_t pd = {0};
-    ike_payload_header_t np = {0};
     ike_payload_header_t header_1 = {0} ;
 
     pd.next_payload = NEXT_PAYLOAD_NONCE;
-    np.next_payload = NEXT_PAYLOAD_NONE;
     header_1.next_payload = NEXT_PAYLOAD_KE;
 
     push_component(&packet_list, PAYLOAD_TYPE_NONCE,       left.ctx.nonce,   left.ctx.nonce_len);
-    push_component(&packet_list, GENERIC_PAYLOAD_HEADER,   &np,              sizeof(ike_payload_header_t));
+    push_component(&packet_list, GENERIC_PAYLOAD_HEADER,   &ni_data.hdr,              sizeof(ike_payload_header_t));
     push_component(&packet_list, PAYLOAD_TYPE_KE,          kex_data.body,    kex_data.len);
     push_component(&packet_list, GENERIC_PAYLOAD_HEADER,   &pd,              sizeof(ike_payload_header_t));
-    push_component(&packet_list, PAYLOAD_TYPE_SA,          ni_data.body,     sizeof(ike_proposal_payload_t));
+    push_component(&packet_list, PAYLOAD_TYPE_SA,          sa_data.body,     sizeof(ike_proposal_payload_t));
     push_component(&packet_list, GENERIC_PAYLOAD_HEADER,   &header_1,        sizeof(ike_payload_header_t));
     push_component(&packet_list, IKE_HEADER,               &header,          sizeof(ike_header_t));
     
@@ -450,14 +449,10 @@ int main(int argc, char* argv[]){
     ike_header_raw_t raw = {0};
     parse_header_raw(buffer, &raw);
     
-    uint32_t lun = bytes_to_uint32_be(raw.length);
 
     // quando tratto i dati siamo già nel mondo della CPU, ovvero non stiamo più trattando byte 
     // ma stiamo operando su una variabile che è nativa per la macchina, quindi il compilatore conosce l'endianess della CPU e come rappresentare il dato
     // l'endianess conta solo quando interpretiamo l'array di byte come interi o altri dati nativi 
-    lun += 100;
-
-    uint32_to_bytes_be(lun, raw.length);
 
     secure_free(response, response_len);
 
