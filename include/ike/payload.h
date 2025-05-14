@@ -1,8 +1,7 @@
 #ifndef PAYLOAD_H
 #define PAYLOAD_H
 
-#include "../common_include.h"
-#include "../crypto/crypto.h"
+#include "../crypto.h"
 #include "constant.h"
 #include "header.h"
 #include <stddef.h>

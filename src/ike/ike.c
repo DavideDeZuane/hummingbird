@@ -1,11 +1,10 @@
-#include "ike.h"
-#include "../log/log.h"
-#include "../network/network.h"
-#include "constant.h"
+#include "../../include/ike/ike.h"
+#include "../../include/log.h"
+#include "../../include/network.h"
 #include <stddef.h>
 #include <stdlib.h>
-#include "../utils/utils.h"
-#include "../auth/auth.h"
+#include "../../include/utils.h"
+#include "../../include/auth.h"
 
 #define COPY_AND_ADVANCE(dest, src, offset, len)    \
     memcpy((dest), (src) + (offset), (len));        \
@@ -44,7 +43,7 @@ void initiate_ike(ike_partecipant_t* left, ike_partecipant_t* right, ike_sa_t* s
 
 int ike_sa_init(ike_partecipant_t* left){
 
-
+    return 0;
 
 
 }

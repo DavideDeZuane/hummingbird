@@ -3,9 +3,9 @@
 
 #include "constant.h"
 #include "header.h"
-#include "../network/network.h"
-#include "../crypto/crypto.h"
-#include "../auth/auth.h"
+#include "../network.h"
+#include "../crypto.h"
+#include "../auth.h"
 #include <openssl/evp.h>
 
 typedef enum {

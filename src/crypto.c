@@ -1,5 +1,5 @@
-#include "crypto.h" // IWYU pragma: keep
 #include <endian.h>
+#include <openssl/cryptoerr_legacy.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -8,11 +8,13 @@
 #include <sys/random.h>
 #include <openssl/dh.h>
 #include <openssl/evp.h>
+#include <openssl/ml_kem.h>
 #include <openssl/hmac.h>
 #include <sys/types.h>
 #include <time.h>
-#include "../log/log.h"
-#include "../utils/utils.h"
+#include "../include/log.h"
+#include "../include/utils.h"
+#include "../include/crypto.h" // IWYU pragma: keep
 
 static const algo_t algo_table[] = {
     // ENCRYPTION
@@ -102,35 +104,30 @@ void generate_nonce(uint8_t** nonce, size_t len) {
 * @param[in] pri The private key, is of the type EVP_PKEY because the context inside this struct are necessary to derive correctly the secret
 * @param[in] pub The public key, this is a buffer becuase we have to send this content in the init exchange
 */
-void generate_key(EVP_PKEY** pri, uint8_t** pub){
+void generate_key(EVP_PKEY** pri, uint8_t** pub, const char* name, size_t* len){
     
     *pri = NULL;
-    *pub = malloc(X25519_KEY_LENGTH);
 
-    EVP_PKEY_CTX*ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_X25519, NULL);
+
+    EVP_PKEY_CTX*ctx = EVP_PKEY_CTX_new_from_name(NULL, name, NULL);
     if (!ctx || EVP_PKEY_keygen_init(ctx) <= 0 || EVP_PKEY_keygen(ctx, pri) <= 0){
         log_error("Error during the generation of the private key");
 
     } 
-    //la dimensione del buffer è 32 byte dato che x25519 produce sempre chiavi pubbliche di questa dimensione
-    unsigned char dump[32];
-    size_t len = X25519_KEY_LENGTH;
+    *len = 0;
 
-    //METTERE UNA GUARD CHE FA QUESTA COSA PER FARE IL DUMP SOLO SE IL LOG LEVEL È QUELLO GIUSTO
-    if (EVP_PKEY_get_raw_private_key(*pri, dump, &len) <= 0){
+    if (EVP_PKEY_get_raw_private_key(*pri, NULL, len) <= 0){
         printf("Errore extracting the private key");
         log_error("Errore");
     }
-    /*    
-    printf("Private key: \n");
-    dump_memory(dump, 32);
-    */
-    // estraiamo la chiave pubblica da quella privata in modo tale da metterla all'interno di un buffer per poi inviarla nel payload KE
-    if (EVP_PKEY_get_raw_public_key(*pri, *pub, &len) <= 0){
+
+    *pub = calloc(*len, BYTE);
+
+    if (EVP_PKEY_get_raw_public_key(*pri, *pub, len) <= 0){
         printf("Errore extracting the public key");
         log_error("Errore");
     } 
-    // Stampa la chiave pubblica in formato esadecimale
+
     EVP_PKEY_CTX_free(ctx);
 
 }
@@ -149,7 +146,7 @@ int initiate_crypto(cipher_suite_t* suite, crypto_context_t* ctx, const cipher_o
     // dunque la parte di generazione della chiave dipende pubblica e privata dipende dalla proposal
 
     int ret = validate_suite(opts, suite);
-    log_trace("%-5s: " ANSI_COLOR_BOLD "%s-%s-%s-%s", "SAi", opts->enc, opts->aut, opts->kex, opts->prf);
+    log_trace("%-5s: %s-%s-%s-%s", "SAi", opts->enc, opts->aut, opts->kex, opts->prf);
     if(ret == EXIT_FAILURE) return EXIT_FAILURE;
 
     /* SPI configuration */
@@ -157,7 +154,7 @@ int initiate_crypto(cipher_suite_t* suite, crypto_context_t* ctx, const cipher_o
     size_t str_len = 2* SPI_LENGTH_BYTE +1;
     char* str = calloc(str_len, BYTE); 
     format_hex_string(str, str_len, ctx->spi, SPI_LENGTH_BYTE);
-    log_trace("%-5s: " ANSI_COLOR_BOLD "0x%s","SPIi", str);
+    log_trace("%-5s: 0x%s","SPIi", str);
     
     /* Nonce configuration */
     ctx->nonce_len = DEFAULT_NONCE_LENGTH;
@@ -166,17 +163,18 @@ int initiate_crypto(cipher_suite_t* suite, crypto_context_t* ctx, const cipher_o
     str = realloc(str, str_len);
     memset(str, 0, str_len);
     format_hex_string(str, str_len, ctx->nonce, ctx->nonce_len);
-    log_trace("%-5s: " ANSI_COLOR_BOLD "0x%s", "Ni", str);
+    log_trace("%-5s: 0x%s", "Ni", str);
 
     ctx->dh_group = suite->kex.iana_code;
     // a questo punto genero la chiave in base a questo
 
     /* Key configuration */
-    ctx->key_len = X25519_KEY_LENGTH;
-    generate_key(&ctx->private_key, &ctx->public_key);
+
+    generate_key(&ctx->private_key, &ctx->public_key, suite->kex.name, &ctx->key_len);
+    str_len = ctx->key_len *2 + 1;
     memset(str, 0, str_len);
     format_hex_string(str, str_len, ctx->public_key, ctx->key_len);
-    log_trace("%-5s: " ANSI_COLOR_BOLD "0x%s", "KEi", str);
+    log_trace("%-5s: 0x%s", "KEi", str);
 
     return EXIT_SUCCESS;
 }

@@ -1,8 +1,8 @@
 #ifndef UTILITY_H
 #define UTILITY_H
 
-#include "../common_include.h"
-#include "../ike/constant.h"
+#include "common.h"
+#include "ike/constant.h"
 #include <stdio.h>
 
 

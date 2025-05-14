@@ -1,16 +1,16 @@
-#include "common_include.h" // IWYU pragma: keep
+#include "../include/common.h" // IWYU pragma: keep
 #include <endian.h>
 #include <ini.h>
-#include "./config/config.h"
-#include "./log/log.h"
-#include "./ike/header.h"
-#include "crypto/crypto.h"
-#include "ike/constant.h"
-#include "./ike/header.h"
-#include "ike/ike.h"
-#include "ike/payload.h"
-#include "network/network.h"
-#include "utils/utils.h"
+#include "../include/config.h"
+#include "../include/log.h"
+#include "../include/crypto.h"
+#include "../include/utils.h"
+#include "../include/network.h"
+#include "../include/ike/header.h"
+#include "../include/ike/constant.h"
+#include "../include//ike/header.h"
+#include "../include/ike/ike.h"
+#include "../include/ike/payload.h"
 
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
@@ -105,7 +105,6 @@ uint8_t* create_message(ike_message_t* list, size_t* len){
 // FINO A QUA NEL PACKET MODULE DI IKE
 // ################################################################################################
 
-
 int main(int argc, char* argv[]){
     /*---------------------------------------------
     Command Line arguments
@@ -169,75 +168,44 @@ int main(int argc, char* argv[]){
     initiate_ike(&left, &right, &sa, cfg);
     free(cfg);
 
-    // a questo punto abbiamo che il local ha tutto configurato correttamente 
-    // la cipher suite è configurata correttamente quindi andiamo a crare il payload di tipo SA
-
-    // ok ora a partire dalla configurazione dell'initiator devo generare i payload che mi servono, perciò SA, KE, N 
     ike_payload_t ni_data = {0};
     ike_payload_t kex_data = {0};
 
-    
-    EVP_PKEY *pri = NULL;
-    EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_from_name(NULL, "ML-KEM-512", NULL);
-
-    EVP_PKEY_keygen_init(pctx);
-    EVP_PKEY_keygen(pctx, &pri);
-
-    crypto_context_t pq = {0};
-    pq.dh_group = 35;
-    pq.private_key = pri;
-
-    build_payload(&ni_data, PAYLOAD_TYPE_NONCE, left.ctx.nonce, left.ctx.nonce_len);
-
-    build_payload(&kex_data, PAYLOAD_TYPE_KE, &pq, sizeof(crypto_context_t));
-    
-    build_payload(&ni_data, PAYLOAD_TYPE_SA, &sa.suite, sizeof(cipher_suite_t));
-
+    build_payload(&ni_data,     PAYLOAD_TYPE_NONCE, left.ctx.nonce, left.ctx.nonce_len);
+    build_payload(&kex_data,    PAYLOAD_TYPE_KE,    &left.ctx,      sizeof(crypto_context_t));
+    build_payload(&ni_data,     PAYLOAD_TYPE_SA,    &sa.suite,      sizeof(cipher_suite_t));
 
     ike_message_t packet_list = {NULL, NULL};
-
     ike_header_t header = init_header();
 
+    memcpy(&header.initiator_spi, left.ctx.spi, SPI_LENGTH_BYTE);
+
     ike_payload_header_t pd = {0};
-    pd.next_payload = NEXT_PAYLOAD_NONCE;
-
-    // questa parte deve essere scelta in base alla proposal specificata
-    ike_payload_kex_t kd = {0};
-    kd.dh_group = htobe16(31);
-    // questa parte andrà spostata nella creazione del pacchetto
-    memcpy(&kd.ke_data, left.ctx.public_key, 32);
-    memcpy(&header.initiator_spi, &left.ctx.spi, 8);
-
     ike_payload_header_t np = {0};
-    np.next_payload = NEXT_PAYLOAD_NONE;
-
     ike_payload_header_t header_1 = {0} ;
+
+    pd.next_payload = NEXT_PAYLOAD_NONCE;
+    np.next_payload = NEXT_PAYLOAD_NONE;
     header_1.next_payload = NEXT_PAYLOAD_KE;
 
-
-    push_component(&packet_list, PAYLOAD_TYPE_NONCE,        left.ctx.nonce,         left.ctx.nonce_len);
-    push_component(&packet_list, GENERIC_PAYLOAD_HEADER,    &np,                    sizeof(ike_payload_header_t));
-    push_component(&packet_list, PAYLOAD_TYPE_KE,           kex_data.body,                    kex_data.len);
-    push_component(&packet_list, GENERIC_PAYLOAD_HEADER,    &pd,                    sizeof(ike_payload_header_t));
-    push_component(&packet_list, PAYLOAD_TYPE_SA,           ni_data.body,              sizeof(ike_proposal_payload_t));
-    push_component(&packet_list, GENERIC_PAYLOAD_HEADER,    &header_1,              sizeof(ike_payload_header_t));
-    push_component(&packet_list, IKE_HEADER,                &header,                sizeof(ike_header_t));
+    push_component(&packet_list, PAYLOAD_TYPE_NONCE,       left.ctx.nonce,   left.ctx.nonce_len);
+    push_component(&packet_list, GENERIC_PAYLOAD_HEADER,   &np,              sizeof(ike_payload_header_t));
+    push_component(&packet_list, PAYLOAD_TYPE_KE,          kex_data.body,    kex_data.len);
+    push_component(&packet_list, GENERIC_PAYLOAD_HEADER,   &pd,              sizeof(ike_payload_header_t));
+    push_component(&packet_list, PAYLOAD_TYPE_SA,          ni_data.body,     sizeof(ike_proposal_payload_t));
+    push_component(&packet_list, GENERIC_PAYLOAD_HEADER,   &header_1,        sizeof(ike_payload_header_t));
+    push_component(&packet_list, IKE_HEADER,               &header,          sizeof(ike_header_t));
     
     uint8_t* buff;
     size_t len = 0;
     
     buff = create_message(&packet_list, &len);
 
-
-    // TUTTA LA PARTE DI GENERAZIONE DEL MESSAGGIO VA SPOSTATA NEL MODULO IKE
-
-
     int retval =  send(left.node.fd, buff, len, 0);
     if(retval == -1){
         printf("Errore per la send");
         return -1;
     }
-
 
     //la gestione della recv e del caso in cui il timeout scade va gestita nella parte network
     uint8_t* buffer = calloc(MAX_PAYLOAD, sizeof(uint8_t));
@@ -258,8 +226,9 @@ int main(int argc, char* argv[]){
 
     //qunado vado a fare il parsing dei vari elementi vorrei fare in modo di confrontare il payload dal buffer per aggiornare quello che ho inviato io 
     ike_header_t* hd = parse_header(buffer, n);
-    
+    // #########################################################################################
     //porcodio
+    // #########################################################################################
     memcpy(right.ctx.spi, &hd->responder_spi , 8);
 
     /* 
@@ -317,7 +286,6 @@ int main(int argc, char* argv[]){
     # GENERATING THE IKE AUTH EXCHANGE
     ####################################################################################
     */
-
     uint8_t id_i[8] = {0};
     id_i[0] = 0x01;
     id_i[1] = 0x00;   // Reserved

@@ -1,7 +1,7 @@
-#include "../log/log.h"
-#include "payload.h"
-#include "constant.h"
-#include "header.h"
+#include "../../include/ike/payload.h"
+#include "../../include/ike/constant.h"
+#include "../../include/ike/header.h"
+
 #include <endian.h>
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
@@ -10,8 +10,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "../crypto/crypto.h"
-#include "../utils/utils.h"
+#include "../../include/crypto.h"
+#include "../../include/utils.h"
 
 int build_transform(void* tran, algo_t* alg){
     

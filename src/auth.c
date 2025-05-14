@@ -1,7 +1,7 @@
-#include "auth.h"
+#include "../include/auth.h"
+#include "../include/log.h"
+#include "../include/ike/constant.h"
 #include <string.h>
-#include "../log/log.h"
-#include "../ike/constant.h"
 
 
 int initiate_auth(auth_context_t* auth, const auth_options_t* opts){

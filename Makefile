@@ -5,15 +5,15 @@
 TARGET = hummingbird
 
 SRCS = src/main.c 				\
-       src/config/config.c 		\
-	   src/log/log.c 			\
-	   src/network/network.c	\
-	   src/utils/utils.c 		\
-	   src/crypto/crypto.c 		\
+       src/config.c 		\
+	   src/log.c 			\
+	   src/network.c	\
+	   src/utils.c 		\
+	   src/crypto.c 		\
 	   src/ike/header.c 		\
 	   src/ike/payload.c 		\
 	   src/ike/packet.c			\
-	   src/auth/auth.c			\
+	   src/auth.c			\
 	   src/ike/ike.c
 
 LIBS =  -linih					\
@@ -22,13 +22,7 @@ LIBS =  -linih					\
 		-g			 
 
 CFLAGS = -DLOG_USE_COLOR -Wall 	\
-		 -I./src/config 		\
-		 -I./src/log 			\
-		 -I./src/network 		\
-		 -I./src/auth			\
-		 -I./src/utils 			\
-		 -I./src/crypto 		\
-		 -I./src/ike
+		 -I include/ 			\
 
 LDFLAGS = $(LIBS)
 

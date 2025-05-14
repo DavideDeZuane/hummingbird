@@ -1,6 +1,5 @@
-#include "../common_include.h" // IWYU pragma: keep
-#include "../log/log.h"
-#include "network.h"
+#include "../include/log.h"
+#include "../include/network.h"
 #include <arpa/inet.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -12,9 +11,9 @@
 #include <ifaddrs.h>
 #include <ifaddrs.h>
 #include <endian.h>
-#include "../ike/constant.h"
-#include "../utils/utils.h"
-#include "../config/config.h"
+#include "../include/ike/constant.h"
+#include "../include/utils.h"
+#include "../include/config.h"
 
 
 /**

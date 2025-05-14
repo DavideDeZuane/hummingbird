@@ -1,8 +1,8 @@
 #ifndef CRYPTO_H
 #define CRYPTO_H
 
-#include "../common_include.h"
-#include "../config/config.h"
+#include "common.h"
+#include "config.h"
 #include <openssl/evp.h>
 #include <stdint.h>
 

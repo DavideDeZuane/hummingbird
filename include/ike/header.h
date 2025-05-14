@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include "constant.h"
-#include "../common_include.h"
+#include "../common.h"
 
 #define IKE_HDR_DIM sizeof(ike_header_t)
 #define GEN_HDR_DIM sizeof(ike_payload_header_t)

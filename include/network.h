@@ -4,8 +4,8 @@
 #include <netinet/in.h>
 #include <stdint.h>
 #include <sys/socket.h>
-#include "../ike/header.h"
-#include "../config/config.h"
+#include "../include/ike/header.h"
+#include "../include/config.h"
 
 #define AF_INVALID -1
 #define PORT_INVALID 0

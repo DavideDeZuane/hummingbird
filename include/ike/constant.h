@@ -1,7 +1,7 @@
 #ifndef IKE_ALIASES_H
 #define IKE_ALIASES_H
 
-#include "../common_include.h"
+#include "../common.h"
 
 #define BYTE 1
 

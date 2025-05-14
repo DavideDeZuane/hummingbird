@@ -1,8 +1,8 @@
 #ifndef AUTH_H
 #define AUTH_H
 
-#include "../common_include.h"
-#include "../config/config.h"
+#include "common.h"
+#include "config.h"
 
 typedef enum {
     AUTH_METHOD_PSK,

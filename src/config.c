@@ -1,9 +1,8 @@
-#include "../common_include.h" // IWYU pragma: keep
-#include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "config.h"
+#include <netinet/in.h>
+#include "../include/config.h"
 
 /*
 ###########################################################################################
