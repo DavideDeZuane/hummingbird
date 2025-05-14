@@ -9,8 +9,8 @@
 MACRO SECTION to make the code more readable
 ###########################################################################################
 */
-//#define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
-#define MATCH(s, n)  strcmp(name, n) == 0
+#define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
+//#define MATCH(s, n)  strcmp(name, n) == 0
 #define SET_DEFAUTL_FIELD(cfg, sub, field, val) strncpy((cfg)->sub.field, (val), sizeof((cfg)->sub.field))
 #define HANDLE_FIELD(sec, field, src, dst, max_len)  if (MATCH(sec, field)) { secure_strncpy(dst, src, max_len); return 1; }
 
@@ -48,6 +48,9 @@ void default_config(config* cfg){
     SET_DEFAUTL_FIELD(cfg, suite, aut, "sha1_96");
     SET_DEFAUTL_FIELD(cfg, suite, prf, "prfsha1");
     SET_DEFAUTL_FIELD(cfg, suite, kex, "x25519");
+
+    cfg->log.quiet = false;
+
 
 }
 
@@ -102,6 +105,16 @@ int crypto_handler(cipher_options* opts, const char* section, const char* name, 
     return 0;
 }
 
+
+int log_handler(logging_options* opts, const char* section, const char* name, const char* value){
+
+    if(MATCH("Logging", "quiet")){
+        if(strcmp(value, "true") == 0) opts->quiet = true;
+        else opts->quiet = false;
+    } 
+    return 0;
+}
+
 /**
 * @brief This function is called every time a line within the configuration file is parsed. 
 * Each time a line is read, this callback is invoked
@@ -122,6 +135,10 @@ int handler(void* cfg, const char* section, const char* name, const char* value)
     } 
     if (strcmp(section, "Crypto") == 0){
         crypto_handler(&conf->suite, section, name, value);
+    } 
+
+    if (strcmp(section, "Logging") == 0){
+        log_handler(&conf->log, section, name, value);
     } 
 
     return 1;

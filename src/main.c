@@ -1,5 +1,4 @@
 #include "../include/common.h" // IWYU pragma: keep
-#include <endian.h>
 #include <ini.h>
 #include "../include/config.h"
 #include "../include/log.h"
@@ -12,14 +11,9 @@
 #include "../include/ike/ike.h"
 #include "../include/ike/payload.h"
 
-#include <openssl/evp.h>
-#include <openssl/hmac.h>
-#include <openssl/ml_kem.h>
-#include <stdint.h>
+#include <openssl/hmac.h> //spostare utilizzo di hmac diretto nel modulo crytpo
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/random.h>
+#include <sys/random.h> //spostare la definizione dell'IV per l'encrypted payload nel modulo IKE
 
 // ###############################################################################################
 //spostare questo nel modulo packet, questa è quella parte che si occupa di creare il messaggio e il creeate message ritorna il buffer che poi verrò inviato tramite socket sulla rete 
@@ -158,6 +152,8 @@ int main(int argc, char* argv[]){
         return EXIT_FAILURE;
     }
 
+    log_set_quiet(cfg->log.quiet);
+    log_set_level(cfg->log.level);
     log_info("Configuration file %s loaded successfully", DEFAULT_CONFIG);
     log_info("[CFG] module successfully setup", DEFAULT_CONFIG);
 
@@ -464,6 +460,7 @@ int main(int argc, char* argv[]){
     uint32_to_bytes_be(lun, raw.length);
 
     secure_free(response, response_len);
+
 
     
     return 0;

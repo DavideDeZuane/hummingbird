@@ -5,6 +5,7 @@
 #include <ini.h>
 #include <stdint.h>
 #include <netinet/in.h>
+#include <stdbool.h>
 
 #define DEFAULT_CONFIG "conf.ini"
 #define INET_FQNLEN 255
@@ -16,6 +17,7 @@
 #define MAX_AUTH_DATA_LEN 256  
 
 typedef struct {
+    bool quiet;
     int level;
     char file_name[30];
 } logging_options;
