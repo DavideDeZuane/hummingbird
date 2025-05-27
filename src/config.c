@@ -6,8 +6,7 @@
 MACRO SECTION to make the code more readable
 ###########################################################################################
 */
-#define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
-//#define MATCH(s, n)  strcmp(name, n) == 0
+#define MATCH(s, n) ( strcmp(section, s) == 0 && strcmp(name, n) == 0 )
 #define SET_DEFAUTL_FIELD(cfg, sub, field, val) strncpy((cfg)->sub.field, (val), sizeof((cfg)->sub.field))
 #define HANDLE_FIELD(sec, field, src, dst, max_len)  if (MATCH(sec, field)) { secure_strncpy(dst, src, max_len); return 1; }
 
@@ -47,7 +46,6 @@ void default_config(config* cfg){
     SET_DEFAUTL_FIELD(cfg, suite, kex, "x25519");
 
     cfg->log.quiet = false;
-
 
 }
 
@@ -102,7 +100,13 @@ int crypto_handler(cipher_options* opts, const char* section, const char* name, 
     return 0;
 }
 
-
+/** 
+* @brief Handler that deals with popular section dealing with logging configuration, this will be used to initialize the [LOG] module
+* @param[in] opts Pointer to a substructure of the configuration structs, particularly one that has to do with cryptographyc functions
+* @param[in] section This is fixed and is "Logging"
+* @param[in] name Same as handler
+* @param[in] value Same as handler 
+*/
 int log_handler(logging_options* opts, const char* section, const char* name, const char* value){
 
     if(MATCH("Logging", "quiet")){
