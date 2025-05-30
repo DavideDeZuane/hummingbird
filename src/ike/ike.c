@@ -42,6 +42,14 @@ void initiate_ike(ike_partecipant_t* left, ike_partecipant_t* right, ike_sa_t* s
 
 
 int ike_sa_init(ike_partecipant_t* left){
+    // qui a partire dal contesto crittografico genero i payload per il pacchetto 
+    
+    /*
+    build_payload(&ni_data,     PAYLOAD_TYPE_NONCE, left.ctx.nonce, left.ctx.nonce_len);
+    build_payload(&kex_data,    PAYLOAD_TYPE_KE,    &left.ctx,      sizeof(ike_payload_kex_raw_t));
+    build_payload(&sa_data,     PAYLOAD_TYPE_SA,    &sa.suite,      sizeof(ike_proposal_payload_t));
+    */
+    // una volta generato il pacchetto utilizzo la parte di rete per inviarlo
 
     return 0;
 

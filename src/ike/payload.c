@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 #include "../../include/crypto.h"
 #include "../../include/utils.h"
 
@@ -87,29 +88,33 @@ int build_kex(ike_payload_kex_raw_t* ke, crypto_context_t* data){
 */
 int build_payload(ike_payload_t* payload, MessageComponent type, void* body, size_t len){
 
+
     switch (type) {
         case PAYLOAD_TYPE_NONCE: {
             // popolo il campo body 
             // in questo caso non devo fare niente dato che 
+
             payload->type = type;
             payload->len = len + GEN_HDR_DIM;
             payload->body = body;
-            //popolo il campo hdr
-            build_payload_header(&payload->hdr, NEXT_PAYLOAD_NONE, len);
+
+            //popolo il campo hdr e aggiungo qua la dimensione del generic payload header
+            build_payload_header(&payload->hdr, NEXT_PAYLOAD_NONE, payload->len);
             break;
         };
         case PAYLOAD_TYPE_KE: {
-            // qui abbiamo un metodo per il key exchange che dipende dalla cipher suite 
+
             crypto_context_t* tmp = (crypto_context_t *) body;
             EVP_PKEY_get_raw_public_key(tmp->private_key, NULL, &tmp->key_len);
 
-            //printf("Lunghezza chiave estratta %zu \n", tmp->key_len);
             payload->len = tmp->key_len + 4;
             payload->body = calloc(tmp->key_len + 4, BYTE);
             ike_payload_kex_raw_t* tmp2 = (ike_payload_kex_raw_t *) payload->body;
-
             uint16_to_bytes_be(tmp->dh_group, tmp2->dh_group);
             EVP_PKEY_get_raw_public_key(tmp->private_key, tmp2->data, &tmp->key_len);
+            memset(&payload->hdr, 0, sizeof(ike_payload_kex_raw_t));
+
+            build_payload_header(&payload->hdr, NEXT_PAYLOAD_NONCE, payload->len+ GEN_HDR_DIM);
             break;
         };
         case PAYLOAD_TYPE_SA: {
@@ -117,7 +122,8 @@ int build_payload(ike_payload_t* payload, MessageComponent type, void* body, siz
             payload->body = calloc(sizeof(ike_proposal_payload_t), BYTE);
             payload->len = len + GEN_HDR_DIM;
             build_proposal((ike_proposal_payload_t *) payload->body, tmp);
-            build_payload_header(&payload->hdr, NEXT_PAYLOAD_KE, len);
+            build_payload_header(&payload->hdr, NEXT_PAYLOAD_KE, payload->len);
+
             break;
         };
         default: {

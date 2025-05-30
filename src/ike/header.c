@@ -5,6 +5,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <time.h>
+#include "../../include/utils.h"
 
 
 // DIMENION IN BYTE OF THE FIELDS OF THE IKE HEADER
@@ -121,13 +122,13 @@ ike_header_t* parse_header(uint8_t* buffer, size_t size){
 
 
 
-int build_payload_header(ike_payload_header_t* hdr, NextPayload np, uint16_t len){
+int build_payload_header(ike_payload_header_raw_t* hdr, NextPayload np, uint16_t len){
     if(hdr == NULL){
         return EXIT_FAILURE;
     }
 
     hdr->next_payload = np;
-    hdr->length = htobe16(len + GEN_HDR_DIM);
+    uint16_to_bytes_be(len, hdr->length);
 
     return EXIT_SUCCESS;
     

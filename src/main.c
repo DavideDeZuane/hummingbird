@@ -73,18 +73,13 @@ uint8_t* create_message(ike_message_t* list, size_t* len){
         if (buffer_len > scan->length) memmove(buffer + scan->length, buffer, buffer_len - scan->length);
 
         if(scan->type == GENERIC_PAYLOAD_HEADER) {
-            //se il componente che andiamo a considerare è quello del generic payload allora vuol dire che il componente che lo precedeva 
-            //ha questo come header e quindi dato che ci server conoscere la sua lunhgezza utilizziamo il campo offset per determinare la dimensione del 
-            //payload precedente in modo da non dover scrivere a mano la lunghezza. Una volta aggiornato il compo del generic header resettiamo l'offset
-            //dato che passiamo al prossimo payload
-            ike_payload_header_t* hd = (ike_payload_header_t*) scan->data;
-            hd->length = htobe16(offset);
             offset = 0;
         }
         if(scan->type == IKE_HEADER){
             ike_header_t * hdr = (ike_header_t *) scan->data;
             hdr->length = htobe32(buffer_len) ;
         }
+
 
         memcpy(buffer, scan->data, scan->length);
         scan = scan->prev;
@@ -168,27 +163,28 @@ int main(int argc, char* argv[]){
     ike_payload_t kex_data = {0};
     ike_payload_t sa_data = {0};
 
+    // la parte di init prende il crypto context e basta
+    // la parte di autenticazione prende sia il crytpo context che quello di autenticazione
+    // quello di netwrok serve ad entrambi per poter effettuare la comunicazione
+
     build_payload(&ni_data,     PAYLOAD_TYPE_NONCE, left.ctx.nonce, left.ctx.nonce_len);
-    build_payload(&kex_data,    PAYLOAD_TYPE_KE,    &left.ctx,      sizeof(crypto_context_t));
-    build_payload(&sa_data,     PAYLOAD_TYPE_SA,    &sa.suite,      sizeof(cipher_suite_t));
+    build_payload(&kex_data,    PAYLOAD_TYPE_KE,    &left.ctx,      sizeof(ike_payload_kex_raw_t));
+    build_payload(&sa_data,     PAYLOAD_TYPE_SA,    &sa.suite,      sizeof(ike_proposal_payload_t));
 
     ike_message_t packet_list = {NULL, NULL};
     ike_header_t header = init_header();
 
     memcpy(&header.initiator_spi, left.ctx.spi, SPI_LENGTH_BYTE);
 
-    ike_payload_header_t pd = {0};
-    ike_payload_header_t header_1 = {0} ;
 
-    pd.next_payload = NEXT_PAYLOAD_NONCE;
-    header_1.next_payload = NEXT_PAYLOAD_KE;
-
-    push_component(&packet_list, PAYLOAD_TYPE_NONCE,       left.ctx.nonce,   left.ctx.nonce_len);
-    push_component(&packet_list, GENERIC_PAYLOAD_HEADER,   &ni_data.hdr,              sizeof(ike_payload_header_t));
+    // a questo punto con la modifica che è stata fatta non occorre più distinguere tra body e header ma si può mettere tutto insieme direttamente
+    
+    push_component(&packet_list, PAYLOAD_TYPE_NONCE,       ni_data.body,   left.ctx.nonce_len);
+    push_component(&packet_list, GENERIC_PAYLOAD_HEADER,   &ni_data.hdr,              sizeof(ike_payload_header_raw_t));
     push_component(&packet_list, PAYLOAD_TYPE_KE,          kex_data.body,    kex_data.len);
-    push_component(&packet_list, GENERIC_PAYLOAD_HEADER,   &pd,              sizeof(ike_payload_header_t));
+    push_component(&packet_list, GENERIC_PAYLOAD_HEADER,   &kex_data.hdr,              sizeof(ike_payload_header_raw_t));
     push_component(&packet_list, PAYLOAD_TYPE_SA,          sa_data.body,     sizeof(ike_proposal_payload_t));
-    push_component(&packet_list, GENERIC_PAYLOAD_HEADER,   &header_1,        sizeof(ike_payload_header_t));
+    push_component(&packet_list, GENERIC_PAYLOAD_HEADER,   &sa_data.hdr,        sizeof(ike_payload_header_raw_t));
     push_component(&packet_list, IKE_HEADER,               &header,          sizeof(ike_header_t));
     
     uint8_t* buff;

@@ -97,7 +97,7 @@ void print_header(ike_header_t* hd);
 
 int build_header(ike_header_raw_t* hdr);
 
-int build_payload_header(ike_payload_header_t* hdr, NextPayload np, uint16_t len);
+int build_payload_header(ike_payload_header_raw_t* hdr, NextPayload np, uint16_t len);
 
 ike_header_t* parse_header(uint8_t* buffer, size_t size);
 

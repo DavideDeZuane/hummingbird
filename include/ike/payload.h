@@ -150,7 +150,7 @@ typedef struct {
 
 typedef struct {
     MessageComponent type; 
-    ike_payload_header_t hdr;
+    ike_payload_header_raw_t hdr;
     void* body;
     size_t len;
 } ike_payload_t;
