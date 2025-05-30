@@ -90,10 +90,7 @@ typedef struct {
 } __attribute__((packed)) ike_payload_header_raw_t;
 
 
-
-
 ike_header_t init_header();
-void print_header(ike_header_t* hd);
 
 int build_header(ike_header_raw_t* hdr);
 
@@ -103,8 +100,10 @@ ike_header_t* parse_header(uint8_t* buffer, size_t size);
 
 int parse_header_raw(uint8_t* buffer, ike_header_raw_t* hdr);
 
+/**
+* @brief This function set the flags field of the IKE Message header
+*/
 void set_flags(ike_header_t* hd, uint8_t flags[]);
-
 
 bool verify_exchange(const ike_header_raw_t *req, const ike_header_raw_t *res);
 

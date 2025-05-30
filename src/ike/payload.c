@@ -14,6 +14,18 @@
 #include "../../include/crypto.h"
 #include "../../include/utils.h"
 
+/**
+ * @brief Builds a transform structure for an IKE proposal based on the algorithm type.
+ * 
+ * This function initializes the appropriate transform structure depending on the algorithm type 
+ * For encryption algorithms, it includes an additional attribute field specifying the key length.
+ * 
+ * @param[out] tran Pointer to the memory where the transform structure will be written.
+ *                 Its concrete type depends on the algorithm type:
+ *                 - `ike_transofrm_with_attr_t*` for encryption (with key length attribute),
+ *                 - `ike_transofrm_t*` for other algorithm types.
+ * @param[in] alg Pointer to the algorithm specification containing type, IANA code, and key length.
+ */
 int build_transform(void* tran, algo_t* alg){
     
     switch(alg->type){
@@ -49,6 +61,18 @@ int build_transform(void* tran, algo_t* alg){
 
 }
 
+/**
+ * @brief Builds an IKE proposal payload (SA) to be sent to the responder containing the cryptographic algorithms.
+ * 
+ * This function initializes the proposal payload with the required parameters,
+ * including the protocol ID, the number of transforms, and the specific transforms
+ * for authentication, PRF, encryption, and key exchange, based on the provided cipher suite.
+ * 
+ * @param[out] proposal Pointer to the proposal payload to be populated.
+ * @param[in] suite Pointer to the cipher suite containing the algorithms to use.
+ * 
+ * @return int Returns EXIT_SUCCESS on success.
+ */
 int build_proposal(ike_proposal_payload_t* proposal, cipher_suite_t* suite){
 
     proposal->protocol = PROTOCOL_ID_IKE;
@@ -68,23 +92,31 @@ int build_proposal(ike_proposal_payload_t* proposal, cipher_suite_t* suite){
 
 }
 
+/**
+ * @brief Builds the Key Exchange (KEX) payload for the IKE message.
+ * 
+ * This function sets the Diffie-Hellman group identifier in the payload,
+ * retrieves the length of the raw public key, resizes the payload buffer accordingly,
+ * and copies the raw public key data into the payload.
+ * 
+ * @param[in,out] ke Pointer to the KEX payload structure to be built. It will be reallocated to fit the key data.
+ * @param[in] data Pointer to the cryptographic context containing the DH group and private key information.
+ * 
+ * @return int Returns EXIT_SUCCESS on success.
+ */
 int build_kex(ike_payload_kex_raw_t* ke, crypto_context_t* data){
 
     uint16_to_bytes_be(data->dh_group, ke->dh_group);
     // retrieve che public key len 
     EVP_PKEY_get_raw_public_key(data->private_key, NULL, &data->key_len);
-    printf("Lunghezza chiave estratta %zu \n", data->key_len);
     ke = realloc(ke, data->key_len + sizeof(ike_payload_kex_raw_t));
-
-    printf("Size of ke %zu \n", sizeof(ike_payload_kex_raw_t));
 
     EVP_PKEY_get_raw_public_key(data->private_key, ke->data, &data->key_len);
     return EXIT_SUCCESS;
 }
 
 /**
-* This function serialized the content of the payload in a buffer
-* add the  generation of the header
+* @brief This function serialized the content of the payload in a buffer and create the generic payload header
 */
 int build_payload(ike_payload_t* payload, MessageComponent type, void* body, size_t len){
 
