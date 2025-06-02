@@ -15,9 +15,37 @@
 #include <stdio.h>
 #include <sys/random.h> //spostare la definizione dell'IV per l'encrypted payload nel modulo IKE
 
-// ###############################################################################################
-//spostare questo nel modulo packet, questa è quella parte che si occupa di creare il messaggio e il creeate message ritorna il buffer che poi verrò inviato tramite socket sulla rete 
-// ###############################################################################################
+/*
+typedef struct {
+    void *data;                  
+    size_t length;              
+    MessageComponent type;      
+} ike_message_component_t;
+
+typedef struct {
+    ike_message_component_t *components; 
+    size_t count;                        
+    size_t capacity;                     
+} ike_message_t;
+
+
+int ike_message_add_component(ike_message_t *msg, void *data, size_t length, MessageComponent type) {
+    if (msg->count >= msg->capacity) {
+        size_t new_capacity = msg->capacity * 2;
+        void *new_array = realloc(msg->components, new_capacity * sizeof(ike_message_component_t));
+        if (!new_array) return -1;
+        msg->components = new_array;
+        msg->capacity = new_capacity;
+    }
+
+    ike_message_component_t *component = &msg->components[msg->count++];
+    component->data = data;
+    component->length = length;
+    component->type = type;
+    return 0;
+}
+*/
+
 typedef struct {
     void *data;
     size_t length;
@@ -90,10 +118,6 @@ uint8_t* create_message(ike_message_t* list, size_t* len){
 
 }
 
-// ################################################################################################
-// FINO A QUA NEL PACKET MODULE DI IKE
-// ################################################################################################
-
 int main(int argc, char* argv[]){
     /*---------------------------------------------
     Command Line arguments
@@ -163,10 +187,6 @@ int main(int argc, char* argv[]){
     ike_payload_t kex_data = {0};
     ike_payload_t sa_data = {0};
 
-    // la parte di init prende il crypto context e basta
-    // la parte di autenticazione prende sia il crytpo context che quello di autenticazione
-    // quello di netwrok serve ad entrambi per poter effettuare la comunicazione
-
     build_payload(&ni_data,     PAYLOAD_TYPE_NONCE, left.ctx.nonce, left.ctx.nonce_len);
     build_payload(&kex_data,    PAYLOAD_TYPE_KE,    &left.ctx,      sizeof(ike_payload_kex_raw_t));
     build_payload(&sa_data,     PAYLOAD_TYPE_SA,    &sa.suite,      sizeof(ike_proposal_payload_t));
@@ -187,16 +207,18 @@ int main(int argc, char* argv[]){
     push_component(&packet_list, GENERIC_PAYLOAD_HEADER,   &sa_data.hdr,        sizeof(ike_payload_header_raw_t));
     push_component(&packet_list, IKE_HEADER,               &header,          sizeof(ike_header_t));
     
-    uint8_t* buff;
+    uint8_t* buff, * buff2;
     size_t len = 0;
     
     buff = create_message(&packet_list, &len);
+
 
     int retval =  send(left.node.fd, buff, len, 0);
     if(retval == -1){
         printf("Errore per la send");
         return -1;
     }
+
 
     //la gestione della recv e del caso in cui il timeout scade va gestita nella parte network
     uint8_t* buffer = calloc(MAX_PAYLOAD, sizeof(uint8_t));
@@ -249,8 +271,6 @@ int main(int argc, char* argv[]){
             right.ctx.nonce = malloc(right.ctx.nonce_len);
             memcpy(right.ctx.nonce, ptr+4, 32);
         }
-        // qui skippo il payload security association
-        // c'è da controllarlo per la proposal
 
         //printf("Next payload di tipo %s, tra %d byte\n", next_payload_to_string(payload->next_payload), be16toh(payload->length));
         next_payload = payload->next_payload;

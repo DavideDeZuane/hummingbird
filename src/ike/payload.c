@@ -139,14 +139,13 @@ int build_payload(ike_payload_t* payload, MessageComponent type, void* body, siz
             crypto_context_t* tmp = (crypto_context_t *) body;
             EVP_PKEY_get_raw_public_key(tmp->private_key, NULL, &tmp->key_len);
 
-            payload->len = tmp->key_len + 4;
+            payload->type = type;
+            payload->len = tmp->key_len + 4 ;
             payload->body = calloc(tmp->key_len + 4, BYTE);
             ike_payload_kex_raw_t* tmp2 = (ike_payload_kex_raw_t *) payload->body;
             uint16_to_bytes_be(tmp->dh_group, tmp2->dh_group);
             EVP_PKEY_get_raw_public_key(tmp->private_key, tmp2->data, &tmp->key_len);
-            memset(&payload->hdr, 0, sizeof(ike_payload_kex_raw_t));
-
-            build_payload_header(&payload->hdr, NEXT_PAYLOAD_NONCE, payload->len+ GEN_HDR_DIM);
+            build_payload_header(&payload->hdr, NEXT_PAYLOAD_NONCE, (payload->len + GEN_HDR_DIM));
             break;
         };
         case PAYLOAD_TYPE_SA: {

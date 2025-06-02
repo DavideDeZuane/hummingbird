@@ -1,6 +1,7 @@
 #include "../../include/ike/header.h"
 #include <endian.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -42,6 +43,7 @@ bool compare_spi(uint8_t* spi1, uint8_t* spi2) {
 
 
 
+
 ike_header_t init_header(){
     uint8_t flag, version = 0;
     uint8_t flags[] = { FLAG_I };
@@ -64,6 +66,27 @@ ike_header_t init_header(){
 
     //convert_to_big_endian(&header, IKE_HEADER);
     
+    return header;
+}
+
+ike_header_raw_t init_header_raw(uint8_t* spi, uint32_t len){
+    uint8_t flag, version = 0;
+    uint8_t flags[] = { FLAG_I };
+    for (size_t i = 0; i < sizeof(flags)/sizeof(flags[0]); ++i) {
+        flag |= flags[i]; 
+    } 
+    version |= IKEV2;
+   
+    ike_header_raw_t header = {0};
+    memcpy(header.initiator_spi, spi, SPI_LENGTH_BYTE);
+    memset(header.responder_spi, 0, SPI_LENGTH_BYTE);
+    memset(header.message_id,    0, MESSAGE_ID_BYTE);
+    header.next_payload = NEXT_PAYLOAD_SA;
+    header.exchange_type = EXCHANGE_IKE_SA_INIT;
+    header.version = version;
+    header.flags = flag;
+    uint32_to_bytes_be(len, header.length);
+
     return header;
 }
 
@@ -120,6 +143,7 @@ ike_header_t* parse_header(uint8_t* buffer, size_t size){
 
 }
 
+int build_header(ike_header_raw_t *hdr, size_t len);
 
 
 int build_payload_header(ike_payload_header_raw_t* hdr, NextPayload np, uint16_t len){

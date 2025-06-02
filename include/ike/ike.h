@@ -7,6 +7,10 @@
 #include "../crypto.h"
 #include "../auth.h"
 #include <openssl/evp.h>
+#include <stdint.h>
+
+#define INIT_PAYLOADS 3
+
 
 typedef enum {
     IKE_INITIATOR,
@@ -56,7 +60,7 @@ typedef struct {
 
 void initiate_ike(ike_partecipant_t* left, ike_partecipant_t* right, ike_sa_t* sa, config* cfg);
 
-int ike_sa_init(ike_partecipant_t* left);
+uint8_t* ike_sa_init(ike_partecipant_t* left, ike_sa_t* sa);
 
 int derive_ike_sa(ike_session_t* sa);
 
