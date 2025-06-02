@@ -1,6 +1,7 @@
 #include "../../include/ike/payload.h"
 #include "../../include/ike/constant.h"
 #include "../../include/ike/header.h"
+#include "../../include/log.h" // IWYU pragma: keep
 
 #include <endian.h>
 #include <openssl/crypto.h>
@@ -123,15 +124,17 @@ int build_payload(ike_payload_t* payload, MessageComponent type, void* body, siz
 
     switch (type) {
         case PAYLOAD_TYPE_NONCE: {
-            // popolo il campo body 
-            // in questo caso non devo fare niente dato che 
+            // pointer casting to determinate the size of the payload
+            // definition of an header that will be prepended 
+            ike_nonce_payload_t* tmp = (ike_nonce_payload_t *) body;
+            ike_payload_header_raw_t hdr = {0};
 
+            payload->len = sizeof(*tmp) + GEN_HDR_DIM;
+            build_payload_header(&hdr, NEXT_PAYLOAD_NONE, payload->len);
             payload->type = type;
-            payload->len = len + GEN_HDR_DIM;
-            payload->body = body;
-
-            //popolo il campo hdr e aggiungo qua la dimensione del generic payload header
-            build_payload_header(&payload->hdr, NEXT_PAYLOAD_NONE, payload->len);
+            payload->body = malloc(payload->len);
+            memcpy(payload->body, &hdr, GEN_HDR_DIM);
+            memcpy(payload->body + GEN_HDR_DIM, tmp, sizeof(*tmp));
             break;
         };
         case PAYLOAD_TYPE_KE: {
@@ -140,21 +143,28 @@ int build_payload(ike_payload_t* payload, MessageComponent type, void* body, siz
             EVP_PKEY_get_raw_public_key(tmp->private_key, NULL, &tmp->key_len);
 
             payload->type = type;
-            payload->len = tmp->key_len + 4 ;
+            payload->len = (tmp->key_len + 4 + GEN_HDR_DIM);
             payload->body = calloc(tmp->key_len + 4, BYTE);
             ike_payload_kex_raw_t* tmp2 = (ike_payload_kex_raw_t *) payload->body;
             uint16_to_bytes_be(tmp->dh_group, tmp2->dh_group);
             EVP_PKEY_get_raw_public_key(tmp->private_key, tmp2->data, &tmp->key_len);
-            build_payload_header(&payload->hdr, NEXT_PAYLOAD_NONCE, (payload->len + GEN_HDR_DIM));
+            build_payload_header(&payload->hdr, NEXT_PAYLOAD_NONCE, payload->len);
             break;
         };
         case PAYLOAD_TYPE_SA: {
-            cipher_suite_t* tmp = (cipher_suite_t *) body;
-            payload->body = calloc(sizeof(ike_proposal_payload_t), BYTE);
-            payload->len = len + GEN_HDR_DIM;
-            build_proposal((ike_proposal_payload_t *) payload->body, tmp);
-            build_payload_header(&payload->hdr, NEXT_PAYLOAD_KE, payload->len);
 
+            cipher_suite_t* tmp = (cipher_suite_t *) body;
+            payload->len = sizeof(ike_proposal_payload_t) + GEN_HDR_DIM;
+            payload->body = calloc(payload->len, BYTE);
+            ike_proposal_payload_t* data = calloc(sizeof(ike_proposal_payload_t), BYTE);
+            build_proposal(data, tmp);
+            
+            ike_payload_header_raw_t hdr = {0};
+            build_payload_header(&hdr, NEXT_PAYLOAD_KE, payload->len);
+
+            memcpy(payload->body, &hdr, GEN_HDR_DIM);
+            memcpy(payload->body + GEN_HDR_DIM, data, sizeof(ike_proposal_payload_t));
+            free(data);
             break;
         };
         default: {

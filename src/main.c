@@ -13,6 +13,7 @@
 
 #include <openssl/hmac.h> //spostare utilizzo di hmac diretto nel modulo crytpo
 #include <stdio.h>
+#include <string.h>
 #include <sys/random.h> //spostare la definizione dell'IV per l'encrypted payload nel modulo IKE
 
 /*
@@ -88,7 +89,6 @@ void push_component(ike_message_t* list, MessageComponent type, void *data, size
 uint8_t* create_message(ike_message_t* list, size_t* len){
 
     size_t buffer_len = 0;
-    size_t offset = 0;
 
     uint8_t* buffer = NULL;
     ike_message_component_t* scan = list->tail;
@@ -96,18 +96,13 @@ uint8_t* create_message(ike_message_t* list, size_t* len){
     while(scan != NULL){
         buffer_len += scan->length;
         buffer = realloc(buffer, buffer_len);
-        offset += scan->length;
         //una volta allocato il buffer prima di scriverci sopra facciamo la conversione in big endian di quello che ci vogliamo scrivere
         if (buffer_len > scan->length) memmove(buffer + scan->length, buffer, buffer_len - scan->length);
 
-        if(scan->type == GENERIC_PAYLOAD_HEADER) {
-            offset = 0;
-        }
         if(scan->type == IKE_HEADER){
             ike_header_t * hdr = (ike_header_t *) scan->data;
             hdr->length = htobe32(buffer_len) ;
         }
-
 
         memcpy(buffer, scan->data, scan->length);
         scan = scan->prev;
@@ -186,9 +181,11 @@ int main(int argc, char* argv[]){
     ike_payload_t ni_data = {0};
     ike_payload_t kex_data = {0};
     ike_payload_t sa_data = {0};
+    
+    // al build payload non devo passare la lunghezza e lui che mi deve popolare il valore della lunghezza con quello totale
 
     build_payload(&ni_data,     PAYLOAD_TYPE_NONCE, left.ctx.nonce, left.ctx.nonce_len);
-    build_payload(&kex_data,    PAYLOAD_TYPE_KE,    &left.ctx,      sizeof(ike_payload_kex_raw_t));
+    build_payload(&kex_data,    PAYLOAD_TYPE_KE,    &left.ctx,      left.ctx.key_len);
     build_payload(&sa_data,     PAYLOAD_TYPE_SA,    &sa.suite,      sizeof(ike_proposal_payload_t));
 
     ike_message_t packet_list = {NULL, NULL};
@@ -196,18 +193,19 @@ int main(int argc, char* argv[]){
 
     memcpy(&header.initiator_spi, left.ctx.spi, SPI_LENGTH_BYTE);
 
+    
+    // questo deve andare a far parte del build payload e quindi devo togliere la pare di header
 
-    // a questo punto con la modifica che è stata fatta non occorre più distinguere tra body e header ma si può mettere tutto insieme direttamente
-    
-    push_component(&packet_list, PAYLOAD_TYPE_NONCE,       ni_data.body,   left.ctx.nonce_len);
-    push_component(&packet_list, GENERIC_PAYLOAD_HEADER,   &ni_data.hdr,              sizeof(ike_payload_header_raw_t));
-    push_component(&packet_list, PAYLOAD_TYPE_KE,          kex_data.body,    kex_data.len);
-    push_component(&packet_list, GENERIC_PAYLOAD_HEADER,   &kex_data.hdr,              sizeof(ike_payload_header_raw_t));
-    push_component(&packet_list, PAYLOAD_TYPE_SA,          sa_data.body,     sizeof(ike_proposal_payload_t));
-    push_component(&packet_list, GENERIC_PAYLOAD_HEADER,   &sa_data.hdr,        sizeof(ike_payload_header_raw_t));
+    uint8_t* tmp2 = malloc(sizeof(ike_payload_header_t) + 36);
+    memcpy(tmp2, &kex_data.hdr, GEN_HDR_DIM);
+    memcpy(tmp2 + GEN_HDR_DIM, kex_data.body, 36);
+
+    push_component(&packet_list, PAYLOAD_TYPE_NONCE,       ni_data.body,   ni_data.len);
+    push_component(&packet_list, PAYLOAD_TYPE_KE,           tmp2,   40);
+    push_component(&packet_list, PAYLOAD_TYPE_SA,           sa_data.body,   48);
     push_component(&packet_list, IKE_HEADER,               &header,          sizeof(ike_header_t));
-    
-    uint8_t* buff, * buff2;
+
+    uint8_t* buff;
     size_t len = 0;
     
     buff = create_message(&packet_list, &len);
