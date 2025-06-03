@@ -62,7 +62,7 @@ typedef struct {
 typedef struct {
     uint8_t dh_group[2];
     uint8_t reserved[2];
-    uint8_t data[]; //variable field
+    uint8_t data[]; 
 } __attribute__((packed)) ike_payload_kex_raw_t;
 /*
                     1                   2                   3

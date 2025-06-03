@@ -69,9 +69,10 @@ uint8_t* create_message(ike_message_t* list, size_t* len){
         if (buffer_len > scan->length) memmove(buffer + scan->length, buffer, buffer_len - scan->length);
 
         if(scan->type == IKE_HEADER){
-            ike_header_t * hdr = (ike_header_t *) scan->data;
-            hdr->length = htobe32(buffer_len) ;
+            ike_header_raw_t * hdr = (ike_header_raw_t *) scan->data;
+            uint32_to_bytes_be(buffer_len, hdr->length);
         }
+
 
         memcpy(buffer, scan->data, scan->length);
         scan = scan->prev;
@@ -160,14 +161,12 @@ int main(int argc, char* argv[]){
     build_payload(&sa_data,     PAYLOAD_TYPE_SA,    &sa.suite);
 
     ike_message_t packet_list = {NULL, NULL};
-    ike_header_t header = init_header();
+    ike_header_raw_t header = init_header_raw(left.ctx.spi,0);
 
-    memcpy(&header.initiator_spi, left.ctx.spi, SPI_LENGTH_BYTE);
-    
     push_component(&packet_list, PAYLOAD_TYPE_NONCE, ni_data.body,   ni_data.len);
     push_component(&packet_list, PAYLOAD_TYPE_KE,    kex_data.body,  kex_data.len);
     push_component(&packet_list, PAYLOAD_TYPE_SA,    sa_data.body,   sa_data.len);
-    push_component(&packet_list, IKE_HEADER,         &header,        sizeof(ike_header_t));
+    push_component(&packet_list, IKE_HEADER,         &header,        sizeof(ike_header_raw_t));
 
     uint8_t* buff;
     size_t len = 0;

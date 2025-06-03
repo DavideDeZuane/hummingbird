@@ -8,8 +8,7 @@
 #include <time.h>
 #include "../../include/utils.h"
 
-
-// DIMENION IN BYTE OF THE FIELDS OF THE IKE HEADER
+// DIMENSION IN BYTE OF THE FIELDS OF THE IKE HEADER
 #define SPI_LENGTH_BYTE     8
 #define NEXT_PAYLOAD_BYTE   1
 #define VERSION_BYTE        1
@@ -17,6 +16,7 @@
 #define FLAGS_BYTE          1
 #define MESSAGE_ID_BYTE     4
 #define LENGTH_BYTE         4
+
 
 #define BUFFER_SIZE (SPI_LENGTH_BYTE * 2 + NEXT_PAYLOAD_BYTE + VERSION_BYTE + EXCHANGE_TYPE_BYTE + FLAGS_BYTE + MESSAGE_ID_BYTE + LENGTH_BYTE)
 
@@ -39,34 +39,6 @@ bool compare_spi(uint8_t* spi1, uint8_t* spi2) {
         }
     }
     return true;  
-}
-
-
-
-
-ike_header_t init_header(){
-    uint8_t flag, version = 0;
-    uint8_t flags[] = { FLAG_I };
-    for (size_t i = 0; i < sizeof(flags)/sizeof(flags[0]); ++i) {
-        flag |= flags[i]; 
-    } 
-    version |= IKEV2;
-   
-    //qui va modificato, per fare l'init dell'header dobbiamo passargli il ressponder
-    ike_header_t header = {
-        SPI_NULL,
-        SPI_NULL,
-        NEXT_PAYLOAD_SA,
-        version,
-        EXCHANGE_IKE_SA_INIT,
-        flag,
-        MID_NULL,
-        sizeof(ike_header_t)
-    };
-
-    //convert_to_big_endian(&header, IKE_HEADER);
-    
-    return header;
 }
 
 ike_header_raw_t init_header_raw(uint8_t* spi, uint32_t len){
@@ -143,7 +115,6 @@ bool verify_exchange(const ike_header_raw_t *req, const ike_header_raw_t *res){
 
     return true;
 }
-
 
 
 ike_header_t* parse_header(uint8_t* buffer, size_t size){

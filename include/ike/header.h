@@ -90,8 +90,6 @@ typedef struct {
 } __attribute__((packed)) ike_payload_header_raw_t;
 
 
-ike_header_t init_header();
-
 int build_payload_header(ike_payload_header_raw_t* hdr, NextPayload np, uint16_t len);
 
 int parse_payload_header(uint8_t* buff, ike_payload_header_raw_t* hdr);
