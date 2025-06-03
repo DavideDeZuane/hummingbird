@@ -177,3 +177,7 @@ int build_payload(ike_payload_t* payload, MessageComponent type, void* data){
     return EXIT_SUCCESS;
 
 }
+
+int parse_payload(void* data, MessageComponent type, ike_payload_t* payload){
+
+}

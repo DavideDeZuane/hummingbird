@@ -92,9 +92,9 @@ typedef struct {
 
 ike_header_t init_header();
 
-int build_header(ike_header_raw_t* hdr, size_t len);
-
 int build_payload_header(ike_payload_header_raw_t* hdr, NextPayload np, uint16_t len);
+
+int parse_payload_header(uint8_t* buff, ike_payload_header_raw_t* hdr);
 
 ike_header_t* parse_header(uint8_t* buffer, size_t size);
 

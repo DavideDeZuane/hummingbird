@@ -158,5 +158,7 @@ typedef struct {
 
 int build_payload(ike_payload_t* payload, MessageComponent type, void *body);
 
+int parse_payload(void* data, MessageComponent type, ike_payload_t* payload);
+
 
 #endif

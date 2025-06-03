@@ -164,13 +164,6 @@ int main(int argc, char* argv[]){
 
     memcpy(&header.initiator_spi, left.ctx.spi, SPI_LENGTH_BYTE);
     
-    //fare il metodo per la buil dell'header
-    // refactoring del metodo push component, evitare di passare body e len seprati come il type ma passare direttamente solamente il payload
-
-    // a questo punto posso vedere un messaggio come una lista di ike_payload_t, faccio una lista con:
-    // inserimento in coda 
-    // nel generare il messaggio la inizio a scorrere dalla testa
-
     push_component(&packet_list, PAYLOAD_TYPE_NONCE, ni_data.body,   ni_data.len);
     push_component(&packet_list, PAYLOAD_TYPE_KE,    kex_data.body,  kex_data.len);
     push_component(&packet_list, PAYLOAD_TYPE_SA,    sa_data.body,   sa_data.len);
@@ -186,6 +179,8 @@ int main(int argc, char* argv[]){
         printf("Errore per la send");
         return -1;
     }
+
+    log_info("INIT message with dimension %zu bytes, sended to responder", len);
 
     //la gestione della recv e del caso in cui il timeout scade va gestita nella parte network
     uint8_t* buffer = calloc(MAX_PAYLOAD, sizeof(uint8_t));
@@ -223,25 +218,26 @@ int main(int argc, char* argv[]){
     while (next_payload != 0){
         current_payload = next_payload;
         //printf("Il payload corrente è %s\n", next_payload_to_string(current_payload));
-        ike_payload_header_t *payload = (ike_payload_header_t *)ptr;
+        ike_payload_header_raw_t *payload = (ike_payload_header_raw_t *)ptr;
 
         if(current_payload == NEXT_PAYLOAD_KE){
-            right.ctx.key_len = 32;
+            // aggiungere il controllo sul contenuto della risposta del dh group 
+            right.ctx.dh_group = bytes_to_uint16_be(ptr + 4);
+            right.ctx.key_len = bytes_to_uint16_be(payload->length) - 8;
             right.ctx.public_key = malloc(right.ctx.key_len);
             memcpy(right.ctx.public_key, ptr+8, right.ctx.key_len);
-
         }
         
         if(current_payload == NEXT_PAYLOAD_NONCE){
             //printf("sono al payload nonce\n");
-            right.ctx.nonce_len = be16toh(payload->length) - 4;
+            right.ctx.nonce_len = bytes_to_uint16_be(payload->length) - GEN_HDR_DIM;
             right.ctx.nonce = malloc(right.ctx.nonce_len);
-            memcpy(right.ctx.nonce, ptr+4, 32);
+            memcpy(right.ctx.nonce, ptr + GEN_HDR_DIM, right.ctx.nonce_len);
         }
 
         //printf("Next payload di tipo %s, tra %d byte\n", next_payload_to_string(payload->next_payload), be16toh(payload->length));
         next_payload = payload->next_payload;
-        ptr += be16toh(payload->length);
+        ptr += bytes_to_uint16_be(payload->length);
     }
     /*
     #########################################################################################

@@ -114,6 +114,25 @@ int parse_header_raw(uint8_t* buffer, ike_header_raw_t* hdr){
 
 }
 
+/**
+* @brief This function populate a generic payload header struct starting from a buffer
+* @param[in] buffer Is the buffer that contains a payload that is part of the response
+* @param[out] hdr 
+*/
+int parse_payload_header(uint8_t* buff, ike_payload_header_raw_t* hdr){
+    
+    int offset = 0;
+        
+    if(hdr == NULL){
+        printf("Pointer null exception");
+    }
+    UPDATE_BINARY_FIELD(hdr, buff, offset, BYTE);
+    offset += 1; //this field will be the reservered so it's not necessary to copy this byte
+    UPDATE_BINARY_FIELD(hdr, buff, offset, GEN_HDR_LENGTH_BYTE);
+
+    return EXIT_SUCCESS;
+}
+
 bool verify_exchange(const ike_header_raw_t *req, const ike_header_raw_t *res){
 
     if (memcmp(req->initiator_spi, res->initiator_spi, SPI_LENGTH_BYTE) != 0) return false;
