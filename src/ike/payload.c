@@ -119,14 +119,14 @@ int build_kex(ike_payload_kex_raw_t* ke, crypto_context_t* data){
 /**
 * @brief This function serialized the content of the payload in a buffer and create the generic payload header
 */
-int build_payload(ike_payload_t* payload, MessageComponent type, void* body, size_t len){
+int build_payload(ike_payload_t* payload, MessageComponent type, void* data){
 
 
     switch (type) {
         case PAYLOAD_TYPE_NONCE: {
             // pointer casting to determinate the size of the payload
             // definition of an header that will be prepended 
-            ike_nonce_payload_t* tmp = (ike_nonce_payload_t *) body;
+            ike_nonce_payload_t* tmp = (ike_nonce_payload_t *) data;
             ike_payload_header_raw_t hdr = {0};
 
             payload->len = sizeof(*tmp) + GEN_HDR_DIM;
@@ -139,21 +139,24 @@ int build_payload(ike_payload_t* payload, MessageComponent type, void* body, siz
         };
         case PAYLOAD_TYPE_KE: {
 
-            crypto_context_t* tmp = (crypto_context_t *) body;
+            crypto_context_t* tmp = (crypto_context_t *) data;
             EVP_PKEY_get_raw_public_key(tmp->private_key, NULL, &tmp->key_len);
-
             payload->type = type;
             payload->len = (tmp->key_len + 4 + GEN_HDR_DIM);
             payload->body = calloc(tmp->key_len + 4, BYTE);
             ike_payload_kex_raw_t* tmp2 = (ike_payload_kex_raw_t *) payload->body;
             uint16_to_bytes_be(tmp->dh_group, tmp2->dh_group);
             EVP_PKEY_get_raw_public_key(tmp->private_key, tmp2->data, &tmp->key_len);
-            build_payload_header(&payload->hdr, NEXT_PAYLOAD_NONCE, payload->len);
+            
+            memmove(payload->body + GEN_HDR_DIM, payload->body, payload->len - GEN_HDR_DIM);
+            ike_payload_header_raw_t hdr = {0};
+            build_payload_header(&hdr, NEXT_PAYLOAD_NONCE, payload->len);
+            memcpy(payload->body, &hdr, GEN_HDR_DIM);
             break;
         };
         case PAYLOAD_TYPE_SA: {
 
-            cipher_suite_t* tmp = (cipher_suite_t *) body;
+            cipher_suite_t* tmp = (cipher_suite_t *) data;
             payload->len = sizeof(ike_proposal_payload_t) + GEN_HDR_DIM;
             payload->body = calloc(payload->len, BYTE);
             ike_proposal_payload_t* data = calloc(sizeof(ike_proposal_payload_t), BYTE);
@@ -168,7 +171,6 @@ int build_payload(ike_payload_t* payload, MessageComponent type, void* body, siz
             break;
         };
         default: {
-
         }
     }
 

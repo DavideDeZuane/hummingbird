@@ -16,47 +16,11 @@
 #include <string.h>
 #include <sys/random.h> //spostare la definizione dell'IV per l'encrypted payload nel modulo IKE
 
-/*
-typedef struct {
-    void *data;                  
-    size_t length;              
-    MessageComponent type;      
-} ike_message_component_t;
 
 typedef struct {
-    ike_message_component_t *components; 
-    size_t count;                        
-    size_t capacity;                     
-} ike_message_t;
-
-
-int ike_message_add_component(ike_message_t *msg, void *data, size_t length, MessageComponent type) {
-    if (msg->count >= msg->capacity) {
-        size_t new_capacity = msg->capacity * 2;
-        void *new_array = realloc(msg->components, new_capacity * sizeof(ike_message_component_t));
-        if (!new_array) return -1;
-        msg->components = new_array;
-        msg->capacity = new_capacity;
-    }
-
-    ike_message_component_t *component = &msg->components[msg->count++];
-    component->data = data;
-    component->length = length;
-    component->type = type;
-    return 0;
-}
-*/
-
-typedef struct {
-    void *data;
-    size_t length;
-    MessageComponent type; 
-} ike_msg_component_t;
-
-typedef struct {
-    void *next; // Puntatore generico al prossimo payload
-    void *prev; // Puntatore generico al precedente payload
-    void *data;                  // Puntatore generico ai dati del payload
+    void *next; 
+    void *prev; 
+    void *data; 
     size_t length;
     MessageComponent type; 
 } ike_message_component_t;
@@ -65,6 +29,11 @@ typedef struct {
     ike_message_component_t *head;
     ike_message_component_t *tail;
 } ike_message_t;
+
+
+int add_payload(ike_message_t* msg, ike_payload_t* payload){
+
+}
 
 void push_component(ike_message_t* list, MessageComponent type, void *data, size_t length){
 
@@ -178,45 +147,45 @@ int main(int argc, char* argv[]){
     initiate_ike(&left, &right, &sa, cfg);
     free(cfg);
 
+    // crearli in maniera dinamica in modo tale da poterli distruggere una volta creato il messaggio,
+    // quello che ci server per la fase di autenticazione è il messaggio completo
     ike_payload_t ni_data = {0};
     ike_payload_t kex_data = {0};
     ike_payload_t sa_data = {0};
     
     // al build payload non devo passare la lunghezza e lui che mi deve popolare il valore della lunghezza con quello totale
 
-    build_payload(&ni_data,     PAYLOAD_TYPE_NONCE, left.ctx.nonce, left.ctx.nonce_len);
-    build_payload(&kex_data,    PAYLOAD_TYPE_KE,    &left.ctx,      left.ctx.key_len);
-    build_payload(&sa_data,     PAYLOAD_TYPE_SA,    &sa.suite,      sizeof(ike_proposal_payload_t));
+    build_payload(&ni_data,     PAYLOAD_TYPE_NONCE, left.ctx.nonce);
+    build_payload(&kex_data,    PAYLOAD_TYPE_KE,    &left.ctx);
+    build_payload(&sa_data,     PAYLOAD_TYPE_SA,    &sa.suite);
 
     ike_message_t packet_list = {NULL, NULL};
     ike_header_t header = init_header();
 
     memcpy(&header.initiator_spi, left.ctx.spi, SPI_LENGTH_BYTE);
-
     
-    // questo deve andare a far parte del build payload e quindi devo togliere la pare di header
+    //fare il metodo per la buil dell'header
+    // refactoring del metodo push component, evitare di passare body e len seprati come il type ma passare direttamente solamente il payload
 
-    uint8_t* tmp2 = malloc(sizeof(ike_payload_header_t) + 36);
-    memcpy(tmp2, &kex_data.hdr, GEN_HDR_DIM);
-    memcpy(tmp2 + GEN_HDR_DIM, kex_data.body, 36);
+    // a questo punto posso vedere un messaggio come una lista di ike_payload_t, faccio una lista con:
+    // inserimento in coda 
+    // nel generare il messaggio la inizio a scorrere dalla testa
 
-    push_component(&packet_list, PAYLOAD_TYPE_NONCE,       ni_data.body,   ni_data.len);
-    push_component(&packet_list, PAYLOAD_TYPE_KE,           tmp2,   40);
-    push_component(&packet_list, PAYLOAD_TYPE_SA,           sa_data.body,   48);
-    push_component(&packet_list, IKE_HEADER,               &header,          sizeof(ike_header_t));
+    push_component(&packet_list, PAYLOAD_TYPE_NONCE, ni_data.body,   ni_data.len);
+    push_component(&packet_list, PAYLOAD_TYPE_KE,    kex_data.body,  kex_data.len);
+    push_component(&packet_list, PAYLOAD_TYPE_SA,    sa_data.body,   sa_data.len);
+    push_component(&packet_list, IKE_HEADER,         &header,        sizeof(ike_header_t));
 
     uint8_t* buff;
     size_t len = 0;
     
     buff = create_message(&packet_list, &len);
 
-
     int retval =  send(left.node.fd, buff, len, 0);
     if(retval == -1){
         printf("Errore per la send");
         return -1;
     }
-
 
     //la gestione della recv e del caso in cui il timeout scade va gestita nella parte network
     uint8_t* buffer = calloc(MAX_PAYLOAD, sizeof(uint8_t));

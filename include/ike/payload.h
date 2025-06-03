@@ -150,14 +150,13 @@ typedef struct {
 
 typedef struct {
     MessageComponent type; 
-    ike_payload_header_raw_t hdr;
     void* body;
     size_t len;
 } ike_payload_t;
 
 
 
-int build_payload(ike_payload_t* payload, MessageComponent type, void *body, size_t len);
+int build_payload(ike_payload_t* payload, MessageComponent type, void *body);
 
 
 #endif
