@@ -4,6 +4,9 @@ This is an academic project.
 
 ## Why?
 
+IKEv2 is a general purpose protocol and in the years a lof of funcitonalities are been added to this protocol.
+This implies for the software that want to be fully compliant to include a lot of RFC, this require a lot of code. But in most cases that functionalities will no te be used,
+
 The implementation of IKEv2 strongswan in the init exchange has different optional payload someone can be removed in the configuration but othern cannot be removed.
 The most significant are the payload that deal with nat detection that there are the most significant in terms of byte sended
 
@@ -20,13 +23,21 @@ The most significant are the payload that deal with nat detection that there are
 
 ## Structure
 
-The source code of the implementation is inside the `src` directory. During the implementation we use a strongswan server to check if the generated messaggess are corret, the configuration of strongswan can be found inside the directory `srv`. It is a version of strongswan dockerized.
+The source code of the implementation is divided in `include` and`src` directory. 
+Because the implementation provides only initiator role to correctly test if it is woking we have created a server running strongswan. This istance is running inside a docker container so anyone can test, the configuration can be found inside the `srv` directory.
+
+So if you want to test the implementation, please before remember to start the container with the following command:
+
+```
+sudo docker-compose -f srv/docker-compose.yml up -d
+```
 
 ```
 .
-├── conf.ini
-├── Makefile
 ├── README.md
+├── Makefile
+├── conf.ini
+├── include
 ├── src
 ├── srv
 └── start.sh
