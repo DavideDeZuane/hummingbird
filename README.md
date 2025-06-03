@@ -26,12 +26,6 @@ The most significant are the payload that deal with nat detection that there are
 The source code of the implementation is divided in `include` and`src` directory. 
 Because the implementation provides only initiator role to correctly test if it is woking we have created a server running strongswan. This istance is running inside a docker container so anyone can test, the configuration can be found inside the `srv` directory.
 
-So if you want to test the implementation, please before remember to start the container with the following command:
-
-```
-sudo docker-compose -f srv/docker-compose.yml up -d
-```
-
 ```
 .
 ├── README.md
@@ -42,3 +36,10 @@ sudo docker-compose -f srv/docker-compose.yml up -d
 ├── srv
 └── start.sh
 ```
+
+So if you want to test the implementation, please before remember to start the container with the following command:
+
+```
+sudo docker-compose -f srv/docker-compose.yml up -d
+```
+
