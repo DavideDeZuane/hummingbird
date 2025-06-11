@@ -39,3 +39,6 @@ clean:
 
 # Regola predefinita
 all: $(TARGET)
+
+noconfig: clean
+	$(MAKE) CFLAGS="$(CFLAGS) -DNO_INI_PARSING" $(TARGET)

@@ -1,4 +1,5 @@
 #include "../include/common.h" // IWYU pragma: keep
+#include <bits/time.h>
 #include <ini.h>
 #include "../include/config.h"
 #include "../include/log.h"
@@ -14,6 +15,7 @@
 #include <openssl/hmac.h> //spostare utilizzo di hmac diretto nel modulo crytpo
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include <sys/random.h> //spostare la definizione dell'IV per l'encrypted payload nel modulo IKE
 
 
@@ -118,10 +120,16 @@ int main(int argc, char* argv[]){
     /*--------------------------------------------
     Loading configuration file
     --------------------------------------------*/
+    struct timespec start, end;
+
+    clock_gettime(CLOCK_MONOTONIC, &start);
+
     config* cfg = malloc(sizeof(config));
     default_config(cfg);
 
+
     int n;
+    #ifndef NO_INI_PARSING
     if ((n = ini_parse(DEFAULT_CONFIG, handler, cfg)) != 0) {
         if (n == -1) {
             log_error("Error on opening the configuration file %s", COLOR_TEXT(ANSI_COLOR_YELLOW, DEFAULT_CONFIG));
@@ -135,6 +143,7 @@ int main(int argc, char* argv[]){
         }
         return EXIT_FAILURE;
     }
+    #endif
 
     log_set_quiet(cfg->log.quiet);
     log_set_level(cfg->log.level);
@@ -181,7 +190,6 @@ int main(int argc, char* argv[]){
 
     log_info("INIT message with dimension %zu bytes, sended to responder", len);
 
-    //la gestione della recv e del caso in cui il timeout scade va gestita nella parte network
     uint8_t* buffer = calloc(MAX_PAYLOAD, sizeof(uint8_t));
     log_debug("Sended INIT request, waiting for the response");
 
@@ -195,8 +203,8 @@ int main(int argc, char* argv[]){
         }
     } 
     log_debug("Bytes received from the responder %d", n);
-    buffer = realloc(buffer, n);
-    buffer[n] = '\0'; 
+    //evito di fare la realloc in modo da evirare un overhead di reallocazione tanto ho la dimensione massima della recv
+    //buffer = realloc(buffer, n);
 
     //qunado vado a fare il parsing dei vari elementi vorrei fare in modo di confrontare il payload dal buffer per aggiornare quello che ho inviato io 
     ike_header_t* hd = parse_header(buffer, n);
@@ -434,6 +442,11 @@ int main(int argc, char* argv[]){
 
     secure_free(response, response_len);
 
+    
+    clock_gettime(CLOCK_MONOTONIC, &end);
+
+    double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+    log_info("Handshake time: %.6f seconds\n", elapsed);
 
     
     return 0;
