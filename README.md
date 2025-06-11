@@ -5,7 +5,12 @@ This is an academic project.
 ## Why?
 
 IKEv2 is a general purpose protocol and in the years a lof of funcitonalities are been added to this protocol.
-This implies for the software that want to be fully compliant to include a lot of RFC, this require a lot of code. But in most cases that functionalities will no te be used,
+This implies for the software that want to be fully compliant to include a lot of RFC, this require a lot of code. But in most cases that functionalities will no te be used.
+
+
+A key differentiator of this implementation is its **daemon-less** nature: unlike full-featured IKE implementations (e.g., strongSwan, Libreswan), it does not require a background service or interprocess communication to operate. The handshake logic is implemented in a monolithic, single-process executable that can be invoked directly or embedded within another application.
+
+
 
 The implementation of IKEv2 strongswan in the init exchange has different optional payload someone can be removed in the configuration but othern cannot be removed.
 The most significant are the payload that deal with nat detection that there are the most significant in terms of byte sended
