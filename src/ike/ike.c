@@ -39,6 +39,7 @@ void initiate_ike(ike_partecipant_t* left, ike_partecipant_t* right, ike_sa_t* s
     // qui va tutta la parte di generazione del messaggio di cui si occupa il modulo IKE
 
     log_info("[IKE] module successfully setup");
+    free(cfg);
 
 }
 

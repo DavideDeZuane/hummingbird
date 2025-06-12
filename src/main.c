@@ -13,77 +13,21 @@
 #include "../include/ike/payload.h"
 
 #include <openssl/hmac.h> //spostare utilizzo di hmac diretto nel modulo crytpo
+#include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <sys/random.h> //spostare la definizione dell'IV per l'encrypted payload nel modulo IKE
 
 
 typedef struct {
-    void *next; 
-    void *prev; 
-    void *data; 
-    size_t length;
-    MessageComponent type; 
-} ike_message_component_t;
+    ike_payload_t* items;
+    size_t size;     
+    size_t capacity; 
+} payload_array;
 
-typedef struct {
-    ike_message_component_t *head;
-    ike_message_component_t *tail;
-} ike_message_t;
-
-
-int add_payload(ike_message_t* msg, ike_payload_t* payload){
-
-}
-
-void push_component(ike_message_t* list, MessageComponent type, void *data, size_t length){
-
-    ike_message_component_t* new = malloc(sizeof(ike_message_component_t));
-    if (new == NULL) printf("Error during malloc\n");
-    
-    new->prev = NULL; //dato che faccio il prepend l'elemento che aggiungo diventa il primo e quindi lo posso lasciare qui
-    new->data = data;
-    new->length = length;
-    new->type = type;
-    
-    if(list->head == NULL){
-        list->head = new;
-        list->tail = new;
-        return;
-    }
-    new->next = list->head;
-    list->head->prev = new;
-    list->head = new;
-}
-
-uint8_t* create_message(ike_message_t* list, size_t* len){
-
-    size_t buffer_len = 0;
-
-    uint8_t* buffer = NULL;
-    ike_message_component_t* scan = list->tail;
-
-    while(scan != NULL){
-        buffer_len += scan->length;
-        buffer = realloc(buffer, buffer_len);
-        //una volta allocato il buffer prima di scriverci sopra facciamo la conversione in big endian di quello che ci vogliamo scrivere
-        if (buffer_len > scan->length) memmove(buffer + scan->length, buffer, buffer_len - scan->length);
-
-        if(scan->type == IKE_HEADER){
-            ike_header_raw_t * hdr = (ike_header_raw_t *) scan->data;
-            uint32_to_bytes_be(buffer_len, hdr->length);
-        }
-
-
-        memcpy(buffer, scan->data, scan->length);
-        scan = scan->prev;
-    }
-
-    *len = buffer_len;
-    return buffer;
-
-}
 
 int main(int argc, char* argv[]){
     /*---------------------------------------------
@@ -127,7 +71,6 @@ int main(int argc, char* argv[]){
     config* cfg = malloc(sizeof(config));
     default_config(cfg);
 
-
     int n;
     #ifndef NO_INI_PARSING
     if ((n = ini_parse(DEFAULT_CONFIG, handler, cfg)) != 0) {
@@ -155,32 +98,56 @@ int main(int argc, char* argv[]){
     ike_sa_t sa = {0};
     
     initiate_ike(&left, &right, &sa, cfg);
-    free(cfg);
 
-    // crearli in maniera dinamica in modo tale da poterli distruggere una volta creato il messaggio,
-    // quello che ci server per la fase di autenticazione è il messaggio completo
-    ike_payload_t ni_data = {0};
-    ike_payload_t kex_data = {0};
-    ike_payload_t sa_data = {0};
+    ike_payload_t* ni_data = malloc(sizeof(ike_payload_t));
+    ike_payload_t* kex_data = malloc(sizeof(ike_payload_t));
+    ike_payload_t* sa_data = malloc(sizeof(ike_payload_t));
+    ike_payload_t* header_p = malloc(sizeof(ike_payload_t));
     
-    // al build payload non devo passare la lunghezza e lui che mi deve popolare il valore della lunghezza con quello totale
+    build_payload(ni_data,     PAYLOAD_TYPE_NONCE, left.ctx.nonce);
+    build_payload(kex_data,    PAYLOAD_TYPE_KE,    &left.ctx);
+    build_payload(sa_data,     PAYLOAD_TYPE_SA,    &sa.suite);
 
-    build_payload(&ni_data,     PAYLOAD_TYPE_NONCE, left.ctx.nonce);
-    build_payload(&kex_data,    PAYLOAD_TYPE_KE,    &left.ctx);
-    build_payload(&sa_data,     PAYLOAD_TYPE_SA,    &sa.suite);
-
-    ike_message_t packet_list = {NULL, NULL};
     ike_header_raw_t header = init_header_raw(left.ctx.spi,0);
 
-    push_component(&packet_list, PAYLOAD_TYPE_NONCE, ni_data.body,   ni_data.len);
-    push_component(&packet_list, PAYLOAD_TYPE_KE,    kex_data.body,  kex_data.len);
-    push_component(&packet_list, PAYLOAD_TYPE_SA,    sa_data.body,   sa_data.len);
-    push_component(&packet_list, IKE_HEADER,         &header,        sizeof(ike_header_raw_t));
+    payload_array msg;
+    msg.capacity = 4;
+    msg.items = malloc(msg.capacity * sizeof(ike_payload_t));
 
-    uint8_t* buff;
+    // questo andrà a far parte del metodo build_header
+    header_p->body = &header;
+    header_p->len = IKE_HDR_DIM;
+    header_p->type = IKE_HEADER;
+
+    msg.items[3] = *ni_data;
+    msg.items[2] = *kex_data;
+    msg.items[1] = *sa_data;
+    msg.items[0] = *header_p;
+
     size_t len = 0;
-    
-    buff = create_message(&packet_list, &len);
+    for(int i=0; i<4; i++){len += msg.items[i].len; }
+    // conviene fare un'unica malloc totale che diverse malloc parziali dato che ha un pò di overhead
+    uint8_t* buff = malloc(len);
+
+
+    int offset = 0;
+    for(int i=0; i < 4; i++){
+        if(msg.items[i].type == IKE_HEADER){
+            ike_header_raw_t* tmp = msg.items[i].body;
+            uint32_to_bytes_be(offset + IKE_HDR_DIM, tmp->length);
+        }
+        memcpy(buff + offset, msg.items[i].body, msg.items[i].len);
+        offset += msg.items[i].len;
+    }
+
+
+    free(ni_data);
+    free(kex_data);
+    free(sa_data);
+    free(msg.items);
+
+    // una volta creato il messaggio posso rimuovere la lista concatenata
+    // l'unica cosa che devo gestire è la ritrasmissione e per questo basta solamente il buffer
 
     int retval =  send(left.node.fd, buff, len, 0);
     if(retval == -1){
@@ -208,10 +175,16 @@ int main(int argc, char* argv[]){
 
     //qunado vado a fare il parsing dei vari elementi vorrei fare in modo di confrontare il payload dal buffer per aggiornare quello che ho inviato io 
     ike_header_t* hd = parse_header(buffer, n);
+
+    ike_header_raw_t* hdr = malloc(sizeof(ike_header_raw_t));
+    parse_header_raw(buffer,  hdr);
+
+
     // #########################################################################################
     //porcodio
     // #########################################################################################
     memcpy(right.ctx.spi, &hd->responder_spi , 8);
+    memcpy(right.ctx.spi, hdr->responder_spi , SPI_LENGTH_BYTE);
 
     /* 
     #########################################################################################
