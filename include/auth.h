@@ -12,8 +12,10 @@ typedef enum {
 typedef struct {
     auth_method_t method;
     //manca un campo per l'id
-    uint8_t *auth_data;  
-    size_t auth_data_len;
+    char *id_data;  
+    size_t id_len;
+    uint8_t *psk;  
+    size_t psk_len;
 } auth_context_t;
 
 

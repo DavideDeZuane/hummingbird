@@ -46,6 +46,7 @@ typedef enum {
     PAYLOAD_TYPE_NONCE,
     PAYLOAD_TYPE_KE,
     PAYLOAD_TYPE_SA,
+    PAYLOAD_TYPE_ID,
     GENERIC_PAYLOAD_HEADER,
     IKE_HEADER,
     TRANSFORM,
@@ -99,6 +100,17 @@ typedef enum {
     EXCHANGE_CREATE_CHILD_SA = 36,
     EXCHANGE_INFORMATIONAL   = 37   
 } ExchangeType;
+
+
+typedef enum {
+    ID_TYPE_IPV4_ADDR        = 1,
+    ID_TYPE_FQDN             = 2,  // Fully Qualified Domain Name
+    ID_TYPE_RFC822_ADDR      = 3,  // Email address (e.g., user@example.com)
+    ID_TYPE_IPV6_ADDR        = 5,
+    ID_TYPE_DER_ASN1_DN      = 9,  // Distinguished Name (X.509)
+    ID_TYPE_DER_ASN1_GN      = 10, // General Name (X.509)
+    ID_TYPE_KEY_ID           = 11  // Opaque Key Identifier
+} IDType;
 
 
 /**

@@ -239,6 +239,9 @@ int main(int argc, char* argv[]){
     # to be generated depends on parameters of ike like number of keys
     #########################################################################################
     */
+    // ##################################################################################
+    // questo c'e da cambiarlo molto probabilmente consuma un botto di memoria
+    // #################################################################################
     ike_session_t ike_sa = {0};
     ike_sa.initiator = left;
     ike_sa.responder = right;
@@ -250,14 +253,26 @@ int main(int argc, char* argv[]){
     ####################################################################################
     */
     uint8_t id_i[8] = {0};
-    id_i[0] = 0x01;
+    id_i[0] = 0x01; // sta ad indicare che l'identificativo è un indirizzo IP 
     id_i[1] = 0x00;   // Reserved
     id_i[2] = 0x00;  
     id_i[3] = 0x00;
-    id_i[4] = 0x00;
+    id_i[4] = 0x00; // valore dell'indirizzo ip, ovvero i quattro ottetti
     id_i[5] = 0x00;
     id_i[6] = 0x00;
     id_i[7] = 0x00;
+
+
+    // adesso devo fare un metodo che a partire dall'auth ctx mi genera il corrispondente payload
+    ike_id_payload_t *id_in = malloc(sizeof(ike_id_payload_t) + 4);
+    id_in->id_type = ID_TYPE_IPV4_ADDR;
+    uint8_t ip_bin[4];
+    inet_pton(AF_INET, left.aut.id_data, ip_bin);
+    memcpy(id_in->data, ip_bin, sizeof(ip_bin));
+
+
+
+
 
     //il contenuto di id payload insieme a quello di auth e della proposal va messo all'interno di encrypted and authenticated
 
@@ -281,7 +296,9 @@ int main(int argc, char* argv[]){
 
     uint8_t* md = malloc(SHA1_DIGEST_LENGTH);
     unsigned int md_len = 0;
-    HMAC(EVP_sha1(), ike_sa.association.sk_pi, SHA1_DIGEST_LENGTH, id_i, 8, md, &md_len);
+
+    // se si cambia l'identià devo cambiare anche questo
+    HMAC(EVP_sha1(), ike_sa.association.sk_pi, SHA1_DIGEST_LENGTH, (uint8_t*)id_in, 8, md, &md_len);
 
     memcpy(auth_payload + len + right.ctx.nonce_len, md, md_len);
 
@@ -323,7 +340,7 @@ int main(int argc, char* argv[]){
     uint8_t* enc_buffer = malloc(plaintext_len);
 
     mempcpy(enc_buffer ,&identity, GEN_HDR_DIM);
-    memcpy(enc_buffer + GEN_HDR_DIM , id_i, 8);
+    memcpy(enc_buffer + GEN_HDR_DIM , id_in, 8);
     memcpy(enc_buffer + 12, &authentication, GEN_HDR_DIM);
     memcpy(enc_buffer +16 , &auth_i, 4);
     memcpy(enc_buffer +16+4, output, out_len);
@@ -399,6 +416,9 @@ int main(int argc, char* argv[]){
 
     retval =  send(left.node.fd, response, response_len+icv_len, 0);
 
+    tot_traffic += response_len;
+    tot_traffic += icv_len;
+
     log_info("Waiting for the IKE AUTH response");
 
     buffer = realloc(buffer, MAX_PAYLOAD);
@@ -411,6 +431,7 @@ int main(int argc, char* argv[]){
             return EXIT_FAILURE;
         }
     } 
+    tot_traffic += n;
 
     log_debug("Bytes received from the responder %d", n);
 
@@ -428,7 +449,8 @@ int main(int argc, char* argv[]){
     clock_gettime(CLOCK_MONOTONIC, &end);
 
     double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
-    log_info("Handshake time: %.6f seconds\n", elapsed);
+    log_info("Handshake time: %.6f seconds", elapsed);
+    log_info("Total traffic exchanged: %d bytes", tot_traffic);
 
     
     return 0;

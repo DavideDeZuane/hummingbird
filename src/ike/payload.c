@@ -170,6 +170,9 @@ int build_payload(ike_payload_t* payload, MessageComponent type, void* data){
             free(data);
             break;
         };
+        case PAYLOAD_TYPE_ID: {
+            
+        }
         default: {
         }
     }

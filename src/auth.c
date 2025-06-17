@@ -11,11 +11,17 @@ int initiate_auth(auth_context_t* auth, const auth_options_t* opts){
 
     if(strcmp(opts->method, "psk") == 0){
         auth->method = AUTH_METHOD_PSK;
-        auth->auth_data_len = strlen(opts->data);
-        auth->auth_data = calloc(strnlen(opts->data, MAX_AUTH_DATA_LEN), BYTE);
-        memcpy(auth->auth_data, opts->data, auth->auth_data_len);
+
+        auth->psk_len = strlen(opts->data);
+        auth->psk = calloc(strnlen(opts->data, MAX_AUTH_DATA_LEN), BYTE);
+        memcpy(auth->psk, opts->data, auth->psk_len);
+
+        auth->id_len = strlen(opts->id);
+        auth->id_data = calloc(strnlen(opts->id, MAX_AUTH_DATA_LEN), BYTE);
+        memcpy(auth->id_data, opts->id, auth->id_len);
+
         log_trace("Auth Method PSK");
-        log_trace("PSK: " ANSI_COLOR_BOLD "%s", auth->auth_data);
+        log_trace("ID: %s and PSK: " ANSI_COLOR_BOLD "%s", auth->id_data, auth->psk);
     }
 
     return EXIT_SUCCESS;

@@ -15,12 +15,12 @@ All are in binary format so that it can be sent on the buffer without having to 
 */
 
 /**
-* @brief  
+* @brief  We use flexible array member
 */
 typedef  struct {
     uint8_t id_type;
-    uint8_t RESERVED1;
-    uint16_t RESERVED2;
+    uint8_t RESERVED[3];
+    uint8_t data[];
 } __attribute__((packed)) ike_id_payload_t ;
 /*
                     1                   2                   3
