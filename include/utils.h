@@ -6,6 +6,8 @@
 #include <stdio.h>
 
 
+MessageComponent next_payload_to_component(uint8_t np);
+
 uint32_t bytes_to_uint32_be(const uint8_t *bytes);
 
 uint16_t bytes_to_uint16_be(const uint8_t *bytes);

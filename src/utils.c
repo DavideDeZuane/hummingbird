@@ -148,10 +148,24 @@ const char* next_payload_to_string(NextPayload type){
         case NEXT_PAYLOAD_DELETE:  return "";
         case NEXT_PAYLOAD_TSi:     return "";
         case NEXT_PAYLOAD_TSr:     return "";
-        case NEXT_PAYLOAD_SK:      return "";
+        case NEXT_PAYLOAD_SK:      return "Encrypted Payload (SK)";
     }
     return "";
 }
+
+/** 
+* @brief Mapping funcion between NextPayload and MessageComponent
+*/
+MessageComponent next_payload_to_component(uint8_t np) {
+    switch (np) {
+        case NEXT_PAYLOAD_NONCE:   return PAYLOAD_TYPE_NONCE;
+        case NEXT_PAYLOAD_KE:      return PAYLOAD_TYPE_KE;
+        case NEXT_PAYLOAD_SA:      return PAYLOAD_TYPE_SA;
+        // aggiungi altri se ti servono
+        default:                   return PAYLOAD_TYPE_NONE;  // o GENERIC_PAYLOAD_HEADER
+    }
+}
+
 
 uint32_t bytes_to_uint32_be(const uint8_t *bytes) {
     #if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__

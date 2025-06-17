@@ -178,6 +178,25 @@ int build_payload(ike_payload_t* payload, MessageComponent type, void* data){
 
 }
 
-int parse_payload(void* data, MessageComponent type, ike_payload_t* payload){
+int parse_payload(void* data, MessageComponent type, void* payload){
+
+    switch (type) {
+        case PAYLOAD_TYPE_NONCE: {
+            log_debug("Parsing Nr");
+            break;
+        };
+        case PAYLOAD_TYPE_KE: {
+            break;
+        };
+        case PAYLOAD_TYPE_SA: {
+            log_debug("Parsing SAr");
+            break;
+        };
+        default: {
+
+        };
+    }
+
+    return EXIT_SUCCESS;
 
 }

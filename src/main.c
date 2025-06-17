@@ -12,14 +12,14 @@
 #include "../include/ike/ike.h"
 #include "../include/ike/payload.h"
 
-#include <openssl/hmac.h> //spostare utilizzo di hmac diretto nel modulo crytpo
+#include <openssl/hmac.h> 
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <sys/random.h> //spostare la definizione dell'IV per l'encrypted payload nel modulo IKE
+#include <sys/random.h> 
 
 
 typedef struct {
@@ -65,6 +65,7 @@ int main(int argc, char* argv[]){
     Loading configuration file
     --------------------------------------------*/
     struct timespec start, end;
+    int tot_traffic = 0;
 
     clock_gettime(CLOCK_MONOTONIC, &start);
 
@@ -126,9 +127,8 @@ int main(int argc, char* argv[]){
 
     size_t len = 0;
     for(int i=0; i<4; i++){len += msg.items[i].len; }
-    // conviene fare un'unica malloc totale che diverse malloc parziali dato che ha un pò di overhead
     uint8_t* buff = malloc(len);
-
+    // conviene fare un'unica malloc totale che diverse malloc parziali dato che ha un pò di overhead
 
     int offset = 0;
     for(int i=0; i < 4; i++){
@@ -140,25 +140,23 @@ int main(int argc, char* argv[]){
         offset += msg.items[i].len;
     }
 
-
     free(ni_data);
     free(kex_data);
     free(sa_data);
-    free(msg.items);
 
     // una volta creato il messaggio posso rimuovere la lista concatenata
     // l'unica cosa che devo gestire è la ritrasmissione e per questo basta solamente il buffer
-
     int retval =  send(left.node.fd, buff, len, 0);
     if(retval == -1){
         printf("Errore per la send");
         return -1;
     }
 
-    log_info("INIT message with dimension %zu bytes, sended to responder", len);
+    log_info("Sended INIT message with dimension %zu bytes", len);
+    // tracking the total traffic between the hosts 
+    tot_traffic += len;
 
     uint8_t* buffer = calloc(MAX_PAYLOAD, sizeof(uint8_t));
-    log_debug("Sended INIT request, waiting for the response");
 
     n = recv(left.node.fd, buffer, MAX_PAYLOAD, 0);
     if (n < 0) {
@@ -169,22 +167,25 @@ int main(int argc, char* argv[]){
             return EXIT_FAILURE;
         }
     } 
-    log_debug("Bytes received from the responder %d", n);
+    log_debug("Received INIT response with dimension %d bytes", n);
+    tot_traffic += n;
+
     //evito di fare la realloc in modo da evirare un overhead di reallocazione tanto ho la dimensione massima della recv
     //buffer = realloc(buffer, n);
 
     //qunado vado a fare il parsing dei vari elementi vorrei fare in modo di confrontare il payload dal buffer per aggiornare quello che ho inviato io 
+
     ike_header_t* hd = parse_header(buffer, n);
+    memcpy(right.ctx.spi, &hd->responder_spi , 8);
 
     ike_header_raw_t* hdr = malloc(sizeof(ike_header_raw_t));
     parse_header_raw(buffer,  hdr);
 
+    memcpy(right.ctx.spi, hdr->responder_spi , SPI_LENGTH_BYTE);
 
     // #########################################################################################
     //porcodio
     // #########################################################################################
-    memcpy(right.ctx.spi, &hd->responder_spi , 8);
-    memcpy(right.ctx.spi, hdr->responder_spi , SPI_LENGTH_BYTE);
 
     /* 
     #########################################################################################
@@ -192,30 +193,38 @@ int main(int argc, char* argv[]){
     #########################################################################################
     */
     uint8_t *ptr = buffer+28; 
-    uint8_t next_payload = ptr[0];         
-    uint8_t current_payload = hd->next_payload;
+    uint8_t next_payload = hd->next_payload;
 
     while (next_payload != 0){
-        current_payload = next_payload;
-        //printf("Il payload corrente è %s\n", next_payload_to_string(current_payload));
+        
         ike_payload_header_raw_t *payload = (ike_payload_header_raw_t *)ptr;
 
-        if(current_payload == NEXT_PAYLOAD_KE){
-            // aggiungere il controllo sul contenuto della risposta del dh group 
-            right.ctx.dh_group = bytes_to_uint16_be(ptr + 4);
-            right.ctx.key_len = bytes_to_uint16_be(payload->length) - 8;
-            right.ctx.public_key = malloc(right.ctx.key_len);
-            memcpy(right.ctx.public_key, ptr+8, right.ctx.key_len);
-        }
-        
-        if(current_payload == NEXT_PAYLOAD_NONCE){
-            //printf("sono al payload nonce\n");
-            right.ctx.nonce_len = bytes_to_uint16_be(payload->length) - GEN_HDR_DIM;
-            right.ctx.nonce = malloc(right.ctx.nonce_len);
-            memcpy(right.ctx.nonce, ptr + GEN_HDR_DIM, right.ctx.nonce_len);
+        switch (next_payload) {
+            case NEXT_PAYLOAD_NOTIFIY: {
+                log_debug("Notify Payload received");
+                break;
+            };
+            case NEXT_PAYLOAD_KE: {
+                log_debug("Parsing KEr payload");
+                // forse è meglio suddividere il contesto in chiave, e in nonce 
+                right.ctx.dh_group = bytes_to_uint16_be(ptr + 4);
+                right.ctx.key_len = bytes_to_uint16_be(payload->length) - 8;
+                right.ctx.public_key = malloc(right.ctx.key_len);
+                memcpy(right.ctx.public_key, ptr+8, right.ctx.key_len);
+                break;
+            };
+            case NEXT_PAYLOAD_NONCE: {
+                log_debug("Parsing Nr payload");
+                right.ctx.nonce_len = bytes_to_uint16_be(payload->length) - GEN_HDR_DIM;
+                right.ctx.nonce = malloc(right.ctx.nonce_len);
+                memcpy(right.ctx.nonce, ptr + GEN_HDR_DIM, right.ctx.nonce_len);
+                break;
+            };
+            default: {
+
+            };
         }
 
-        //printf("Next payload di tipo %s, tra %d byte\n", next_payload_to_string(payload->next_payload), be16toh(payload->length));
         next_payload = payload->next_payload;
         ptr += bytes_to_uint16_be(payload->length);
     }

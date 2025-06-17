@@ -31,7 +31,6 @@ void parse_response(uint8_t* req, uint8_t* res, ike_partecipant_t* right){
     while (next_payload != 0){
 
         current_payload = next_payload;
-        ike_payload_header_t *payload = (ike_payload_header_t *)res;
         
         switch (current_payload) {
             case NEXT_PAYLOAD_KE: {
