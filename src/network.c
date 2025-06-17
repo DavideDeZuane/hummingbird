@@ -11,7 +11,6 @@
 #include <ifaddrs.h>
 #include <ifaddrs.h>
 #include <endian.h>
-#include "../include/ike/constant.h"
 #include "../include/utils.h"
 #include "../include/config.h"
 
@@ -44,36 +43,6 @@ int validate_port(char *port){
         return port_n;
     else
         return 0; //chiamare tipo port not valid
-}
-
-/**
-* @brief This function convert the rappresentation of the field of a struct in big-endian.
-* @param[in] data Generic pointer to a buffer of data to convert
-* @param[in] type Type of the data to convert this will be used to deterimnate which fields must be converted
-*/
-void convert_to_big_endian(void *data, MessageComponent type) {
-    size_t num_fields = 0;
-    field_descriptor_t* fields = fields_to_convert(type, &num_fields);
-    for (size_t i = 0; i < num_fields; i++) {
-        void *field_ptr = (uint8_t *)data + fields[i].offset;
-        switch (fields[i].type) {
-            case FIELD_UINT16: {
-                uint16_t *value = (uint16_t *)field_ptr;
-                *value = CONVERT_TO_BIG_ENDIAN(*value, 16);  // Conversione in big-endian per uint16_t
-                break;
-            }
-            case FIELD_UINT32: {
-                uint32_t *value = (uint32_t *)field_ptr;
-                *value = CONVERT_TO_BIG_ENDIAN(*value, 32);  // Conversione in big-endian per uint32_t
-                break;
-            }
-            case FIELD_UINT64: {
-                uint64_t *value = (uint64_t *)field_ptr;
-                *value = CONVERT_TO_BIG_ENDIAN(*value, 64);  
-                break;
-            }
-        }
-    }
 }
 
 /**

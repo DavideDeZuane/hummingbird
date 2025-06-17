@@ -61,18 +61,18 @@ int main(int argc, char* argv[]){
         
         }
     }  
+    struct timespec start, end;
+    // tracking the total traffic between the hosts 
+    int tot_traffic = 0;
+    clock_gettime(CLOCK_MONOTONIC, &start);
+
     /*--------------------------------------------
     Loading configuration file
     --------------------------------------------*/
-    struct timespec start, end;
-    int tot_traffic = 0;
-
-    clock_gettime(CLOCK_MONOTONIC, &start);
-
     config* cfg = malloc(sizeof(config));
     default_config(cfg);
-
     int n;
+    
     #ifndef NO_INI_PARSING
     if ((n = ini_parse(DEFAULT_CONFIG, handler, cfg)) != 0) {
         if (n == -1) {
@@ -153,7 +153,6 @@ int main(int argc, char* argv[]){
     }
 
     log_info("Sended INIT message with dimension %zu bytes", len);
-    // tracking the total traffic between the hosts 
     tot_traffic += len;
 
     uint8_t* buffer = calloc(MAX_PAYLOAD, sizeof(uint8_t));
@@ -245,22 +244,7 @@ int main(int argc, char* argv[]){
     ike_session_t ike_sa = {0};
     ike_sa.initiator = left;
     ike_sa.responder = right;
-
     derive_ike_sa(&ike_sa);
-    /*
-    ####################################################################################
-    # GENERATING THE IKE AUTH EXCHANGE
-    ####################################################################################
-    */
-    uint8_t id_i[8] = {0};
-    id_i[0] = 0x01; // sta ad indicare che l'identificativo è un indirizzo IP 
-    id_i[1] = 0x00;   // Reserved
-    id_i[2] = 0x00;  
-    id_i[3] = 0x00;
-    id_i[4] = 0x00; // valore dell'indirizzo ip, ovvero i quattro ottetti
-    id_i[5] = 0x00;
-    id_i[6] = 0x00;
-    id_i[7] = 0x00;
 
 
     // adesso devo fare un metodo che a partire dall'auth ctx mi genera il corrispondente payload
@@ -271,11 +255,7 @@ int main(int argc, char* argv[]){
     memcpy(id_in->data, ip_bin, sizeof(ip_bin));
 
 
-
-
-
     //il contenuto di id payload insieme a quello di auth e della proposal va messo all'interno di encrypted and authenticated
-
     uint8_t auth_i[4] = {0};
     auth_i[0] = 0x02;
     auth_i[1] = 0x00;   // Reserved

@@ -53,11 +53,6 @@ typedef struct {
 /** 
 * @brief ADD DESCRIPTION
 */
-typedef struct {
-    uint16_t dh_group;
-    uint16_t reserved;
-    uint8_t ke_data[32]; 
-} __attribute__((packed)) ike_payload_kex_t;
 
 typedef struct {
     uint8_t dh_group[2];

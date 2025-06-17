@@ -22,14 +22,6 @@ void format_hex_string(char *dest, size_t dest_size, const uint8_t *data, size_t
 void alloc_buffer(uint8_t **buff, size_t size);
 
 /**
-* @brief This function return which fields of a given struct of the IKE packet must be converted for a big endian rappresentation
-* @param[in] type The type of the struct to convert
-* @param[out] num The number of the field to convert
-* @return A dynamic array of the field co convert
-*/
-field_descriptor_t* fields_to_convert(MessageComponent type, size_t* num);
-
-/**
 * @brief This function print the value passed in a big endian rappresentation
 * @param[in] data The data to print in big-endian format
 * @param[in] size The length of the data to print

@@ -35,9 +35,6 @@ void initiate_ike(ike_partecipant_t* left, ike_partecipant_t* right, ike_sa_t* s
     LOAD_MODULE("CRY", initiate_crypto, &sa->suite, &left->ctx, &cfg->suite);
     LOAD_MODULE("AUT", initiate_auth, &left->aut, &cfg->auth);
 
-    // once correctly imported all the modules we can say that ike can do all his operations
-    // qui va tutta la parte di generazione del messaggio di cui si occupa il modulo IKE
-
     log_info("[IKE] module successfully setup");
     free(cfg);
 

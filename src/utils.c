@@ -1,6 +1,4 @@
 #include "../include/utils.h"
-#include "../include/network.h"
-#include "../include/ike/payload.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,57 +26,6 @@ void secure_free(void* ptr, size_t size){
     }
 }
 
-/**
-* @brief This function return which fields of a given struct of the IKE packet must be converted for a big endian rappresentation
-* @param[in] type The type of the struct to convert
-* @param[out] num The number of the field to convert
-* @return A dynamic array of the field co convert
-*/
-field_descriptor_t* fields_to_convert(MessageComponent type, size_t* num_fields) {
-    field_descriptor_t* fields = NULL;
-    size_t num = 0;
-
-    switch(type) {
-        case IKE_HEADER: {
-            field_descriptor_t tmp[] = {
-                { offsetof(ike_header_t, initiator_spi), FIELD_UINT64 },
-                { offsetof(ike_header_t, responder_spi), FIELD_UINT64 },
-                { offsetof(ike_header_t, message_id), FIELD_UINT32 },
-                { offsetof(ike_header_t, length), FIELD_UINT32 }
-            };
-            num = sizeof(tmp) / sizeof(tmp[0]);
-            fields = malloc(num * sizeof(field_descriptor_t));
-            memcpy(fields, tmp, num * sizeof(field_descriptor_t));
-            break;
-        }
-        case GENERIC_PAYLOAD_HEADER: {
-            field_descriptor_t tmp[] = {
-                { offsetof(ike_payload_header_t, length), FIELD_UINT16 },
-            };
-            num = sizeof(tmp) / sizeof(tmp[0]);
-            fields = malloc(num * sizeof(field_descriptor_t));
-            memcpy(fields, tmp, num * sizeof(field_descriptor_t));
-            break;
-        }
-        case PAYLOAD_TYPE_KE: {
-            field_descriptor_t tmp[] = {
-                { offsetof(ike_payload_kex_t, dh_group), FIELD_UINT16 },
-            };
-            num = sizeof(tmp) / sizeof(tmp[0]);
-            fields = malloc(num * sizeof(field_descriptor_t));
-            memcpy(fields, tmp, num * sizeof(field_descriptor_t));
-            break;
-        }
-        case PAYLOAD_TYPE_NONCE: {
-
-        }
-        default:{
-            break;
-        }
-    }
-    *num_fields = num;
-    return fields;
-}
 
 /**
 * @brief This function return the content of a memory pointed by the pointer specified for the length specified 
