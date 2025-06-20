@@ -17,7 +17,7 @@ int initiate_auth(auth_context_t* auth, const auth_options_t* opts){
         memcpy(auth->psk, opts->data, auth->psk_len);
 
         auth->id_len = strlen(opts->id);
-        auth->id_data = calloc(strnlen(opts->id, MAX_AUTH_DATA_LEN), BYTE);
+        auth->id_data = calloc(strnlen(opts->id, MAX_AUTH_ID_LEN), BYTE);
         memcpy(auth->id_data, opts->id, auth->id_len);
 
         log_trace("Auth Method PSK");

@@ -105,12 +105,12 @@ int build_proposal(ike_proposal_payload_t* proposal, cipher_suite_t* suite){
  * 
  * @return int Returns EXIT_SUCCESS on success.
  */
-int build_kex(ike_payload_kex_raw_t* ke, crypto_context_t* data){
+int build_kex(ike_payload_kex_t* ke, crypto_context_t* data){
 
     uint16_to_bytes_be(data->dh_group, ke->dh_group);
     // retrieve che public key len 
     EVP_PKEY_get_raw_public_key(data->private_key, NULL, &data->key_len);
-    ke = realloc(ke, data->key_len + sizeof(ike_payload_kex_raw_t));
+    ke = realloc(ke, data->key_len + sizeof(ike_payload_kex_t));
 
     EVP_PKEY_get_raw_public_key(data->private_key, ke->data, &data->key_len);
     return EXIT_SUCCESS;
@@ -144,7 +144,7 @@ int build_payload(ike_payload_t* payload, MessageComponent type, void* data){
             payload->type = type;
             payload->len = (tmp->key_len + 4 + GEN_HDR_DIM);
             payload->body = calloc(tmp->key_len + 4, BYTE);
-            ike_payload_kex_raw_t* tmp2 = (ike_payload_kex_raw_t *) payload->body;
+            ike_payload_kex_t* tmp2 = (ike_payload_kex_t *) payload->body;
             uint16_to_bytes_be(tmp->dh_group, tmp2->dh_group);
             EVP_PKEY_get_raw_public_key(tmp->private_key, tmp2->data, &tmp->key_len);
             
@@ -171,7 +171,7 @@ int build_payload(ike_payload_t* payload, MessageComponent type, void* data){
             break;
         };
         case PAYLOAD_TYPE_ID: {
-            
+
         }
         default: {
         }

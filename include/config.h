@@ -11,8 +11,9 @@
 #define INET_FQNLEN 255
 #define MAX_PORT_LENGTH 6
 #define MAX_ALGR_LENGTH 10
-
 #define MAX_ID_LENGTH 10
+
+#define MAX_AUTH_ID_LEN 20
 #define MAX_AUTH_METHOD_LEN 6
 #define MAX_AUTH_DATA_LEN 256  
 
@@ -23,7 +24,7 @@ typedef struct {
 } logging_options;
 
 typedef struct {
-    char id[MAX_ID_LENGTH];
+    char id[MAX_AUTH_ID_LEN];
     char method[MAX_AUTH_METHOD_LEN];
     char data[MAX_AUTH_DATA_LEN];
 } auth_options_t;

@@ -58,7 +58,7 @@ typedef struct {
     uint8_t dh_group[2];
     uint8_t reserved[2];
     uint8_t data[]; 
-} __attribute__((packed)) ike_payload_kex_raw_t;
+} __attribute__((packed)) ike_payload_kex_t;
 /*
                     1                   2                   3
 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
