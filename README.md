@@ -20,7 +20,7 @@ The most significant are the payload that deal with nat detection that there are
 | VENDOR\_ID                       |         20        |           send\_vendor\_id |    no |     7296 |
 | MULTIPLE\_AUTH\_SUPPORTED        |         8         |   multiple\_authentication |    no |     4739 |
 | SIGNATURE\_HASH\_ALGORITHMS      |         16        |  signature\_authentication |    no |     7427 |
-| REDIRECT\_SUPPORTED              |         8         |            flow\_redirects |    no |     5685 |
+| REDIRECT\_SUPPORTED              |         8         |            follow\_redirects |    no |     5685 |
 | NAT\_DETECTION\_SOURCE\_IP       |         28        |                          - |     - |     4306 |
 | NAT\_DETECTION\_DESTIONATION\_IP |         28        |                          - |     - |     4306 |
 |                                  |                   |                            |       |          |
