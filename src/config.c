@@ -1,3 +1,4 @@
+#include <netinet/in.h>
 #include <string.h>
 #include "../include/config.h"
 
@@ -30,8 +31,8 @@ void secure_strncpy(char *dest, const char *src, size_t dest_size) {
 void default_config(config* cfg){
 
     // default configuration for the [NET] module
-    SET_DEFAUTL_FIELD(cfg, peer, hostname, "localhost");
-    SET_DEFAUTL_FIELD(cfg, peer, address,  "127.0.0.1");
+    SET_DEFAUTL_FIELD(cfg, peer, initiator, "127.0.0.1");
+    SET_DEFAUTL_FIELD(cfg, peer, responder, "127.0.0.1");
     SET_DEFAUTL_FIELD(cfg, peer, port,     "500");
     
     // default configuration for the [AUT] module
@@ -73,10 +74,10 @@ int auth_handler(auth_options_t* opts, const char* section, const char* name, co
 * @param[in] name Same as handler
 * @param[in] value Same as handler 
 */
-int peer_handler(peer_options* opts, const char* section, const char* name, const char* value){
+int net_handler(net_options_t* opts, const char* section, const char* name, const char* value){
 
-    HANDLE_FIELD(section, "hostname",  value,  opts->hostname,  INET_FQNLEN);
-    HANDLE_FIELD(section, "address",   value,  opts->address,   INET_ADDRSTRLEN);
+    HANDLE_FIELD(section, "initiator",  value,  opts->initiator,  INET_ADDRSTRLEN);
+    HANDLE_FIELD(section, "responder",   value,  opts->responder,   INET_ADDRSTRLEN);
     HANDLE_FIELD(section, "port",      value,  opts->port,      MAX_PORT_LENGTH);
 
     return 0;
@@ -129,7 +130,7 @@ int handler(void* cfg, const char* section, const char* name, const char* value)
     config* conf = (config *) cfg;
 
     if (strcmp(section, "Network") == 0){
-        peer_handler(&conf->peer, section, name, value);
+        net_handler(&conf->peer, section, name, value);
     }
     if (strcmp(section, "Authentication") == 0){
         auth_handler(&conf->auth, section, name, value);

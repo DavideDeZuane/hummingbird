@@ -88,11 +88,6 @@ int socket_set_address(struct sockaddr_storage *sk, int af, char *ip, int port){
             struct sockaddr_in *ipv4_addr = (struct sockaddr_in *)sk;
             ipv4_addr->sin_port = htons(port);
             ipv4_addr->sin_family = af;
-            if(ip == NULL){
-                //quando non specifico l'ip è il caso dell'initiator
-                ipv4_addr->sin_addr.s_addr = INADDR_ANY;
-                return EXIT_SUCCESS;
-            }
             retv = inet_pton(AF_INET, ip, &ipv4_addr->sin_addr);
             break;
         };
@@ -100,11 +95,6 @@ int socket_set_address(struct sockaddr_storage *sk, int af, char *ip, int port){
             struct sockaddr_in6 *ipv6_addr = (struct sockaddr_in6 *)sk;
             ipv6_addr->sin6_port = htons(port);
             ipv6_addr->sin6_family = AF_INET6;
-            if(ip == NULL){
-                //quando non specifico l'ip è il caso dell'initiator
-                ipv6_addr->sin6_addr = in6addr_any;
-                return EXIT_SUCCESS;
-            }
             retv = inet_pton(AF_INET6, ip, &ipv6_addr->sin6_addr);  // Indirizzo IPv6
             break;
         };
@@ -119,14 +109,15 @@ int socket_set_address(struct sockaddr_storage *sk, int af, char *ip, int port){
  * @param[in]  AF Specify which family use
  * @return 
  */
-int socket_up(int *sockfd, struct sockaddr_storage *sk_i, int AF, struct sockaddr_storage *sk_r){ //IMPORTANTE rimuovere il parametro sk_r
+int socket_up(int *sockfd, struct sockaddr_storage *sk_i, int AF, char* ip){ 
     //creating the socket
     if (socket_setup(sockfd, AF) == EXIT_FAILURE){
         log_error("Error during che socket creation");
         return EXIT_FAILURE;
     }
     //setting the soket information
-    if (socket_set_address(sk_i, AF, NULL, EPHEMERAL_PORT) == EXIT_FAILURE){
+    // when ip is misconfigured inet_pton return 0
+    if (socket_set_address(sk_i, AF, ip, EPHEMERAL_PORT) == 0){
         log_error("Error populating the socket information");
         return EXIT_FAILURE;
     }
@@ -146,7 +137,7 @@ int socket_up(int *sockfd, struct sockaddr_storage *sk_i, int AF, struct sockadd
     if (addr.ss_family == AF_INET) {
         // IPv4
         struct sockaddr_in *addr_in = (struct sockaddr_in *)&addr;
-        log_trace("Initiator running on ephemeral port (IPv4): " ANSI_COLOR_BOLD "%d" ANSI_COLOR_RESET, ntohs(addr_in->sin_port));
+        log_trace("Initiator running on socket (IPv4):" ANSI_COLOR_BOLD "%d" ANSI_COLOR_RESET, ntohs(addr_in->sin_port));
     } else if (addr.ss_family == AF_INET6) {
         // IPv6
         struct sockaddr_in6 *addr_in6 = (struct sockaddr_in6 *)&addr;
@@ -161,22 +152,22 @@ int socket_up(int *sockfd, struct sockaddr_storage *sk_i, int AF, struct sockadd
 * @param[out] remote  This is the scruct that contains the network information of the remote host
 * @param[in]  opts    These are the options provided for the remote peer in the configuration file
 */
-int initiate_network(net_endpoint_t *local, net_endpoint_t *remote, peer_options* opts){
+int initiate_network(net_endpoint_t *local, net_endpoint_t *remote, net_options_t* opts){
     //Remote Endpoint configuration
     log_debug("[NET] Validating configurations options");
     int af, port = 0;
-    af = validate_address(opts->address);
+    af = validate_address(opts->responder);
     port = validate_port(opts->port);
     if(af == AF_INVALID || port == PORT_INVALID){ 
         log_error("Invalid AF or Port for the address of the peer");
         return EXIT_FAILURE;
     }
-    socket_set_address(&remote->addr, af, opts->address, port);
+    socket_set_address(&remote->addr, af, opts->responder, port);
     remote->fd = -1;
-    log_trace("Peer socket at " ANSI_COLOR_BOLD "%s:%d", opts->address, port);
+    log_trace("Peer socket at " ANSI_COLOR_BOLD "%s:%d", opts->responder, port);
 
     //local endpoint configuration
-    int retv = socket_up(&local->fd, &local->addr, remote->addr.ss_family, &remote->addr);
+    int retv = socket_up(&local->fd, &local->addr, remote->addr.ss_family, opts->initiator);
     if(retv == -1){
         printf("Error configuring the socket");
         return EXIT_FAILURE;
@@ -189,5 +180,18 @@ int initiate_network(net_endpoint_t *local, net_endpoint_t *remote, peer_options
         close(local->fd);
         return EXIT_FAILURE;
     } 
+
+    char ipstr[INET6_ADDRSTRLEN];  // Abbastanza spazio per IPv6
+    void *addr_ptr;
+
+    if (local->addr.ss_family == AF_INET) {
+    struct sockaddr_in *addr_in = (struct sockaddr_in *)&local->addr;
+    addr_ptr = &(addr_in->sin_addr);
+    }
+
+    inet_ntop(local->addr.ss_family, addr_ptr, ipstr, sizeof(ipstr));
+    printf("Local IP: %s\n", ipstr);
+
+
     return EXIT_SUCCESS;
 }

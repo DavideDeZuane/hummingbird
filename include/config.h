@@ -30,10 +30,10 @@ typedef struct {
 } auth_options_t;
 
 typedef struct {
-    char hostname[INET_FQNLEN];
-    char address[INET6_ADDRSTRLEN];
+    char initiator[INET6_ADDRSTRLEN];
+    char responder[INET6_ADDRSTRLEN];
     char port[MAX_PORT_LENGTH];
-} peer_options;
+} net_options_t;
 
 
 typedef struct {
@@ -44,7 +44,7 @@ typedef struct {
 } cipher_options;
 
 typedef struct {
-    peer_options peer;
+    net_options_t peer;
     cipher_options suite;
     auth_options_t auth;
     logging_options log;
