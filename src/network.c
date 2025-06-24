@@ -58,14 +58,6 @@ int socket_setup(int *sockfd, int AF){
         return EXIT_FAILURE;
     }
 
-    struct timeval timeout;
-    timeout.tv_sec = 1;  
-    timeout.tv_usec = 0;
-    if (setsockopt(retval, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout)) < 0) {
-        printf("Error setting socket options");
-        return EXIT_FAILURE;
-    }
-
     *sockfd = retval;
     log_trace("Local socket of type %s created...", address_family_to_string(AF));
     return 0;

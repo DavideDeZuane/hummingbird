@@ -48,3 +48,21 @@ So if you want to test the implementation, please before remember to start the c
 sudo docker-compose -f srv/docker-compose.yml up -d
 ```
 
+
+## TEST
+
+To test the retry mechiansm use the following rule:
+
+```
+sudo iptables -A INPUT -p udp --dport 500 -j DROP
+```
+
+After that you can use the following command ro remove the rule:
+
+```
+sudo iptables -D INPUT -p udp --dport 500 -j DROP
+```
+
+
+
+
