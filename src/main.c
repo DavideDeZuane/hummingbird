@@ -125,10 +125,10 @@ int main(int argc, char* argv[]){
     msg.items[1] = *sa_data;
     msg.items[0] = *header_p;
 
-    size_t len = 0;
-    for(int i=0; i<4; i++){len += msg.items[i].len; }
-    uint8_t* buff = malloc(len);
     // conviene fare un'unica malloc totale che diverse malloc parziali dato che ha un pò di overhead
+    size_t len = 0;
+    for(int i=0; i<4; i++){ len += msg.items[i].len; }
+    uint8_t* buff = malloc(len);
 
     int offset = 0;
     for(int i=0; i < 4; i++){
@@ -143,7 +143,13 @@ int main(int argc, char* argv[]){
     free(ni_data);
     free(kex_data);
     free(sa_data);
+    free(header_p);
 
+    /* 
+    ##############################################################
+    Questa parte di retry va messa nel modulo NET
+    ##############################################################
+    */
     int retries = 0;
     int exponent = INITIAL_EXPONENT;
 
@@ -191,21 +197,21 @@ int main(int argc, char* argv[]){
         log_fatal("Shutting down...");
         return EXIT_FAILURE;
     }
+    /*
+    #########################################################################################
+    # END
+    #########################################################################################
+    */
 
-
-    //evito di fare la realloc in modo da evirare un overhead di reallocazione tanto ho la dimensione massima della recv
-    //buffer = realloc(buffer, n);
-
-    //qunado vado a fare il parsing dei vari elementi vorrei fare in modo di confrontare il payload dal buffer per aggiornare quello che ho inviato io 
-
+    // rimuovere questo header e utilizzare quello raw dappertutto
     ike_header_t* hd = parse_header(buffer, n);
     memcpy(right.ctx.spi, &hd->responder_spi , 8);
 
+    // usare solo questa tipologia di header
     ike_header_raw_t* hdr = malloc(sizeof(ike_header_raw_t));
     parse_header_raw(buffer,  hdr);
 
     memcpy(right.ctx.spi, hdr->responder_spi , SPI_LENGTH_BYTE);
-
     /* 
     #########################################################################################
     # RESPONSE PARSING, to move in ike directory and use in the recv method
@@ -252,15 +258,14 @@ int main(int argc, char* argv[]){
     # END
     #########################################################################################
     */
-    /* 
+
+
+    /*
     #########################################################################################
-    # GENERATING KEY MATERIALS, the prf plus method is in the crypto, but the key materials
-    # to be generated depends on parameters of ike like number of keys
-    #########################################################################################
+    # DA QUI IN AVANTI FARE REFACTORING
+    ##########################################################################################
     */
-    // ##################################################################################
-    // questo c'e da cambiarlo molto probabilmente consuma un botto di memoria
-    // #################################################################################
+    
     ike_session_t ike_sa = {0};
     ike_sa.initiator = left;
     ike_sa.responder = right;
