@@ -144,30 +144,54 @@ int main(int argc, char* argv[]){
     free(kex_data);
     free(sa_data);
 
-    // una volta creato il messaggio posso rimuovere la lista concatenata
-    // l'unica cosa che devo gestire è la ritrasmissione e per questo basta solamente il buffer
-    int retval =  send(left.node.fd, buff, len, 0);
-    if(retval == -1){
-        printf("Errore per la send");
-        return -1;
-    }
+    int retries = 0;
+    int exponent = INITIAL_EXPONENT;
 
-    log_info("Sended INIT message with dimension %zu bytes", len);
-    tot_traffic += len;
-
+    int retval = 0;
     uint8_t* buffer = calloc(MAX_PAYLOAD, sizeof(uint8_t));
 
-    n = recv(left.node.fd, buffer, MAX_PAYLOAD, 0);
-    if (n < 0) {
-        if (errno == EAGAIN ) {
-            printf("Timeout scaduto: nessun dato ricevuto entro 1 secondo.\n");
-        } else {
-            perror("Errore durante la ricezione");
-            return EXIT_FAILURE;
+    while(retries < MAX_RETRIES){
+
+        int timeout_sec = 1 << exponent;
+        struct timeval timeout = {timeout_sec, 0};
+        setsockopt(left.node.fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+
+
+        retval =  send(left.node.fd, buff, len, 0);
+        if(retval == -1){
+            log_warn("Error during the send");
+            break;
         }
+
+        log_info("Sended INIT message with dimension %zu bytes. Attemp no. %d", len, retries +1);
+        tot_traffic += len;
+
+        n = recv(left.node.fd, buffer, MAX_PAYLOAD, 0);
+
+        if (n < 0) {
+            if (errno == EAGAIN ) {
+                log_warn("Timeout exceeded.");
+                retries++;
+                exponent += 2;
+                continue;
+            } else {
+                log_error("The peer is unreachable");
+                log_fatal("Shutting down");
+                return EXIT_FAILURE;
+            }
     } 
+    
     log_debug("Received INIT response with dimension %d bytes", n);
     tot_traffic += n;
+    break;
+    }
+
+    if (retries == MAX_RETRIES) {
+        log_error("No response after %d attemps", MAX_RETRIES);
+        log_fatal("Shutting down...");
+        return EXIT_FAILURE;
+    }
+
 
     //evito di fare la realloc in modo da evirare un overhead di reallocazione tanto ho la dimensione massima della recv
     //buffer = realloc(buffer, n);

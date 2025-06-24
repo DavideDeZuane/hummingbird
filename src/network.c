@@ -181,17 +181,5 @@ int initiate_network(net_endpoint_t *local, net_endpoint_t *remote, net_options_
         return EXIT_FAILURE;
     } 
 
-    char ipstr[INET6_ADDRSTRLEN];  // Abbastanza spazio per IPv6
-    void *addr_ptr;
-
-    if (local->addr.ss_family == AF_INET) {
-    struct sockaddr_in *addr_in = (struct sockaddr_in *)&local->addr;
-    addr_ptr = &(addr_in->sin_addr);
-    }
-
-    inet_ntop(local->addr.ss_family, addr_ptr, ipstr, sizeof(ipstr));
-    printf("Local IP: %s\n", ipstr);
-
-
     return EXIT_SUCCESS;
 }

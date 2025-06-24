@@ -13,6 +13,9 @@
 
 #define MAX_PAYLOAD 1280
 
+#define MAX_RETRIES 3
+#define INITIAL_EXPONENT 1
+
 /**
  * @brief Rappresenta un endpoint di rete (Initiator o Responder).
  * @note Assumpution for the remote endpoint the file descritor is set to -1 ()
