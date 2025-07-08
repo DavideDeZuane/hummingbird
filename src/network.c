@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <fcntl.h>      // per fcntl() e O_NONBLOCK
 #include <sys/socket.h>
 #include <unistd.h>
 #include <ifaddrs.h>
@@ -13,7 +14,6 @@
 #include <endian.h>
 #include "../include/utils.h"
 #include "../include/config.h"
-
 
 /**
 * @brief This function check if the ip address is valid
@@ -113,6 +113,10 @@ int socket_up(int *sockfd, struct sockaddr_storage *sk_i, int AF, char* ip){
         log_error("Error populating the socket information");
         return EXIT_FAILURE;
     }
+
+    // questo lavora a livello di file descriptor, non a livello di socket
+    fcntl(*sockfd, F_SETFL, O_NONBLOCK);
+
     //binding the address with the socket
     if (bind(*sockfd, (struct sockaddr *)sk_i, sizeof(struct sockaddr)) == -1){
         log_error("Error during bind");

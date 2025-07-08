@@ -145,6 +145,22 @@ int main(int argc, char* argv[]){
     free(sa_data);
     free(header_p);
 
+
+    while (1) {
+        // while loop of the deamon
+        char tmp_buffer[100];
+        ssize_t n = recv(left.node.fd, tmp_buffer, 100 - 1, 0);
+        if (n > 0) {
+            tmp_buffer[n] = '\0';
+            printf("Received: %s\n", tmp_buffer);
+        } else if (n == -1 && errno != EAGAIN && errno != EWOULDBLOCK) {
+            perror("recv error");
+        }
+
+        usleep(10000);
+    
+    }
+
     /* 
     ##############################################################
     Questa parte di retry va messa nel modulo NET

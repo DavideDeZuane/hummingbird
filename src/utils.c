@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 void alloc_buffer(uint8_t **buff, size_t size) {
     if (buff == NULL || size == 0) return;
 
@@ -25,7 +24,6 @@ void secure_free(void* ptr, size_t size){
         ptr = NULL;
     }
 }
-
 
 /**
 * @brief This function return the content of a memory pointed by the pointer specified for the length specified 

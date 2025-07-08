@@ -146,7 +146,7 @@ int initiate_crypto(cipher_suite_t* suite, crypto_context_t* ctx, const cipher_o
     // dunque la parte di generazione della chiave dipende pubblica e privata dipende dalla proposal
 
     int ret = validate_suite(opts, suite);
-    log_trace("%-5s: %s-%s-%s-%s", "SAi", opts->enc, opts->aut, opts->kex, opts->prf);
+    log_trace("%-4s: %s-%s-%s-%s", "SAi", opts->enc, opts->aut, opts->kex, opts->prf);
     if(ret == EXIT_FAILURE) return EXIT_FAILURE;
 
     /* SPI configuration */
@@ -154,7 +154,7 @@ int initiate_crypto(cipher_suite_t* suite, crypto_context_t* ctx, const cipher_o
     size_t str_len = 2* SPI_LENGTH_BYTE +1;
     char* str = calloc(str_len, BYTE); 
     format_hex_string(str, str_len, ctx->spi, SPI_LENGTH_BYTE);
-    log_trace("%-5s: 0x%s","SPIi", str);
+    log_trace("%-4s: 0x%s","SPIi", str);
     
     /* Nonce configuration */
     ctx->nonce_len = DEFAULT_NONCE_LENGTH;
@@ -163,7 +163,7 @@ int initiate_crypto(cipher_suite_t* suite, crypto_context_t* ctx, const cipher_o
     str = realloc(str, str_len);
     memset(str, 0, str_len);
     format_hex_string(str, str_len, ctx->nonce, ctx->nonce_len);
-    log_trace("%-5s: 0x%s", "Ni", str);
+    log_trace("%-4s: 0x%s", "Ni", str);
 
     ctx->dh_group = suite->kex.iana_code;
     // a questo punto genero la chiave in base a questo
@@ -174,7 +174,7 @@ int initiate_crypto(cipher_suite_t* suite, crypto_context_t* ctx, const cipher_o
     str_len = ctx->key_len *2 + 1;
     memset(str, 0, str_len);
     format_hex_string(str, str_len, ctx->public_key, ctx->key_len);
-    log_trace("%-5s: 0x%s", "KEi", str);
+    log_trace("%-4s: 0x%s", "KEi", str);
 
     return EXIT_SUCCESS;
 }

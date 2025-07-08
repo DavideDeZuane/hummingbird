@@ -25,7 +25,6 @@ typedef struct {
     struct sockaddr_storage addr;
 } net_endpoint_t;
 
-
 /**
 * @brief This function populate the socket information of both peer based on the option on the configuration file
 * @param[out] local   This is the scruct tha will be populate with the network information of the local host
