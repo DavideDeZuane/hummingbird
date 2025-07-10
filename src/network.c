@@ -115,7 +115,7 @@ int socket_up(int *sockfd, struct sockaddr_storage *sk_i, int AF, char* ip){
     }
 
     // questo lavora a livello di file descriptor, non a livello di socket
-    fcntl(*sockfd, F_SETFL, O_NONBLOCK);
+    //fcntl(*sockfd, F_SETFL, O_NONBLOCK);
 
     //binding the address with the socket
     if (bind(*sockfd, (struct sockaddr *)sk_i, sizeof(struct sockaddr)) == -1){

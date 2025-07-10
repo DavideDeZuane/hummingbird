@@ -139,6 +139,8 @@ int build_payload(ike_payload_t* payload, MessageComponent type, void* data){
         };
         case PAYLOAD_TYPE_KE: {
 
+            log_debug("Generating KEi payload");
+
             crypto_context_t* tmp = (crypto_context_t *) data;
             EVP_PKEY_get_raw_public_key(tmp->private_key, NULL, &tmp->key_len);
             payload->type = type;
@@ -146,6 +148,8 @@ int build_payload(ike_payload_t* payload, MessageComponent type, void* data){
             payload->body = calloc(tmp->key_len + 4, BYTE);
             ike_payload_kex_t* tmp2 = (ike_payload_kex_t *) payload->body;
             uint16_to_bytes_be(tmp->dh_group, tmp2->dh_group);
+
+
             EVP_PKEY_get_raw_public_key(tmp->private_key, tmp2->data, &tmp->key_len);
             
             memmove(payload->body + GEN_HDR_DIM, payload->body, payload->len - GEN_HDR_DIM);

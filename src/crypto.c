@@ -108,7 +108,6 @@ void generate_key(EVP_PKEY** pri, uint8_t** pub, const char* name, size_t* len){
     
     *pri = NULL;
 
-
     EVP_PKEY_CTX*ctx = EVP_PKEY_CTX_new_from_name(NULL, name, NULL);
     if (!ctx || EVP_PKEY_keygen_init(ctx) <= 0 || EVP_PKEY_keygen(ctx, pri) <= 0){
         log_error("Error during the generation of the private key");
@@ -131,6 +130,8 @@ void generate_key(EVP_PKEY** pri, uint8_t** pub, const char* name, size_t* len){
     EVP_PKEY_CTX_free(ctx);
 
 }
+
+
 
 /**
 * @brief This function given a pointer to the cyrpto context of the initiator generates all the material this needs in order to complete the IKE protocol.
@@ -170,7 +171,8 @@ int initiate_crypto(cipher_suite_t* suite, crypto_context_t* ctx, const cipher_o
 
     /* Key configuration */
 
-    generate_key(&ctx->private_key, &ctx->public_key, suite->kex.name, &ctx->key_len);
+    //generate_key(&ctx->private_key, &ctx->public_key, suite->kex.name, &ctx->key_len);
+
     str_len = ctx->key_len *2 + 1;
     memset(str, 0, str_len);
     format_hex_string(str, str_len, ctx->public_key, ctx->key_len);
@@ -185,15 +187,43 @@ int initiate_crypto(cipher_suite_t* suite, crypto_context_t* ctx, const cipher_o
 * @param[in] pri The private key of the remote peer
 * @param[in] pub The public key of the remote peer
 */
-void derive_secret(EVP_PKEY** pri, uint8_t** pub, uint8_t** secret){
+void derive_secret(EVP_PKEY* pri, uint8_t** pub, uint16_t dh_group, uint8_t** secret){
 
+    log_debug("Deriving shared secret of the KEX");
+
+    if(dh_group == 35){
+
+        //la dimensione del segreto condiviso la dovrei rendere parametrica
+        size_t ss_len = 32;
+        size_t ct_len = 768;
+        *secret = malloc(ss_len);
+        // creo il contesto per fare il decapsulation che è diverso rispetto a quello di keygen
+        // è più corretto crearlo a partire dalla chiave privata 
+        EVP_PKEY_CTX *dec_ctx = EVP_PKEY_CTX_new_from_pkey(NULL, pri, NULL);
+        if(dec_ctx == NULL) log_error("Errore nel contesto");
+        // inizializzo il contesto per la decapsulazione
+        int ret = EVP_PKEY_decapsulate_init(dec_ctx, NULL);
+        if(ret <= 0) log_error("Errore nell'inizializzazione");
+    
+        if (EVP_PKEY_decapsulate(dec_ctx, *secret, &ss_len, *pub, ct_len) <= 0) {
+            log_error("Qui può dare in errore anche se il ct_len è sbagliato, quindi più lungo o più corto rispetto a quello che si aspetta");
+            // passare direttamente il contesto crittografico dei due in modo tale da condividere il segreto
+            fprintf(stderr, "Errore durante decapsulation\n");
+            return;
+        }
+        // a questo punto posso eliminare sia il contesto che la chiave tanto abbiamo ottenuto il segreto condiviso che ci serve
+        EVP_PKEY_CTX_free(dec_ctx);
+        EVP_PKEY_free(pri);
+
+        return;
+    }
     size_t size = X25519_KEY_LENGTH;
     *secret = malloc(X25519_KEY_LENGTH);
 
     EVP_PKEY *peer = EVP_PKEY_new_raw_public_key(EVP_PKEY_X25519, NULL, *pub, size);
     if(!peer){ printf("Error"); }
     
-    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new(*pri, NULL);
+    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new(pri, NULL);
     if (!ctx || EVP_PKEY_derive_init(ctx) <= 0 || EVP_PKEY_derive_set_peer(ctx, peer) <= 0){
         printf("Error");
     }   
@@ -202,9 +232,8 @@ void derive_secret(EVP_PKEY** pri, uint8_t** pub, uint8_t** secret){
 
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(peer);
-
-
 }
+
 
 /**
 * @brief 
@@ -228,7 +257,10 @@ void derive_seed(crypto_context_t* left, crypto_context_t* right, uint8_t* seed)
 
     //populating the shared secret
     uint8_t* ss = calloc(X25519_KEY_LENGTH,1);
-    derive_secret(&left->private_key, &right->public_key, &ss);
+    // AGGIUNGERE IL DH GROUP
+    derive_secret(left->private_key, &right->public_key, left->dh_group, &ss);
+
+    log_info("Segreto derivato");
     //ather that we concatenate the nonce to derive the key for the hmac
     // Ni | Nr
     size_t key_len = left->nonce_len + right->nonce_len;

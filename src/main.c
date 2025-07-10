@@ -12,14 +12,23 @@
 #include "../include/ike/ike.h"
 #include "../include/ike/payload.h"
 
+#include <openssl/dh.h>
+#include <openssl/evp.h>
+#include <openssl/ml_kem.h>
+#include <openssl/pem.h>
 #include <openssl/hmac.h> 
+#include <openssl/core_names.h> 
+#include <openssl/err.h>
+
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
 #include <time.h>
 #include <sys/random.h> 
+#include <unistd.h>
 
 
 typedef struct {
@@ -104,7 +113,18 @@ int main(int argc, char* argv[]){
     ike_payload_t* kex_data = malloc(sizeof(ike_payload_t));
     ike_payload_t* sa_data = malloc(sizeof(ike_payload_t));
     ike_payload_t* header_p = malloc(sizeof(ike_payload_t));
-    
+
+    EVP_PKEY* pri = NULL;
+
+    EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_from_name(NULL, "mlkem512", NULL);
+    EVP_PKEY_keygen_init(pctx);
+    EVP_PKEY_keygen(pctx, &pri);
+
+    EVP_PKEY_CTX_free(pctx);
+
+    left.ctx.private_key = pri;
+
+
     build_payload(ni_data,     PAYLOAD_TYPE_NONCE, left.ctx.nonce);
     build_payload(kex_data,    PAYLOAD_TYPE_KE,    &left.ctx);
     build_payload(sa_data,     PAYLOAD_TYPE_SA,    &sa.suite);
@@ -140,12 +160,14 @@ int main(int argc, char* argv[]){
         offset += msg.items[i].len;
     }
 
+
     free(ni_data);
     free(kex_data);
     free(sa_data);
     free(header_p);
 
-
+    /*
+    Il loop da fare per il daemon in cui parla con lo unix socket per innescare la connessione quando necessario e stabilisce la SA utilizzando il socket di rete
     while (1) {
         // while loop of the deamon
         char tmp_buffer[100];
@@ -158,8 +180,8 @@ int main(int argc, char* argv[]){
         }
 
         usleep(10000);
-    
     }
+        */
 
     /* 
     ##############################################################
@@ -207,13 +229,13 @@ int main(int argc, char* argv[]){
     tot_traffic += n;
     break;
     }
-
     if (retries == MAX_RETRIES) {
         log_error("No response after %d attemps", MAX_RETRIES);
         log_fatal("Shutting down...");
         return EXIT_FAILURE;
     }
-    /*
+    
+    /* 
     #########################################################################################
     # END
     #########################################################################################
@@ -228,6 +250,7 @@ int main(int argc, char* argv[]){
     parse_header_raw(buffer,  hdr);
 
     memcpy(right.ctx.spi, hdr->responder_spi , SPI_LENGTH_BYTE);
+
     /* 
     #########################################################################################
     # RESPONSE PARSING, to move in ike directory and use in the recv method
@@ -235,6 +258,8 @@ int main(int argc, char* argv[]){
     */
     uint8_t *ptr = buffer+28; 
     uint8_t next_payload = hd->next_payload;
+
+    // a questo punto che ho ricevuto il messaggio devo fare il decapsulate del KEM per prendere il segreto condiviso
 
     while (next_payload != 0){
         
@@ -252,6 +277,7 @@ int main(int argc, char* argv[]){
                 right.ctx.key_len = bytes_to_uint16_be(payload->length) - 8;
                 right.ctx.public_key = malloc(right.ctx.key_len);
                 memcpy(right.ctx.public_key, ptr+8, right.ctx.key_len);
+
                 break;
             };
             case NEXT_PAYLOAD_NONCE: {
@@ -281,6 +307,7 @@ int main(int argc, char* argv[]){
     # DA QUI IN AVANTI FARE REFACTORING
     ##########################################################################################
     */
+
     
     ike_session_t ike_sa = {0};
     ike_sa.initiator = left;
@@ -446,7 +473,6 @@ int main(int argc, char* argv[]){
     n = recv(left.node.fd, buffer, MAX_PAYLOAD, 0);
     if (n < 0) {
         if (errno == EAGAIN ) {
-            printf("Timeout scaduto: nessun dato ricevuto entro 1 secondo.\n");
         } else {
             perror("Errore durante la ricezione");
             return EXIT_FAILURE;
