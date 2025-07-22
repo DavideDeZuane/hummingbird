@@ -20,6 +20,8 @@
 #include <openssl/core_names.h> 
 #include <openssl/err.h>
 
+#include <threads.h> 
+
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -36,6 +38,14 @@ typedef struct {
     size_t size;     
     size_t capacity; 
 } payload_array;
+
+
+typedef struct {
+    void* data;
+    int payload_type;
+    void* ctx;
+} payload_args_t;
+
 
 
 int main(int argc, char* argv[]){
@@ -71,7 +81,11 @@ int main(int argc, char* argv[]){
         }
     }  
     struct timespec start, end;
+    struct timespec start_init, end_init;
+    struct timespec start_auth, end_auth;
     // tracking the total traffic between the hosts 
+
+
     int tot_traffic = 0;
     clock_gettime(CLOCK_MONOTONIC, &start);
 
@@ -107,13 +121,16 @@ int main(int argc, char* argv[]){
     ike_partecipant_t right = {0};
     ike_sa_t sa = {0};
     
-    initiate_ike(&left, &right, &sa, cfg);
-
     ike_payload_t* ni_data = malloc(sizeof(ike_payload_t));
     ike_payload_t* kex_data = malloc(sizeof(ike_payload_t));
     ike_payload_t* sa_data = malloc(sizeof(ike_payload_t));
     ike_payload_t* header_p = malloc(sizeof(ike_payload_t));
 
+    clock_gettime(CLOCK_MONOTONIC, &start_init);
+
+    initiate_ike(&left, &right, &sa, cfg);
+
+    /*
     EVP_PKEY* pri = NULL;
 
     EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_from_name(NULL, "mlkem512", NULL);
@@ -123,7 +140,7 @@ int main(int argc, char* argv[]){
     EVP_PKEY_CTX_free(pctx);
 
     left.ctx.private_key = pri;
-
+    */
 
     build_payload(ni_data,     PAYLOAD_TYPE_NONCE, left.ctx.nonce);
     build_payload(kex_data,    PAYLOAD_TYPE_KE,    &left.ctx);
@@ -194,6 +211,9 @@ int main(int argc, char* argv[]){
     int retval = 0;
     uint8_t* buffer = calloc(MAX_PAYLOAD, sizeof(uint8_t));
 
+    int init_len = 0;
+    double elapsed_init = 0;
+
     while(retries < MAX_RETRIES){
 
         int timeout_sec = 1 << exponent;
@@ -206,8 +226,13 @@ int main(int argc, char* argv[]){
             log_warn("Error during the send");
             break;
         }
+        
+        clock_gettime(CLOCK_MONOTONIC, &end_init);
+        elapsed_init = (end_init.tv_sec - start_init.tv_sec) +
+                     (end_init.tv_nsec - start_init.tv_nsec) / 1e9;
 
-        log_info("Sended INIT message with dimension %zu bytes. Attemp no. %d", len, retries +1);
+        init_len = len;
+
         tot_traffic += len;
 
         n = recv(left.node.fd, buffer, MAX_PAYLOAD, 0);
@@ -234,13 +259,14 @@ int main(int argc, char* argv[]){
         log_fatal("Shutting down...");
         return EXIT_FAILURE;
     }
-    
+
     /* 
     #########################################################################################
     # END
     #########################################################################################
     */
 
+    clock_gettime(CLOCK_MONOTONIC, &start_auth);
     // rimuovere questo header e utilizzare quello raw dappertutto
     ike_header_t* hd = parse_header(buffer, n);
     memcpy(right.ctx.spi, &hd->responder_spi , 8);
@@ -492,6 +518,8 @@ int main(int argc, char* argv[]){
 
     secure_free(response, response_len);
 
+    clock_gettime(CLOCK_MONOTONIC, &end_auth);
+    double elapsed_auth = (end_auth.tv_sec - start_auth.tv_sec) + (end_auth.tv_nsec - start_auth.tv_nsec) / 1e9;
     
     clock_gettime(CLOCK_MONOTONIC, &end);
 
@@ -499,6 +527,13 @@ int main(int argc, char* argv[]){
     log_info("Handshake time: %.6f seconds", elapsed);
     log_info("Total traffic exchanged: %d bytes", tot_traffic);
 
+    log_info("###############################################################"); 
+    log_info("BENCHMARK");
+    log_info("###############################################################"); 
+    log_info("[INIT] Time: " ANSI_COLOR_BOLD "%.6fs" ANSI_COLOR_RESET, elapsed_init);
+    log_info("[INIT] Size: " ANSI_COLOR_BOLD "%zu bytes" ANSI_COLOR_RESET, init_len);
+    log_info("[AUTH] Time: " ANSI_COLOR_BOLD "%.6fs" ANSI_COLOR_RESET, elapsed_auth);
+    log_info("[AUTH] Size: " ANSI_COLOR_BOLD "%zu bytes" ANSI_COLOR_RESET, response_len+icv_len);
     
     return 0;
 }

@@ -171,7 +171,7 @@ int initiate_crypto(cipher_suite_t* suite, crypto_context_t* ctx, const cipher_o
 
     /* Key configuration */
 
-    //generate_key(&ctx->private_key, &ctx->public_key, suite->kex.name, &ctx->key_len);
+    generate_key(&ctx->private_key, &ctx->public_key, suite->kex.name, &ctx->key_len);
 
     str_len = ctx->key_len *2 + 1;
     memset(str, 0, str_len);
