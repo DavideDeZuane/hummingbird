@@ -20,6 +20,7 @@
 #include <openssl/core_names.h> 
 #include <openssl/err.h>
 
+#include <pthread.h>
 #include <threads.h> 
 
 #include <stddef.h>
@@ -41,12 +42,42 @@ typedef struct {
 
 
 typedef struct {
-    void* data;
-    int payload_type;
-    void* ctx;
-} payload_args_t;
+    net_endpoint_t* left_node;
+    net_endpoint_t* right_node;
+    net_options_t* peer;
+} net_thread_args_t;
 
+typedef struct {
+    crypto_context_t* ctx;
+    const cipher_options* opts;
+    cipher_suite_t* suite;
+} crypto_thread_args_t;
 
+void* thread_initiate_network(void* arg) {
+    net_thread_args_t* args = (net_thread_args_t*)arg;
+
+    int ret = initiate_network(args->left_node, args->right_node, args->peer);
+    if (ret != 0) {
+        log_fatal("Could not initiate the [NET] module");
+        exit(EXIT_FAILURE);
+    }
+
+    free(args);  // libero la memoria passata al thread
+    return NULL;
+}
+
+void* thread_initiate_crypto(void* arg) {
+    crypto_thread_args_t* args = (crypto_thread_args_t*)arg;
+
+    int ret = initiate_crypto(args->suite, args->ctx, args->opts);
+    if (ret != 0) {
+        log_fatal("Could not initiate the [NET] module");
+        exit(EXIT_FAILURE);
+    }
+
+    free(args);  // libero la memoria passata al thread
+    return NULL;
+}
 
 int main(int argc, char* argv[]){
     /*---------------------------------------------
@@ -121,14 +152,51 @@ int main(int argc, char* argv[]){
     ike_partecipant_t right = {0};
     ike_sa_t sa = {0};
     
+    
     ike_payload_t* ni_data = malloc(sizeof(ike_payload_t));
     ike_payload_t* kex_data = malloc(sizeof(ike_payload_t));
     ike_payload_t* sa_data = malloc(sizeof(ike_payload_t));
     ike_payload_t* header_p = malloc(sizeof(ike_payload_t));
 
-    clock_gettime(CLOCK_MONOTONIC, &start_init);
 
+    
+
+    /*
+
+    net_thread_args_t* args = malloc(sizeof(net_thread_args_t));
+    crypto_thread_args_t* c_args = malloc(sizeof(crypto_thread_args_t));
+
+    c_args->ctx = &left.ctx;
+    c_args->opts = &cfg->suite;
+    c_args->suite = &sa.suite;
+
+    args->left_node = &left.node;
+    args->right_node = &right.node;
+    args->peer = &cfg->peer;
+
+    pthread_t net_thread;
+    pthread_t cry_thread;
+    
+    if (pthread_create(&net_thread, NULL, thread_initiate_network, args) != 0) {
+        perror("pthread_create");
+        free(args);
+        exit(EXIT_FAILURE);
+    }
+
+    if (pthread_create(&cry_thread, NULL, thread_initiate_crypto, c_args) != 0) {
+        perror("pthread_create");
+        free(args);
+        exit(EXIT_FAILURE);
+    }
+
+    pthread_join(net_thread, NULL);
+    pthread_join(cry_thread, NULL);
+    */
+
+
+    clock_gettime(CLOCK_MONOTONIC, &start_init);
     initiate_ike(&left, &right, &sa, cfg);
+    
 
     /*
     EVP_PKEY* pri = NULL;
@@ -490,6 +558,8 @@ int main(int argc, char* argv[]){
 
     retval =  send(left.node.fd, response, response_len+icv_len, 0);
 
+    clock_gettime(CLOCK_MONOTONIC, &end_auth);
+    double elapsed_auth = (end_auth.tv_sec - start_auth.tv_sec) + (end_auth.tv_nsec - start_auth.tv_nsec) / 1e9;
     tot_traffic += response_len;
     tot_traffic += icv_len;
 
@@ -518,8 +588,6 @@ int main(int argc, char* argv[]){
 
     secure_free(response, response_len);
 
-    clock_gettime(CLOCK_MONOTONIC, &end_auth);
-    double elapsed_auth = (end_auth.tv_sec - start_auth.tv_sec) + (end_auth.tv_nsec - start_auth.tv_nsec) / 1e9;
     
     clock_gettime(CLOCK_MONOTONIC, &end);
 
