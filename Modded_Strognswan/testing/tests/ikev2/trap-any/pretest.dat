@@ -1,5 +1,0 @@
-moon::systemctl start strongswan
-sun::systemctl start strongswan
-carol::systemctl start strongswan
-dave::systemctl start strongswan
-moon::sleep 1
