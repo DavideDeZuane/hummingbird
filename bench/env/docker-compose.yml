@@ -1,0 +1,61 @@
+services:
+
+  responder:
+    image: strongx509/strongswan:latest
+    container_name: responder
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+      - SYS_MODULE
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./responder/swanctl:/etc/swanctl
+      - ./responder/strongswan.conf:/etc/strongswan.conf
+    command: ["sh", "-c", "/usr/libexec/ipsec/charon"]
+    networks:
+      pmtud-net:
+        ipv4_address: 192.168.100.2
+
+  # QUI VA MODIFICATA L'IMMAGINE BASE E VA UTILIZZATO LA VERSIONE DI STRONGSWAN MODIFICATA 
+  # PER POTER RACCOGLIERE I TIMESTAMP DEI PACCCHETTI
+  initiator:
+    image: strongx509/strongswan:latest
+    container_name: initiator_classic
+    depends_on:
+      - responder
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+      - SYS_MODULE
+    command: ["sh", "-c", "/usr/libexec/ipsec/charon"]
+    volumes:
+      - ./initiator_classic/swanctl:/etc/swanctl
+      - ./initiaotr_classic/strongswan.conf:/etc/strongswan.conf
+    networks:
+      pmtud-net:
+         ipv4_address: 192.168.100.3
+
+  # Qui invece è minimal ike
+  minimal:
+    build: initiator_minimal
+    container_name: initiator_minimal
+    volumes:
+      - ./initiator_minimal/conf.ini:/conf.ini
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+      - SYS_MODULE
+    networks:
+      pmtud-net:
+         ipv4_address: 192.168.100.5
+
+networks:
+  pmtud-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.100.0/24
+    driver_opts:
+      com.docker.network.driver.mtu: 1500
+
