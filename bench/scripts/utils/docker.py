@@ -5,6 +5,8 @@ import glob
 import time
 import sys
 
+from utils.log import *
+
 """ We'll use this object to send command to the docker socket """
 docker_client = docker.from_env()
 
@@ -68,15 +70,12 @@ def get_veth(container_name: str):
         host_ifname = find_host_interface_by_ifindex(iflink)
         return host_ifname;
     except Exception as e:
-        print(f"[!] Errore: {e}")
-
-
-
+        log_err(f"Error: {e}")
 
 def exec_in_container(container_name: str, command: str, workdir: str = None, privileged: bool = False) -> str:
     try:
         container = docker_client.containers.get(container_name)
-        print(f"[*] Running '{container_name}': {command}")
+        log_info(f"Running '{container_name}': {command}")
 
         result = container.exec_run(
             cmd=command,
@@ -89,17 +88,17 @@ def exec_in_container(container_name: str, command: str, workdir: str = None, pr
         )
 
         output = result.output.decode("utf-8", errors="ignore").strip()
-
+        print(output)
         if result.exit_code == 0:
-            print(f"✅ Comando eseguito con successo su '{container_name}'")
+            log_ok(f"Command inside '{container_name}' completed")
         else:
-            print(f"❌ Errore nel comando (exit code {result.exit_code})")
+            log_err(f"Error running the command (exit code {result.exit_code})")
 
         return output
 
     except docker.errors.NotFound:
-        print(f"🚫 Container '{container_name}' non trovato.")
+        log_err(f"Container '{container_name}' not found")
         raise
     except docker.errors.APIError as e:
-        print(f"🐋 Errore API Docker: {e}")
+        log_err(f"API Error: {e}")
         raise

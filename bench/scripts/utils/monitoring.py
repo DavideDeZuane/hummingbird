@@ -1,4 +1,5 @@
 from utils.docker import docker_client
+from utils.log import *
 import time, statistics
 
 
@@ -14,7 +15,7 @@ def monitor_container_resources(container_name: str, stop_event, result_holder, 
     memory_samples = []
     prev_stats = container.stats(stream=False)
     
-    print(f"[*] Avvio monitoraggio risorse per '{container_name}' ...")
+    print(f"[=] Starting monitoring for '{container_name}' ...")
 
     try:
         while not stop_event.is_set():
@@ -28,14 +29,14 @@ def monitor_container_resources(container_name: str, stop_event, result_holder, 
     except KeyboardInterrupt:
         print("Monitoraggio interrotto manualmente.")
     finally:
-        print("🧾 Analisi del monitoraggio completata.")
+        log_ok("Monitoring finished")
 
     memory_avg = statistics.mean(memory_samples)
     memory_peak = max(memory_samples)
     memory_std = statistics.stdev(memory_samples) if len(memory_samples) > 1 else 0.0
 
-    print(f"📊 Memory avg: {memory_avg:.2f} MB ± {memory_std:.2f}")
-    print(f"📈 Memory peak: {memory_peak:.2f} MB")
+    log_ok(f"Memory avg: {memory_avg:.2f} MB ± {memory_std:.2f}")
+    log_ok(f"Memory peak: {memory_peak:.2f} MB")
 
 
     results =  {

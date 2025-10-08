@@ -1,5 +1,7 @@
 from utils.docker import ( is_docker_running, start_docker_linux, docker_compose_up, docker_compose_down, get_veth, exec_in_container)
 from utils.monitoring import (get_mem_usage, monitor_container_resources)
+from utils.plot import (plot_memory_distribution)
+from utils.save import (save_benchmark_results)
 import yaml
 import subprocess
 import threading
@@ -24,7 +26,7 @@ def run_single_iteration(container_name, connection_name):
     monitor_thread.start()
     time.sleep(5)
 
-    exec_in_container(container_name, f"swanctl --initiate --ike {connection_name}")
+    result = exec_in_container(container_name, f"swanctl --initiate --ike {connection_name}")
     time.sleep(5)
 
     stop_event.set()
@@ -70,6 +72,7 @@ if __name__ == "__main__":
 
         exec_in_container("initiator_classic", "swanctl --terminate --ike minimal")
         time.sleep(2) 
+        print("[✔] Environemnt Cleaned")
 
 
       # --- Aggrega i risultati ---
@@ -86,3 +89,7 @@ if __name__ == "__main__":
 
     print(summary)
 
+    plot_memory_distribution(memory_avgs, title="Distribuzione Memoria Media", save_path="../results/memory_avg_dist.png")
+    plot_memory_distribution(memory_peaks, title="Distribuzione Picco Memoria", save_path="../results/memory_peak_dist.png")
+
+save_benchmark_results(all_results, summary, output_path="../results/initiator_classic_benchmark.json")
