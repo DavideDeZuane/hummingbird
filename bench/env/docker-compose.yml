@@ -31,7 +31,8 @@ services:
     command: ["sh", "-c", "/usr/libexec/ipsec/charon"]
     volumes:
       - ./initiator_classic/swanctl:/etc/swanctl
-      - ./initiaotr_classic/strongswan.conf:/etc/strongswan.conf
+      - ./initiator_classic/strongswan.conf:/etc/strongswan.conf
+      
     networks:
       pmtud-net:
          ipv4_address: 192.168.100.3
@@ -40,8 +41,8 @@ services:
   minimal:
     build: initiator_minimal
     container_name: initiator_minimal
-    volumes:
-      - ./initiator_minimal/conf.ini:/conf.ini
+    #volumes:
+    #  - ./initiator_minimal/conf.ini:/conf.ini
     cap_add:
       - NET_ADMIN
       - SYS_ADMIN

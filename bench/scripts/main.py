@@ -13,8 +13,12 @@ CONF_FILE = "config.yml"
 all_results = []
 
 
-
 def run_single_iteration(container_name, connection_name):
+
+
+    ########################################################################à
+    # RENDERE LA FUNZIONE CONDIZIONALE IN BASE A QUALE INITIATOR SI UTILIZZA
+    ########################################################################à
 
     stop_event = threading.Event()
     result_holder = [] 
@@ -32,45 +36,43 @@ def run_single_iteration(container_name, connection_name):
     stop_event.set()
     monitor_thread.join()
 
-    metrics = result_holder[0]  # 🔥 recuperi i dati dal thread
+    metrics = result_holder[0]  
     return metrics
 
 
 
 if __name__ == "__main__":
-
     #---------------------------------------------------------------
     # LOAD CONFIGURATION FILE 
     #---------------------------------------------------------------
-    print(f"[*] Parsing configuration file {CONF_FILE} ...");
+    print(f"[=] Parsing configuration file {CONF_FILE} ...");
     with open(CONF_FILE) as f:
         config = yaml.safe_load(f)
 
     ITERATIONS = config["iterations"]
+    RESULTS_DIR = config["results_dir"] 
+    COMPOSE_FILE = config["compose_file"]
+    CONNECTION_NAME = config["connection_name"]
+    CONTAINER_RESPONDER = config["container_responder"]
+    CONTAINER_INITIATOR = config["container_initiator"]
+    print(f"[+] Configuration settings loaded ...");
     #---------------------------------------------------------------
-    # STARTISTARTIING ENVIRONMENT
+    # STARTING ENVIRONMENT
     #---------------------------------------------------------------
     if(is_docker_running() == False):
         start_docker_linux();
     print("[*] Docker is running...");
-    # check the return value of the command
-    docker_compose_up(compose_file=config["compose_file"]);
+    docker_compose_up(COMPOSE_FILE);
     print("[*] The environment is running...");
-
     #---------------------------------------------------------------
-    # RESTARTING DAEMON TO RESET ALL CONNCECTION 
+    # STARTING SIMULATION
     #---------------------------------------------------------------
-    #initiator = container.containers.get("responder")
-    #INTERFACE = get_veth("responder");
-    #print(f"Interface {INTERFACE}")
-
-
     for i in range(ITERATIONS):
 
-        metrics = run_single_iteration("initiator_classic", "minimal")
+        metrics = run_single_iteration(CONTAINER_INITIATOR, CONNECTION_NAME)
         all_results.append(metrics)
 
-        exec_in_container("initiator_classic", "swanctl --terminate --ike minimal")
+        exec_in_container(CONTAINER_INITIATOR, f"swanctl --terminate --ike {CONNECTION_NAME}")
         time.sleep(2) 
         print("[✔] Environemnt Cleaned")
 
