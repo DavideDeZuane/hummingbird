@@ -1,0 +1,26 @@
+# ==========================
+# Configurazione generale
+# ==========================
+compose_file: "../env/docker-compose.yml"    # Percorso del file docker-compose
+results_dir: "results"                 # Directory dove salvare risultati e PCAP
+raw_dir: "results/raw"                 # Directory per PCAP raw
+summary_file: "results/summary.json"   # File JSON con il riepilogo dei benchmark
+
+# ==========================
+# Container e connessioni
+# ==========================
+minimal_container: "initiator_minimal"  # Nome del container initiator minimal
+classic_container: "initiator_classic"    # Nome del container initiator classico (opzionale)
+responder_container: "responder"          # Nome del container responder
+connection_name: "minimal"                 # Nome della connessione swanctl da utilizzare
+
+# ==========================
+# Parametri di sniffing e monitoring
+# ==========================
+sniff_timeout: 10       # Durata sniffing pacchetti in secondi per ogni iterazione
+monitor_interval: 0.5   # Intervallo di campionamento CPU/memoria del container (s)
+
+# ==========================
+# Simulazione e iterazioni
+# ==========================
+iterations: 5           # Numero di iterazioni della negoziazione IKE
