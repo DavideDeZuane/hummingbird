@@ -21,5 +21,3 @@ def save_benchmark_results(all_results, summary, output_path="../results/benchma
 
     with open(output_path, "w") as f:
         json.dump(data, f, indent=4)
-
-    print(f"[+] Risultati salvati in {output_path}")

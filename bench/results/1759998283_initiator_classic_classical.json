@@ -1,0 +1,36 @@
+{
+    "timestamp": "2025-10-09 10:24:43",
+    "individual_runs": [
+        {
+            "memory_avg": 7.11875,
+            "memory_std": 0.40081056483920025,
+            "memory_peak": 7.7265625
+        },
+        {
+            "memory_avg": 6.8703125,
+            "memory_std": 0.30025318905727294,
+            "memory_peak": 7.14453125
+        },
+        {
+            "memory_avg": 6.90390625,
+            "memory_std": 0.5363424922966376,
+            "memory_peak": 7.76171875
+        },
+        {
+            "memory_avg": 6.9515625,
+            "memory_std": 0.26077839460689606,
+            "memory_peak": 7.21875
+        },
+        {
+            "memory_avg": 7.27109375,
+            "memory_std": 0.6320440453741881,
+            "memory_peak": 8.21875
+        }
+    ],
+    "summary": {
+        "memory_avg_mean": 7.023125,
+        "memory_avg_std": 0.16831414343098536,
+        "memory_peak_mean": 7.6140625,
+        "memory_peak_std": 0.4406918305922873
+    }
+}

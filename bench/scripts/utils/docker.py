@@ -88,7 +88,10 @@ def exec_in_container(container_name: str, command: str, workdir: str = None, pr
         )
 
         output = result.output.decode("utf-8", errors="ignore").strip()
-        print(output)
+        
+        # fare il parsing dell'output per prendere il benchmark
+        # print(output)
+
         if result.exit_code == 0:
             log_ok(f"Command inside '{container_name}' completed")
         else:

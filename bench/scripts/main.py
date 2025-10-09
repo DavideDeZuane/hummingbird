@@ -1,24 +1,18 @@
 from utils.docker import ( is_docker_running, start_docker_linux, docker_compose_up, docker_compose_down, get_veth, exec_in_container)
 from utils.monitoring import (get_mem_usage, monitor_container_resources)
-from utils.plot import (plot_memory_distribution)
 from utils.save import (save_benchmark_results)
 import yaml
 import subprocess
 import threading
 import time
+import os
 import statistics
 
 CONF_FILE = "config.yml"
 
 all_results = []
 
-
-def run_single_iteration(container_name, connection_name):
-
-
-    ########################################################################à
-    # RENDERE LA FUNZIONE CONDIZIONALE IN BASE A QUALE INITIATOR SI UTILIZZA
-    ########################################################################à
+def run_single_iteration(container_name, command):
 
     stop_event = threading.Event()
     result_holder = [] 
@@ -30,7 +24,7 @@ def run_single_iteration(container_name, connection_name):
     monitor_thread.start()
     time.sleep(5)
 
-    result = exec_in_container(container_name, f"swanctl --initiate --ike {connection_name}")
+    result = exec_in_container(container_name, command)
     time.sleep(5)
 
     stop_event.set()
@@ -38,8 +32,6 @@ def run_single_iteration(container_name, connection_name):
 
     metrics = result_holder[0]  
     return metrics
-
-
 
 if __name__ == "__main__":
     #---------------------------------------------------------------
@@ -55,6 +47,17 @@ if __name__ == "__main__":
     CONNECTION_NAME = config["connection_name"]
     CONTAINER_RESPONDER = config["container_responder"]
     CONTAINER_INITIATOR = config["container_initiator"]
+
+    if CONTAINER_INITIATOR == "initiator_minimal":
+        CMD_UP = "./build/main" # definire in base al container
+    else:
+        CMD_UP = f"swanctl --initiate --ike {CONNECTION_NAME}"
+
+    # Il reset della connessione lo facciamo fare al responder in modo tale da evitare che questo vada ad impattare 
+    # sulle misurazioni fatte per il responder anche se comunque viene fatta al di fuori de monitoring, inoltre serve
+    # perchè l'initioator minimal non è ancora in grado di farlo
+    CMD_DOWN = f"swanctl --terminate --ike {CONNECTION_NAME}"
+    
     print(f"[+] Configuration settings loaded ...");
     #---------------------------------------------------------------
     # STARTING ENVIRONMENT
@@ -69,10 +72,10 @@ if __name__ == "__main__":
     #---------------------------------------------------------------
     for i in range(ITERATIONS):
 
-        metrics = run_single_iteration(CONTAINER_INITIATOR, CONNECTION_NAME)
+        metrics = run_single_iteration(CONTAINER_INITIATOR, CMD_UP)
         all_results.append(metrics)
 
-        exec_in_container(CONTAINER_INITIATOR, f"swanctl --terminate --ike {CONNECTION_NAME}")
+        exec_in_container(CONTAINER_RESPONDER, CMD_DOWN) 
         time.sleep(2) 
         print("[✔] Environemnt Cleaned")
 
@@ -89,9 +92,13 @@ if __name__ == "__main__":
     }
     #docker_compose_down(compose_file=config["compose_file"]);
 
-    print(summary)
+    timestamp = int(time.time())
+    os.makedirs("../results", exist_ok=True)
 
-    plot_memory_distribution(memory_avgs, title="Distribuzione Memoria Media", save_path="../results/memory_avg_dist.png")
-    plot_memory_distribution(memory_peaks, title="Distribuzione Picco Memoria", save_path="../results/memory_peak_dist.png")
 
-save_benchmark_results(all_results, summary, output_path="../results/initiator_classic_benchmark.json")
+
+    RESULT_PATH = f"../results/{timestamp}_{CONTAINER_INITIATOR}_{CONNECTION_NAME}.json"
+
+    save_benchmark_results(all_results, summary, output_path=RESULT_PATH)
+    print(f"[+] Benchmark saved in: {RESULT_PATH}")
+
