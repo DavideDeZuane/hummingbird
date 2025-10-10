@@ -59,6 +59,8 @@ hummingbird
 srv/log/*
 **/logs
 
+# ingore resuls directory
+results
 
 # --------------------------
 # Byte-compiled / optimized / DLL files
