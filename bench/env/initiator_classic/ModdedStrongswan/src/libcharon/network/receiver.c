@@ -16,6 +16,7 @@
  * for more details.
  */
 
+#include <bits/time.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -383,6 +384,9 @@ static bool drop_ike_sa_init(private_receiver_t *this, message_t *message)
 		!check_cookie(this, message))
 	{
 		chunk_t cookie;
+		struct timespec ts;
+		clock_gettime(CLOCK_MONOTONIC, &ts);
+    	DBG1(DBG_IKE, "[BENCH] Timestamp reveiver: %ld.%09ld", ts.tv_sec, ts.tv_nsec);
 
 		DBG2(DBG_NET, "received packet: from %#H to %#H (%zu bytes)",
 			 src, message->get_destination(message),
@@ -474,7 +478,7 @@ static job_requeue_t receive_packets(private_receiver_t *this)
 
 		struct timespec ts;
 		clock_gettime(CLOCK_MONOTONIC, &ts);
-    	DBG1(DBG_IKE, "receiver.c - Timestamp reveiver: %ld.%09ld", ts.tv_sec, ts.tv_nsec);
+    	DBG1(DBG_IKE, "[BENCH] receiver.c - Timestamp reveiver: %ld.%09ld", ts.tv_sec, ts.tv_nsec);
 	/* read in a packet */
 	status = charon->socket->receive(charon->socket, &packet);
 	if (status == NOT_SUPPORTED)

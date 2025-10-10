@@ -5,6 +5,8 @@ import glob
 import time
 import sys
 
+
+
 from utils.log import *
 
 """ We'll use this object to send command to the docker socket """
@@ -88,9 +90,10 @@ def exec_in_container(container_name: str, command: str, workdir: str = None, pr
         )
 
         output = result.output.decode("utf-8", errors="ignore").strip()
+
+
         
         # fare il parsing dell'output per prendere il benchmark
-        # print(output)
 
         if result.exit_code == 0:
             log_ok(f"Command inside '{container_name}' completed")

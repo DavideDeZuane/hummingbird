@@ -1,46 +1,62 @@
 # ---------------------------------------------------------
 # BASE IMAGE
 # ---------------------------------------------------------
-    FROM ubuntu:24.04
 
-    # ---------------------------------------------------------
-    # INSTALLING DEPENDENCIES
-    # ---------------------------------------------------------
-    # Update packages and install necessary build dependencies
-    ENV VERSION=6.0.1
-    RUN apt-get update
-    RUN apt-get install -y      \
-        libgmp-dev              \
-        libssl-dev              \    
-        libcurl4-openssl-dev    \
-        libsystemd-dev          \
-        make                    \
-        gcc                     \
-        g++                     \
-        flex                    \
-        wget                    \
-        bzip2                   \ 
-        bison                   \
-        libcap-ng-dev           \
-        iproute2                \
-        iptables                \
-        autoconf                \
-        automake                \
-        libtool                 \
-        pkg-config              
-    
-    # ---------------------------------------------------------
-    # CLEAN UP PACKAGE LISTS
-    # ---------------------------------------------------------
-    # Remove cached package lists to reduce image size
-    RUN rm -rf /var/lib/apt/lists/*
-    
+
+    FROM archlinux:latest
+
+# ---------------------------------------------------------
+# ENVIRONMENT
+# ---------------------------------------------------------
+ENV VERSION=6.0.1
+
+# ---------------------------------------------------------
+# INSTALLING DEPENDENCIES
+# ---------------------------------------------------------
+# Aggiorna i pacchetti e installa le dipendenze necessarie
+RUN pacman -Syu --noconfirm && \
+    pacman -S --noconfirm \
+        zsh \
+        gmp \
+        openssl \
+        curl \
+        systemd-libs \
+        make \
+        gcc \
+        flex \
+        bison \
+        bzip2 \
+        libcap-ng \
+        iproute2 \
+        iptables \
+        autoconf \
+        automake \
+        m4 \
+        gperf \
+        perl \
+        libtool \
+        base-devel \
+        pkgconf \
+        wget
+
+# ---------------------------------------------------------
+# OPTIONAL: Set default shell to zsh
+# ---------------------------------------------------------
+SHELL ["/usr/bin/zsh", "-c"]
+
     # ---------------------------------------------------------
     # INSTALLING STRONGSWAN
     # ---------------------------------------------------------
     # Download and extract StrongSwan source code next configure and compile StrongSwan
-    RUN wget https://download.strongswan.org/strongswan-${VERSION}.tar.bz2 && tar xjf strongswan-${VERSION}.tar.bz2 
-    WORKDIR /strongswan-${VERSION}
+    # invece che installarlo basta copiare la directory 
+    
+    # RUN wget https://download.strongswan.org/strongswan-${VERSION}.tar.bz2 && tar xjf strongswan-${VERSION}.tar.bz2 
+    
+    WORKDIR /strongswan
+    COPY ModdedStrongswan /strongswan
+
+
+    RUN autoreconf  -i
     RUN ./configure --prefix=/usr --sysconfdir=/etc 	\
         --with-systemdsystemunitdir                 	\
         --enable-save-keys                          	\
@@ -62,13 +78,17 @@
         --enable-socket-default                     	\
         --enable-kernel-netlink                     	\
         --enable-resolve        
+
+    SHELL ["/bin/zsh", "-c"]
+
     RUN make && make install
+
     
     # ---------------------------------------------------------
     # CLEAN UP THE SYSTEM
     # ---------------------------------------------------------
     WORKDIR /
-    RUN rm -rf strongswan-${VERSION} strongswan-${VERSION}.tar.bz2 
+    RUN rm -rf strongswan 
     
     # ---------------------------------------------------------
     # EXPOSE PORTS

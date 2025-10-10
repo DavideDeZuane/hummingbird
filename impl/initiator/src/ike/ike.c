@@ -32,6 +32,7 @@ void initiate_ike(ike_partecipant_t* left, ike_partecipant_t* right, ike_sa_t* s
     log_info(ANSI_COLOR_GREEN "Starting the init process of hummingbird..." ANSI_COLOR_RESET);
 
     LOAD_MODULE("NET", initiate_network, &left->node, &right->node, &cfg->peer);
+    
     LOAD_MODULE("CRY", initiate_crypto, &sa->suite, &left->ctx, &cfg->suite);
     LOAD_MODULE("AUT", initiate_auth, &left->aut, &cfg->auth);
 

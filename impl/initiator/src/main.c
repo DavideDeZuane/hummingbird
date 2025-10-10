@@ -53,6 +53,18 @@ typedef struct {
     cipher_suite_t* suite;
 } crypto_thread_args_t;
 
+
+#define LOAD_MODULE(name, init_fn, ...)                                \
+    do {                                                               \
+        int ret = init_fn(__VA_ARGS__);                                \
+        if (ret != 0) {                                                \
+            log_fatal("Could not initiate the [%s] module", name);     \
+            exit(EXIT_FAILURE);                                        \
+        }                                                              \
+    } while (0)                                                        \
+\
+
+
 void* thread_initiate_network(void* arg) {
     net_thread_args_t* args = (net_thread_args_t*)arg;
 
@@ -194,8 +206,16 @@ int main(int argc, char* argv[]){
     */
 
 
+    LOAD_MODULE("NET", initiate_network, &left.node, &right.node, &cfg->peer);
+    LOAD_MODULE("AUT", initiate_auth, &left.aut, &cfg->auth);
+    
+    
     clock_gettime(CLOCK_MONOTONIC, &start_init);
-    initiate_ike(&left, &right, &sa, cfg);
+    LOAD_MODULE("CRY", initiate_crypto, &sa.suite, &left.ctx, &cfg->suite);
+
+    free(cfg);
+
+    //initiate_ike(&left, &right, &sa, cfg);
     
 
     /*
@@ -598,10 +618,10 @@ int main(int argc, char* argv[]){
     log_info("###############################################################"); 
     log_info("BENCHMARK");
     log_info("###############################################################"); 
-    log_info("[INIT] Time: " ANSI_COLOR_BOLD "%.6fs" ANSI_COLOR_RESET, elapsed_init);
-    log_info("[INIT] Size: " ANSI_COLOR_BOLD "%zu bytes" ANSI_COLOR_RESET, init_len);
-    log_info("[AUTH] Time: " ANSI_COLOR_BOLD "%.6fs" ANSI_COLOR_RESET, elapsed_auth);
-    log_info("[AUTH] Size: " ANSI_COLOR_BOLD "%zu bytes" ANSI_COLOR_RESET, response_len+icv_len);
+    log_info("[BENCH] Init Time: " ANSI_COLOR_BOLD "%.6fs" ANSI_COLOR_RESET, elapsed_init);
+    log_info("[BENCH] Init Size: " ANSI_COLOR_BOLD "%zu bytes" ANSI_COLOR_RESET, init_len);
+    log_info("[BENCH] Time: " ANSI_COLOR_BOLD "%.6fs" ANSI_COLOR_RESET, elapsed_auth);
+    log_info("[BENCH] Size: " ANSI_COLOR_BOLD "%zu bytes" ANSI_COLOR_RESET, response_len+icv_len);
     
     return 0;
 }

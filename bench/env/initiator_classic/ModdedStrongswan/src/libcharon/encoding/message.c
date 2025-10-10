@@ -17,11 +17,12 @@
  * for more details.
  */
 
+#include <bits/time.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "message.h"
-
+#include <time.h>
 #include <library.h>
 #include <bio/bio_writer.h>
 #include <collections/array.h>
@@ -37,6 +38,7 @@
 #include <encoding/payloads/unknown_payload.h>
 #include <encoding/payloads/cp_payload.h>
 #include <encoding/payloads/fragment_payload.h>
+#include <time.h>
 
 /**
  * Max number of notify payloads per IKEv2 message
@@ -2326,7 +2328,12 @@ METHOD(message_t, parse_header, status_t,
 	bool *reserved;
 	int i;
 
+	struct timespec ts;
+	// PLACEHOLDER
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+
 	DBG2(DBG_ENC, "parsing header of message");
+	DBG1(DBG_IKE, "[BENCH] Parsing response timestamp: %ld.%09ld", ts.tv_sec, ts.tv_nsec);
 
 	if (!this->parser)
 	{	/* reassembled IKEv2 message, header is inherited from fragments */

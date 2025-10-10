@@ -3,16 +3,17 @@
 # ==========================
 compose_file: "../env/docker-compose.yml"    # Percorso del file docker-compose
 results_dir: "../results"                 
+log_initiator: "../env/initiator_classic/charon.log"
 
 # ==========================
 # Container e connessioni
 # ==========================
 container_initiator: "initiator_classic"    # initiator_minimal | initiator_classic
 container_responder: "responder"          # Nome del container responder
-connection_name: "classical"                 # rinominare in classical e post-quantum
+connection_name: "post-quantum"                 # rinominare in classical e post-quantum
 security_level: "L1"                    # specifica il security level della suite che si vuole utilizzare
 
 # ==========================
 # Simulazione e iterazioni
 # ==========================
-iterations: 5           # Numero di iterazioni della negoziazione IKE
+iterations: 100           # Numero di iterazioni della negoziazione IKE

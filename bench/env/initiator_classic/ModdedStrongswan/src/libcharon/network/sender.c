@@ -139,7 +139,7 @@ METHOD(sender_t, send_, void,
 
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    DBG1(DBG_IKE, "send.c - Timestamp send: %ld.%09ld", ts.tv_sec, ts.tv_nsec);
+    DBG1(DBG_IKE, "[BENCH] send.c - Timestamp send: %ld.%09ld", ts.tv_sec, ts.tv_nsec);
 
 }
 

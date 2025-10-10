@@ -90,7 +90,7 @@ static int initiate(vici_conn_t *conn)
 	{
 		struct timespec ts;
 		clock_gettime(CLOCK_MONOTONIC, &ts);
-    	DBG1(DBG_IKE, "initiate.c - Timestamp init: %ld.%09ld", ts.tv_sec, ts.tv_nsec);
+    	DBG1(DBG_IKE, "[IKE] [BENCH] initiate.c - Timestamp init: %ld.%09ld", ts.tv_sec, ts.tv_nsec);
 		vici_add_key_valuef(req, "ike", "%s", ike);
 	}
 	if (timeout)

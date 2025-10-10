@@ -21,6 +21,9 @@ services:
   # PER POTER RACCOGLIERE I TIMESTAMP DEI PACCCHETTI
   initiator:
     image: strongx509/strongswan:latest
+    #build: 
+    #  context: ./initiator_classic
+    #  dockerfile: Dockerfile
     container_name: initiator_classic
     depends_on:
       - responder
@@ -32,6 +35,7 @@ services:
     volumes:
       - ./initiator_classic/swanctl:/etc/swanctl
       - ./initiator_classic/strongswan.conf:/etc/strongswan.conf
+      - ./initiator_classic/charon.log:/var/log/charon.log
       
     networks:
       pmtud-net:
